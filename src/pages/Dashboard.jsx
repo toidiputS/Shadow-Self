@@ -118,83 +118,22 @@ export default function Dashboard() {
     enabled: !!user?.id,
   });
 
-  // Relapse & Streak Logic
+  // Streak & Relapse Synchronization
   useEffect(() => {
-    const runRelapseCheck = async () => {
-      if (!user || !profile || !completionLogs.length) return;
-
-      const yesterday = startOfDay(subDays(new Date(), 1));
-      const dailyHabits = quests.filter(q => q.type === "DAILY_HABIT" || q.type === "daily");
+    const syncStreaks = async () => {
+      if (!user?.id || !profile) return;
       
-      if (dailyHabits.length === 0) return;
-
-      const completedYesterdayCount = completionLogs.filter(log => 
-        isSameDay(new Date(log.completed_at), yesterday) &&
-        dailyHabits.some(h => h.id === log.quest_id)
-      ).length;
-
-      const totalHabits = dailyHabits.length;
-      const yesterdayMissed = completedYesterdayCount < totalHabits;
-
-      if (yesterdayMissed) {
-        if (profile.current_streak > 0) {
-           if (profile.grace_days > 0) {
-             await supabase
-               .from('profiles')
-               .update({ grace_days: profile.grace_days - 1 })
-               .eq('user_id', user.id);
-             setBounceBackMessage("Grace protocol initiated. Streak sustained through protection reserves.");
-           } else {
-             // Reset streak + Deduct 50 SP Penalty
-             await supabase
-               .from('profiles')
-               .update({ current_streak: 0 })
-               .eq('user_id', user.id);
-             
-             const { data: wallet } = await supabase
-               .from('progress')
-               .select('sp')
-               .eq('user_id', user.id)
-               .single();
-               
-             if (wallet) {
-               await supabase
-                 .from('progress')
-                 .update({ sp: Math.max(0, (wallet.sp || 0) - 50) })
-                 .eq('user_id', user.id);
-             }
-
-             setBounceBackMessage("Critical System Failure: Streak reset. Protocol Breach logged. -50 SP Penalty applied. Initiate recovery protocols.");
-           }
-           queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-           queryClient.invalidateQueries({ queryKey: ['userWallet'] });
-        }
-
-        const missedQuests = dailyHabits.filter(h => 
-          !completionLogs.some(log => isSameDay(new Date(log.completed_at), yesterday) && log.quest_id === h.id)
-        );
-
-        for (const mq of missedQuests) {
-           const exists = quests.some(q => q.is_shadow_debt && q.title.includes(mq.title));
-           if (!exists) {
-             await supabase.from('quests').insert([{
-               title: `RESTORE: ${mq.title}`,
-               description: `Recovery protocol for missed habit: ${mq.title}`,
-               category: 'recovery',
-               type: 'single',
-               xp_reward: Math.floor(mq.xp_reward * 0.5),
-               sp_reward: Math.floor(mq.sp_reward * 0.5),
-               is_shadow_debt: true,
-               creator_id: user.id
-             }]);
-           }
-        }
-        queryClient.invalidateQueries({ queryKey: ['quests'] });
+      // Call streak check RPC (to be created)
+      const { data, error } = await supabase.rpc('sync_user_streak', { p_user_id: user.id });
+      
+      if (!error && data?.message) {
+        setBounceBackMessage(data.message);
+        queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       }
     };
 
-    runRelapseCheck();
-  }, [user, profile, completionLogs, quests, queryClient]);
+    if (user && profile) syncStreaks();
+  }, [user?.id, !!profile]);
 
   // Fetch user role and guild info
   const { data: guildMember } = useQuery({
@@ -269,6 +208,7 @@ export default function Dashboard() {
           .eq('id', quest.id);
       }
 
+      // Streak increment logic handled by DB trigger or specific action completion
       const dailyHabits = quests.filter(q => q.type === "DAILY_HABIT" || q.type === "daily");
       const completedTodayCount = completionLogs.filter(log => 
           isSameDay(new Date(log.completed_at), new Date()) && 
@@ -276,12 +216,6 @@ export default function Dashboard() {
       ).length + 1;
 
       if (completedTodayCount === dailyHabits.length && profile) {
-         const newStreak = profile.current_streak + 1;
-         const newBest = Math.max(profile.best_streak, newStreak);
-         await supabase
-           .from('profiles')
-           .update({ current_streak: newStreak, best_streak: newBest })
-           .eq('user_id', user.id);
          setShowPerfectDayBanner(true);
          setTimeout(() => setShowPerfectDayBanner(false), 5000);
       }

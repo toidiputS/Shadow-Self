@@ -9,6 +9,7 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
   const [data, setData] = useState({
     mood: 3,
     craving_level: 1,
+    is_relapse: false,
     sleep_quality: 3,
     energy: 3,
     message: ""
@@ -24,6 +25,7 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
           user_id: userId,
           guild_id: guildId,
           ...checkInData,
+          date: new Date().toISOString().split('T')[0],
           check_in_type: 'daily'
         }])
         .select()
@@ -34,6 +36,7 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dailyCheckIn', userId] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', userId] });
       onComplete?.();
     }
   });
@@ -43,7 +46,7 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
   };
 
   const nextStep = () => {
-    if (step < 5) setStep(step + 1);
+    if (step < 6) setStep(step + 1);
     else checkInMutation.mutate(data);
   };
 
@@ -68,6 +71,14 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
     },
     {
       id: 3,
+      question: "Protocol Breach Status (Relapse)",
+      field: "is_relapse",
+      type: "toggle",
+      icon: <AlertCircle className="w-8 h-8 text-red-600" />,
+      labels: ["Clean Protocol", "Relapse Incident"]
+    },
+    {
+      id: 4,
       question: "How was your sleep last night?",
       field: "sleep_quality",
       min: 1,
@@ -76,7 +87,7 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
       labels: ["Restless", "Poor", "Average", "Deep", "Perfect"]
     },
     {
-      id: 4,
+      id: 5,
       question: "Current energy levels?",
       field: "energy",
       min: 1,
@@ -85,7 +96,7 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
       labels: ["Depleted", "Drained", "Functional", "Active", "Peak"]
     },
     {
-      id: 5,
+      id: 6,
       question: "Any notes for today's reflection?",
       field: "message",
       type: "text"
@@ -99,13 +110,13 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="fixed inset-0 z-50 flex items-center justify-center px-6 bg-black/60 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center px-6 bg-black/80 backdrop-blur-xl"
     >
-      <div className="w-full max-w-lg nm-flat-lg rounded-4xl p-10 relative overflow-hidden">
+      <div className="w-full max-w-lg nm-flat-lg rounded-[3rem] p-10 relative overflow-hidden ring-1 ring-white/10">
         {/* Progress bar */}
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-black/5">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-black/10">
           <motion.div 
-            className="h-full bg-blue-500"
+            className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
             initial={{ width: "0%" }}
             animate={{ width: `${(step / steps.length) * 100}%` }}
           />
@@ -113,7 +124,7 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
 
         <button 
           onClick={onComplete}
-          className="absolute top-6 right-6 w-10 h-10 rounded-full nm-button flex items-center justify-center opacity-40 hover:opacity-100"
+          className="absolute top-6 right-6 w-10 h-10 rounded-full nm-button flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"
         >
           <X className="w-5 h-5" />
         </button>
@@ -127,21 +138,36 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
             className="py-6"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-3xl nm-inset flex items-center justify-center mb-8">
+              <div className="w-20 h-20 rounded-[2rem] nm-inset flex items-center justify-center mb-8 ring-1 ring-white/5">
                 {currentStep.icon || <Sparkles className="w-8 h-8 text-blue-500" />}
               </div>
               
-              <h2 className="text-2xl font-black uppercase tracking-[0.2em] mb-2">{currentStep.question}</h2>
+              <h2 className="text-2xl font-black uppercase tracking-[0.2em] mb-2 leading-tight">{currentStep.question}</h2>
               <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 mb-10">Daily Status Synchronization</p>
 
               {currentStep.type === "text" ? (
                 <textarea
                   autoFocus
                   placeholder="Type your one-line journal entry..."
-                  className="w-full nm-inset rounded-2xl p-6 text-sm min-h-[120px] resize-none focus:outline-none"
+                  className="w-full nm-inset rounded-2xl p-6 text-sm min-h-[140px] resize-none focus:outline-none transition-all focus:ring-1 focus:ring-blue-500/20"
                   value={data.message}
                   onChange={(e) => updateField("message", e.target.value)}
                 />
+              ) : currentStep.type === "toggle" ? (
+                <div className="flex flex-col w-full gap-5">
+                   <button 
+                      onClick={() => updateField(currentStep.field, false)}
+                      className={`w-full py-6 rounded-3xl font-black text-center transition-all ${!data[currentStep.field] ? 'nm-inset-sm text-green-500 ring-1 ring-green-500/20' : 'nm-button opacity-60'}`}
+                   >
+                      <span className="uppercase tracking-[0.2em]">{currentStep.labels[0]}</span>
+                   </button>
+                   <button 
+                      onClick={() => updateField(currentStep.field, true)}
+                      className={`w-full py-6 rounded-3xl font-black text-center transition-all ${data[currentStep.field] ? 'nm-inset-sm text-red-500 ring-1 ring-red-500/20' : 'nm-button opacity-40'}`}
+                   >
+                      <span className="uppercase tracking-[0.2em]">{currentStep.labels[1]}</span>
+                   </button>
+                </div>
               ) : (
                 <div className="flex flex-col w-full gap-8">
                   <div className="flex justify-between items-center px-4">
