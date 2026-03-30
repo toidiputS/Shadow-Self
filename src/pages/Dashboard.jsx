@@ -9,7 +9,8 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
 import MetricsDisplay from "../components/dashboard/MetricsDisplay";
-import LevelProgress, { getCurrentRank } from "../components/dashboard/LevelProgress";
+import LevelProgress from "../components/dashboard/LevelProgress";
+import { getCurrentRank } from "@/utils";
 import QuestCard from "../components/dashboard/QuestCard";
 import CreateQuestForm from "../components/dashboard/CreateQuestForm";
 import PerfectDayBanner from "../components/dashboard/PerfectDayBanner";
