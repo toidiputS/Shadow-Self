@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion"; // eslint-disable-line no-unused-vars
 import { supabase } from "@/api/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Heart, Zap, Moon, Flame, Check, X } from "lucide-react";
+import { Heart, Zap, Moon, Flame, Check, X, AlertCircle, Sparkles } from "lucide-react";
 
 export default function DailyCheckIn({ userId, guildId, onComplete }) {
   const [step, setStep] = useState(1);
@@ -138,7 +138,7 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
             className="py-6"
           >
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-[2rem] nm-inset flex items-center justify-center mb-8 ring-1 ring-white/5">
+              <div className="w-20 h-20 rounded-4xl nm-inset flex items-center justify-center mb-8 ring-1 ring-white/5">
                 {currentStep.icon || <Sparkles className="w-8 h-8 text-blue-500" />}
               </div>
               
@@ -224,4 +224,3 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
   );
 }
 
-import { Sparkles } from "lucide-react";
