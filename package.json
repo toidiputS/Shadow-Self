@@ -38,6 +38,8 @@
   "overrides": {
     "vite-plugin-pwa": {
       "vite": "$vite"
-    }
+    },
+    "serialize-javascript": "^6.0.2",
+    "sourcemap-codec": "npm:@jridgewell/sourcemap-codec"
   }
 }
