@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { Coins, CheckCircle, ShoppingBag } from "lucide-react";
+import { Coins, CheckCircle, ShoppingBag, ShieldCheck, Lock, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
+
+const MotionDiv = motion.div;
 
 export default function CosmeticItemCard({ item, userSpBalance, isOwned, onPurchase }) {
   const [isPressed, setIsPressed] = useState(false);
@@ -13,70 +15,100 @@ export default function CosmeticItemCard({ item, userSpBalance, isOwned, onPurch
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.3 }}
-      className={`relative p-6 rounded-3xl transition-all duration-200
-        ${isOwned ? 'bg-[#e0e0e0] shadow-[inset_6px_6px_12px_#bebebe,inset_-6px_-6px_12px_#ffffff]'
-          : 'bg-[#e0e0e0] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff]'
+    <MotionDiv
+      layout
+      className={`relative p-8 rounded-4xl transition-all duration-500 text-(--text-primary) group
+        ${isOwned 
+          ? 'nm-inset border border-green-500/10' 
+          : 'nm-flat-lg border border-white/10 hover:nm-flat hover:-translate-y-2'
         }
-        ${isPressed ? 'shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff]' : ''}
+        ${isPressed ? 'nm-inset-sm' : ''}
       `}
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}
     >
-      {item.image_url && (
-        <div className="w-full h-32 rounded-2xl overflow-hidden mb-4
-          bg-[#e0e0e0] shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] flex items-center justify-center
-        ">
+      {/* Item Image with System Overlay */}
+      <div className="w-full h-48 rounded-3xl overflow-hidden mb-8 nm-inset flex items-center justify-center relative bg-linear-to-br from-transparent to-(--border-color)/20 group-hover:nm-inset-sm transition-all duration-500">
+        {item.image_url ? (
           <img
             src={item.image_url}
             alt={item.name}
-            className="w-full h-full object-cover p-2 rounded-2xl"
+            className={`w-full h-full object-cover p-4 rounded-[40px] transition-all duration-700 group-hover:scale-110 ${isOwned ? 'grayscale opacity-60' : 'opacity-90'}`}
           />
-        </div>
-      )}
-      <div className="flex flex-col gap-2">
-        <h3 className="text-lg font-bold text-gray-800">{item.name}</h3>
-        <p className="text-xs text-gray-500 font-medium line-clamp-2">{item.description}</p>
+        ) : (
+          <div className="flex flex-col items-center gap-4 opacity-20 group-hover:opacity-40 transition-opacity duration-500">
+            <ShieldCheck className="w-20 h-20 text-(--text-secondary)" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em]">Guild Protected</span>
+          </div>
+        )}
         
-        <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
-          <div className="flex items-center gap-2">
-            <Coins className="w-4 h-4 text-yellow-600" />
-            <span className="text-sm font-bold text-gray-700">{item.sp_cost} SP</span>
+        {isOwned ? (
+          <div className="absolute top-4 right-4 bg-green-500/20 backdrop-blur-md text-green-500 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-green-500/30 flex items-center gap-2 shadow-lg">
+            <CheckCircle className="w-4 h-4" />
+            Vested Clearance
+          </div>
+        ) : !canAfford && (
+          <div className="absolute top-4 right-4 bg-red-500/10 backdrop-blur-md text-red-500 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-500/20 flex items-center gap-2">
+            <Lock className="w-4 h-4" />
+            Resource Gap
+          </div>
+        )}
+
+        <div className="absolute bottom-4 left-4 flex gap-2">
+           <span className="px-3 py-1 rounded-lg bg-black/20 backdrop-blur-sm text-[8px] font-black uppercase tracking-widest border border-white/5 opacity-60">
+             {item.category || 'Standard'} Tier
+           </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <h3 className="text-2xl font-black text-(--text-primary) leading-none tracking-tighter group-hover:text-blue-500 transition-colors uppercase">{item.name}</h3>
+          <ArrowUpRight className="w-5 h-5 opacity-20 group-hover:opacity-100 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+        </div>
+        
+        <p className="text-sm text-(--text-secondary) font-medium leading-relaxed opacity-60 mb-2 line-clamp-3 italic">
+          "{item.description}"
+        </p>
+        
+        <div className="flex items-center justify-between mt-4 pt-6 border-t border-(--text-secondary)/5">
+          <div className="flex flex-col gap-1">
+             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-(--text-secondary) opacity-40">Authorization Cost</p>
+             <div className="flex items-center gap-2.5">
+                <Coins className={`w-5 h-5 ${canAfford ? 'text-yellow-500' : 'text-red-400 opacity-50'} transition-colors`} />
+                <span className={`text-xl font-black ${!canAfford && !isOwned ? 'text-red-400 opacity-80' : ''}`}>{item.sp_cost} <span className="text-xs opacity-30">SP</span></span>
+             </div>
           </div>
           
           <button
             onClick={handlePurchase}
             disabled={isOwned || !canAfford}
             className={`
-              px-6 py-3 rounded-xl text-xs font-bold
-              transition-all duration-200 flex items-center gap-2
+              px-8 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em]
+              transition-all duration-500 flex items-center gap-3 active:scale-95
               ${isOwned
-                ? 'bg-gray-200 text-gray-500 cursor-default shadow-none'
+                ? 'nm-inset text-(--text-secondary) cursor-default bg-blue-500/5'
                 : canAfford
-                  ? 'bg-[#e0e0e0] shadow-[4px_4px_8px_#bebebe,-4px_-4px_8px_#ffffff] hover:shadow-[3px_3px_6px_#bebebe,-3px_-3px_6px_#ffffff] text-blue-600 active:shadow-[inset_-2px_-2px_4px_#ffffff,inset_2px_2px_4px_#bebebe]'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-50 shadow-none'
+                  ? 'nm-button text-blue-500 hover:text-blue-400 font-bold'
+                  : 'nm-flat opacity-30 text-(--text-secondary) cursor-not-allowed'
               }
             `}
           >
             {isOwned ? (
               <>
-                <CheckCircle className="w-4 h-4" />
-                Owned
+                <ShieldCheck className="w-4 h-4" />
+                Authorized
               </>
             ) : (
               <>
-                <ShoppingBag className="w-4 h-4" />
-                Buy
+                <ShoppingBag className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                Redeem Protocol
               </>
             )}
           </button>
         </div>
       </div>
-    </motion.div>
+    </MotionDiv>
   );
 }

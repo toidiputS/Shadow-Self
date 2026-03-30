@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import { CheckCircle, Repeat, Zap, Flame, Coins, Award } from "lucide-react";
+import { CheckCircle, Repeat, Zap, Flame, Coins, Award, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function QuestCard({ quest, onComplete, isCompleted, streak = 0 }) {
-  const MotionDiv = motion.div;
-  const MotionAnimatePresence = AnimatePresence;
   const [isPressed, setIsPressed] = useState(false);
   const [showRewards, setShowRewards] = useState(false);
   
   const isDailyHabit = quest.type === "daily" || quest.type === "DAILY_HABIT";
+
+  const MotionDiv = motion.div;
 
   const handleComplete = () => {
     setShowRewards(true);
@@ -18,136 +18,111 @@ export default function QuestCard({ quest, onComplete, isCompleted, streak = 0 }
 
   return (
     <MotionDiv
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className={`relative ${isCompleted ? 'opacity-50' : ''}`}
+      className={`relative ${isCompleted ? 'opacity-60' : ''} text-(--text-primary) group`}
     >
       <div
         className={`
-          p-6 rounded-3xl transition-all duration-200
+          p-7 rounded-4xl transition-all duration-500
           ${isCompleted 
-            ? 'bg-[#e0e0e0] shadow-[inset_6px_6px_12px_#bebebe,inset_-6px_-6px_12px_#ffffff]' 
-            : 'bg-[#e0e0e0] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff]'
+            ? 'nm-inset border border-white/5' 
+            : 'nm-flat-lg border border-white/10 group-hover:nm-flat'
           }
-          ${isPressed ? 'shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff]' : ''}
+          ${isPressed ? 'nm-inset-sm' : ''}
         `}
         onMouseDown={() => setIsPressed(true)}
         onMouseUp={() => setIsPressed(false)}
         onMouseLeave={() => setIsPressed(false)}
       >
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center gap-4">
             <div className={`
-              w-10 h-10 rounded-full flex items-center justify-center
+              w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500
               ${isCompleted 
-                ? 'bg-[#e0e0e0] shadow-[inset_3px_3px_6px_#bebebe,inset_-3px_-3px_6px_#ffffff]' 
-                : 'bg-[#e0e0e0] shadow-[4px_4px_8px_#bebebe,-4px_-4px_8px_#ffffff]'
+                ? 'nm-inset-sm opacity-50' 
+                : 'nm-flat-sm text-blue-500 group-hover:scale-110'
               }
             `}>
               {isDailyHabit ? (
-                <Repeat className="w-5 h-5 text-gray-600" />
+                <Repeat className="w-6 h-6 opacity-80" />
               ) : (
-                <Zap className="w-5 h-5 text-gray-600" />
+                <Zap className="w-6 h-6 opacity-80" />
               )}
             </div>
             <div>
-              <h3 className={`text-lg font-semibold ${isCompleted ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+              <h3 className={`text-xl font-black tracking-tight ${isCompleted ? 'line-through opacity-40' : 'group-hover:text-blue-400'} transition-colors`}>
                 {quest.title || quest.name}
               </h3>
-              <p className="text-xs text-gray-500 mt-1">
-                {isDailyHabit ? 'Daily Habit' : 'Single Action'}
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-1.5 opacity-40">
+                {isDailyHabit ? 'Shadow Habit' : 'Instant Action'}
               </p>
             </div>
           </div>
           
           {isDailyHabit && streak > 0 && (
-            <div className="
-              px-3 py-1 rounded-full flex items-center gap-1
-              bg-[#e0e0e0] shadow-[inset_2px_2px_4px_#bebebe,inset_-2px_-2px_4px_#ffffff]
-            ">
-              <Flame className="w-4 h-4 text-orange-500" />
-              <span className="text-sm font-bold text-gray-700">{streak}</span>
+            <div className="px-4 py-2 rounded-2xl flex items-center gap-2 nm-inset-sm transition-all group-hover:nm-inset">
+              <Flame className="w-4 h-4 text-orange-500 animate-pulse" />
+              <span className="text-sm font-black opacity-80">{streak}</span>
             </div>
           )}
         </div>
 
-        {/* Rewards Display */}
-        <div className="flex gap-2 mb-4">
-          <div className="
-            px-3 py-1 rounded-full text-xs font-medium text-gray-600 flex items-center gap-1
-            bg-[#e0e0e0] shadow-[inset_2px_2px_4px_#bebebe,inset_-2px_-2px_4px_#ffffff]
-          ">
-            <Award className="w-3 h-3" />
-            +{quest.xp_reward} XP
+        {/* Quest Info & Rewards */}
+        <div className="flex flex-wrap gap-3 mb-8">
+          <div className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 nm-inset-sm opacity-60">
+            <Award className="w-3.5 h-3.5 text-purple-400" />
+            <span>+{quest.xp_reward} Merit</span>
           </div>
-          <div className="
-            px-3 py-1 rounded-full text-xs font-medium text-gray-600 flex items-center gap-1
-            bg-[#e0e0e0] shadow-[inset_2px_2px_4px_#bebebe,inset_-2px_-2px_4px_#ffffff]
-          ">
-            <Coins className="w-3 h-3" />
-            +{quest.sp_reward} SP
+          <div className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 nm-inset-sm opacity-60">
+            <Coins className="w-3.5 h-3.5 text-yellow-400" />
+            <span>+{quest.sp_reward} SP</span>
           </div>
+          {quest.difficulty_band && (
+            <div className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 nm-inset-sm opacity-60">
+              <ShieldCheck className="w-3.5 h-3.5 text-green-400" />
+              <span>{quest.difficulty_band} Class</span>
+            </div>
+          )}
         </div>
 
-        {!isCompleted && (
+        {!isCompleted ? (
           <button
             onClick={handleComplete}
-            className="
-              w-full mt-4 py-3 px-6 rounded-2xl
-              bg-[#e0e0e0] shadow-[6px_6px_12px_#bebebe,-6px_-6px_12px_#ffffff]
-              hover:shadow-[4px_4px_8px_#bebebe,-4px_-4px_8px_#ffffff]
-              active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff]
-              transition-all duration-200
-              text-gray-700 font-medium
-              flex items-center justify-center gap-2
-            "
+            className="w-full py-4.5 px-6 rounded-2xl nm-button font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95 group-hover:text-blue-500"
           >
-            <CheckCircle className="w-5 h-5" />
-            Mark Complete
+            <CheckCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            Certify Completion
           </button>
-        )}
-
-        {isCompleted && (
-          <div className="
-            w-full mt-4 py-3 px-6 rounded-2xl
-            bg-[#e0e0e0] shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff]
-            text-gray-500 font-medium text-center
-            flex items-center justify-center gap-2
-          ">
-            <CheckCircle className="w-5 h-5" />
-            Completed
+        ) : (
+          <div className="w-full py-4.5 px-6 rounded-2xl nm-inset-sm text-(--text-secondary) font-black text-xs uppercase tracking-[0.2em] text-center flex items-center justify-center gap-3 opacity-60">
+            <ShieldCheck className="w-5 h-5 text-green-500" />
+            Verified & Logged
           </div>
         )}
       </div>
 
       {/* Floating Rewards Animation */}
-      <MotionAnimatePresence>
+      <AnimatePresence>
         {showRewards && (
           <MotionDiv
-            initial={{ opacity: 1, y: 0 }}
-            animate={{ opacity: 0, y: -50 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 2 }}
-            className="absolute top-0 right-0 flex gap-2 pointer-events-none"
+            initial={{ opacity: 0, y: 0, scale: 0.5 }}
+            animate={{ opacity: 1, y: -80, scale: 1.2 }}
+            exit={{ opacity: 0, y: -120 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="absolute top-0 inset-x-0 flex items-center justify-center gap-4 pointer-events-none z-50 font-black text-blue-500"
           >
-            <div className="
-              px-4 py-2 rounded-full text-sm font-bold
-              bg-[#e0e0e0] shadow-[6px_6px_12px_#bebebe,-6px_-6px_12px_#ffffff]
-              text-gray-700
-            ">
-              +{quest.xp_reward} XP
-            </div>
-            <div className="
-              px-4 py-2 rounded-full text-sm font-bold
-              bg-[#e0e0e0] shadow-[6px_6px_12px_#bebebe,-6px_-6px_12px_#ffffff]
-              text-gray-700
-            ">
-              +{quest.sp_reward} SP
-            </div>
+             <div className="px-5 py-2.5 rounded-full nm-flat flex items-center gap-2">
+               <Award className="w-4 h-4" /> +{quest.xp_reward || 0}
+             </div>
+             <div className="px-5 py-2.5 rounded-full nm-flat flex items-center gap-2">
+               <Coins className="w-4 h-4" /> +{quest.sp_reward || 0}
+             </div>
           </MotionDiv>
         )}
-      </MotionAnimatePresence>
+      </AnimatePresence>
     </MotionDiv>
   );
 }
