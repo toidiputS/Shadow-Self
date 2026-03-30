@@ -81,4 +81,7 @@ export default function LevelProgress({ totalXp }) {
             />
           </div>
         </div>
- 
+      )}
+    </div>
+  );
+}
