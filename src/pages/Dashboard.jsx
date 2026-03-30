@@ -245,7 +245,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-center md:justify-start gap-4 mt-5 md:ml-21">
               <span className="text-(--text-secondary) font-black uppercase tracking-[0.4em] text-[10px] opacity-40">System Core v3.01</span>
               {guildMember && (
-                <div className="flex items-center gap-2.5 px-4 py-2 rounded-full nm-inset-sm text-[10px] font-black uppercase tracking-[0.1em] opacity-80 border border-white/5">
+                <div className="flex items-center gap-2.5 px-4 py-2 rounded-full nm-inset-sm text-[10px] font-black uppercase tracking-widest opacity-80 border border-white/5">
                   {getRoleIcon(guildMember.role)}
                   <span>{guildMember.guilds?.name} — {guildMember.role}</span>
                 </div>

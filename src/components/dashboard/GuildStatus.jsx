@@ -46,7 +46,7 @@ export default function GuildStatus({ user_id }) {
           </div>
           <div className="h-3 rounded-full nm-inset-sm overflow-hidden p-0.5">
              <div 
-               className="h-full rounded-full bg-gradient-to-r from-red-500/50 via-yellow-500/50 to-green-500/50 transition-all duration-1000"
+               className="h-full rounded-full bg-linear-to-r from-red-500/50 via-yellow-500/50 to-green-500/50 transition-all duration-1000"
                style={{ width: `${guild?.health_score || 100}%` }}
              />
           </div>
