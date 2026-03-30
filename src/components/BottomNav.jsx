@@ -32,19 +32,31 @@ export default function BottomNav() {
           <span className="text-[10px] font-black uppercase tracking-widest">Vault</span>
         </NavLink>
 
-        <div className="flex flex-col items-center gap-1 text-(--text-secondary) opacity-50">
-           <div className="p-2 rounded-xl">
-             <Users className="w-6 h-6" />
-           </div>
-           <span className="text-[10px] font-black uppercase tracking-widest">Guild</span>
-        </div>
+        <NavLink
+          to="/guild"
+          className={({ isActive }) => `
+            flex flex-col items-center gap-1 transition-all duration-300
+            ${isActive ? 'text-blue-500' : 'text-(--text-secondary) opacity-50'}
+          `}
+        >
+          <div className={`p-2 rounded-xl ${window.location.pathname === '/guild' ? 'nm-inset-sm' : ''}`}>
+            <Users className="w-6 h-6" />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-widest">Guild</span>
+        </NavLink>
 
-        <div className="flex flex-col items-center gap-1 text-(--text-secondary) opacity-50">
-           <div className="p-2 rounded-xl">
-             <Settings className="w-6 h-6" />
-           </div>
-           <span className="text-[10px] font-black uppercase tracking-widest">System</span>
-        </div>
+        <NavLink
+          to="/system"
+          className={({ isActive }) => `
+            flex flex-col items-center gap-1 transition-all duration-300
+            ${isActive ? 'text-blue-500' : 'text-(--text-secondary) opacity-50'}
+          `}
+        >
+          <div className={`p-2 rounded-xl ${window.location.pathname === '/system' ? 'nm-inset-sm' : ''}`}>
+            <Settings className="w-6 h-6" />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-widest">System</span>
+        </NavLink>
       </div>
     </nav>
   );

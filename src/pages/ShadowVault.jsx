@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import CosmeticItemCard from "../components/shadowvault/CosmeticItemCard";
 import ThemeSidebar from "../components/dashboard/ThemeSidebar";
+import TrophySection from "../components/shadowvault/TrophySection";
 
 export default function ShadowVault() {
   const [isThemeOpen, setIsThemeOpen] = useState(false);
@@ -23,14 +24,41 @@ export default function ShadowVault() {
     staleTime: Infinity,
   });
 
-  const { data: wallet, isLoading: walletLoading } = useQuery({
-    queryKey: ['userWallet', user?.id],
+  const { data: progressData, isLoading: progressLoading } = useQuery({
+    queryKey: ['userProgress', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data } = await supabase
         .from('progress')
         .select('*')
         .eq('user_id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: completionsCount = 0 } = useQuery({
+    queryKey: ['totalCompletionsCount', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const { count } = await supabase
+        .from('quest_completions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      return count || 0;
+    },
+    enabled: !!user?.id,
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ['userProfile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
         .single();
       return data;
     },
@@ -66,13 +94,13 @@ export default function ShadowVault() {
 
   const purchaseItemMutation = useMutation({
     mutationFn: async (item) => {
-      if (!user?.id || !wallet) throw new Error("User or wallet not loaded.");
-      if (wallet.sp < item.sp_cost) throw new Error("Insufficient Shadow Points.");
+      if (!user?.id || !progressData) throw new Error("User or progress data not loaded.");
+      if (progressData.sp < item.sp_cost) throw new Error("Insufficient Shadow Points.");
 
       await supabase
         .from('progress')
         .update({
-          sp: wallet.sp - item.sp_cost,
+          sp: progressData.sp - item.sp_cost,
         })
         .eq('user_id', user.id);
 
@@ -85,7 +113,7 @@ export default function ShadowVault() {
         }]);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userWallet'] });
+      queryClient.invalidateQueries({ queryKey: ['userProgress'] });
       queryClient.invalidateQueries({ queryKey: ['userInventory'] });
     },
   });
@@ -94,7 +122,7 @@ export default function ShadowVault() {
     purchaseItemMutation.mutate(item);
   };
 
-  const isLoading = walletLoading || itemsLoading || inventoryLoading;
+  const isLoading = progressLoading || itemsLoading || inventoryLoading;
 
   return (
     <div className="min-h-screen bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-8 transition-colors duration-400">
@@ -129,7 +157,7 @@ export default function ShadowVault() {
                <p className="text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) opacity-40 mb-1">Authenticated Merit</p>
                <div className="flex items-center gap-3">
                  <Coins className="w-6 h-6 text-yellow-500 transition-transform group-hover:scale-110" />
-                 <span className="text-2xl font-black leading-none">{wallet?.sp || 0} <span className="text-[10px] opacity-30 tracking-tighter">Vested SP</span></span>
+                 <span className="text-2xl font-black leading-none">{progressData?.sp || 0} <span className="text-[10px] opacity-30 tracking-tighter">Vested SP</span></span>
                </div>
             </div>
 
@@ -185,7 +213,7 @@ export default function ShadowVault() {
                   >
                     <CosmeticItemCard
                       item={item}
-                      userSpBalance={wallet?.sp || 0}
+                      userSpBalance={progressData?.sp || 0}
                       isOwned={ownedItemIds.has(item.id)}
                       onPurchase={handlePurchase}
                     />
@@ -195,6 +223,12 @@ export default function ShadowVault() {
             </div>
           )}
         </div>
+
+        <TrophySection 
+          profile={profile} 
+          progress={progressData} 
+          completionsCount={completionsCount} 
+        />
 
         <ThemeSidebar isOpen={isThemeOpen} onClose={() => setIsThemeOpen(false)} />
       </div>

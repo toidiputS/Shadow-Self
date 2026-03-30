@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, X, ShieldAlert, Target, Zap, Repeat } from "lucide-react";
+import { Plus, X, ShieldAlert, Target, Zap, Repeat, Clock, HelpCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function CreateQuestForm({ onSubmit, onCancel }) {
@@ -8,6 +8,9 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
   const [xpReward, setXpReward] = useState(25);
   const [spReward, setSpReward] = useState(100);
   const [difficulty, setDifficulty] = useState("small");
+  const [category, setCategory] = useState("recovery");
+  const [estimatedTime, setEstimatedTime] = useState("");
+  const [triggerText, setTriggerText] = useState("");
 
   const MotionDiv = motion.div;
 
@@ -20,6 +23,9 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
         xp_reward: xpReward,
         sp_reward: spReward,
         difficulty_band: difficulty,
+        category: category,
+        estimated_time: estimatedTime,
+        trigger_text: triggerText,
         active: true
       });
       setQuestName("");
@@ -72,10 +78,36 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Deployment Category */}
+            {/* Category */}
             <div>
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
-                Deployment Category
+                Core Domain
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {['recovery', 'wellness', 'social', 'skill'].map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat)}
+                    className={`
+                      px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest
+                      transition-all duration-300
+                      ${category === cat
+                        ? 'nm-inset text-blue-500'
+                        : 'nm-flat-xs text-(--text-secondary) opacity-60 hover:opacity-100'
+                      }
+                    `}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Deployment Type */}
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
+                Execution Model
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <button
@@ -110,13 +142,51 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                 </button>
               </div>
             </div>
+          </div>
 
-            {/* Difficulty Band */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             {/* Estimated Time */}
+             <div>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
+                Temporal Requirement
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={estimatedTime}
+                  onChange={(e) => setEstimatedTime(e.target.value)}
+                  placeholder="e.g. 20 min"
+                  className="w-full px-6 py-4 rounded-2xl nm-inset font-bold text-(--text-primary) focus:outline-none"
+                />
+                <Clock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Trigger */}
             <div>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
+                System Trigger
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={triggerText}
+                  onChange={(e) => setTriggerText(e.target.value)}
+                  placeholder="e.g. After coffee"
+                  className="w-full px-6 py-4 rounded-2xl nm-inset font-bold text-(--text-primary) focus:outline-none"
+                />
+                <HelpCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Difficulty Band */}
+            <div className="md:col-span-1">
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
                 Resistance Tier
               </label>
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 {['small', 'medium', 'large'].map((d) => (
                   <button
                     key={d}
@@ -136,11 +206,9 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                 ))}
               </div>
             </div>
-          </div>
 
-          {/* Yield Estimates */}
-          <div className="grid grid-cols-2 gap-8">
-            <div>
+            {/* Yield Estimates */}
+            <div className="md:col-span-1">
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
                 Merit Yield (XP)
               </label>
@@ -154,7 +222,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                 <ShieldAlert className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 pointer-events-none" />
               </div>
             </div>
-            <div>
+            <div className="md:col-span-1">
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
                 Resource Yield (SP)
               </label>

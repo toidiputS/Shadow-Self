@@ -1,0 +1,201 @@
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/api/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Heart, Zap, Moon, Flame, Check, X } from "lucide-react";
+
+export default function DailyCheckIn({ userId, guildId, onComplete }) {
+  const [step, setStep] = useState(1);
+  const [data, setData] = useState({
+    mood: 3,
+    craving_level: 1,
+    sleep_quality: 3,
+    energy: 3,
+    message: ""
+  });
+
+  const queryClient = useQueryClient();
+
+  const checkInMutation = useMutation({
+    mutationFn: async (checkInData) => {
+      const { data: result, error } = await supabase
+        .from('guild_check_ins')
+        .insert([{
+          user_id: userId,
+          guild_id: guildId,
+          ...checkInData,
+          check_in_type: 'daily'
+        }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dailyCheckIn', userId] });
+      onComplete?.();
+    }
+  });
+
+  const updateField = (field, value) => {
+    setData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const nextStep = () => {
+    if (step < 5) setStep(step + 1);
+    else checkInMutation.mutate(data);
+  };
+
+  const steps = [
+    {
+      id: 1,
+      question: "How is your mood right now?",
+      field: "mood",
+      min: 1,
+      max: 5,
+      icon: <Heart className="w-8 h-8 text-red-500" />,
+      labels: ["Hostile", "Low", "Neutral", "Good", "Euphoric"]
+    },
+    {
+      id: 2,
+      question: "Rate your current craving level",
+      field: "craving_level",
+      min: 1,
+      max: 5,
+      icon: <Flame className="w-8 h-8 text-orange-500" />,
+      labels: ["None", "Faint", "Manageable", "Strong", "Critical"]
+    },
+    {
+      id: 3,
+      question: "How was your sleep last night?",
+      field: "sleep_quality",
+      min: 1,
+      max: 5,
+      icon: <Moon className="w-8 h-8 text-indigo-400" />,
+      labels: ["Restless", "Poor", "Average", "Deep", "Perfect"]
+    },
+    {
+      id: 4,
+      question: "Current energy levels?",
+      field: "energy",
+      min: 1,
+      max: 5,
+      icon: <Zap className="w-8 h-8 text-yellow-500" />,
+      labels: ["Depleted", "Drained", "Functional", "Active", "Peak"]
+    },
+    {
+      id: 5,
+      question: "Any notes for today's reflection?",
+      field: "message",
+      type: "text"
+    }
+  ];
+
+  const currentStep = steps[step - 1];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className="fixed inset-0 z-50 flex items-center justify-center px-6 bg-black/60 backdrop-blur-md"
+    >
+      <div className="w-full max-w-lg nm-flat-lg rounded-4xl p-10 relative overflow-hidden">
+        {/* Progress bar */}
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-black/5">
+          <motion.div 
+            className="h-full bg-blue-500"
+            initial={{ width: "0%" }}
+            animate={{ width: `${(step / steps.length) * 100}%` }}
+          />
+        </div>
+
+        <button 
+          onClick={onComplete}
+          className="absolute top-6 right-6 w-10 h-10 rounded-full nm-button flex items-center justify-center opacity-40 hover:opacity-100"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="py-6"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-3xl nm-inset flex items-center justify-center mb-8">
+                {currentStep.icon || <Sparkles className="w-8 h-8 text-blue-500" />}
+              </div>
+              
+              <h2 className="text-2xl font-black uppercase tracking-[0.2em] mb-2">{currentStep.question}</h2>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 mb-10">Daily Status Synchronization</p>
+
+              {currentStep.type === "text" ? (
+                <textarea
+                  autoFocus
+                  placeholder="Type your one-line journal entry..."
+                  className="w-full nm-inset rounded-2xl p-6 text-sm min-h-[120px] resize-none focus:outline-none"
+                  value={data.message}
+                  onChange={(e) => updateField("message", e.target.value)}
+                />
+              ) : (
+                <div className="flex flex-col w-full gap-8">
+                  <div className="flex justify-between items-center px-4">
+                    {[1, 2, 3, 4, 5].map((val) => (
+                      <button
+                        key={val}
+                        onClick={() => updateField(currentStep.field, val)}
+                        className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
+                          data[currentStep.field] === val 
+                            ? "nm-inset-sm text-blue-500" 
+                            : "nm-button hover:text-blue-400"
+                        }`}
+                      >
+                        <span className="text-lg font-black">{val}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex justify-between px-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-30">{currentStep.labels[0]}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-30">{currentStep.labels[4]}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="mt-12 flex gap-4">
+          {step > 1 && (
+            <button
+              onClick={() => setStep(step - 1)}
+              className="flex-1 py-5 rounded-2xl nm-button font-black text-[10px] uppercase tracking-widest opacity-60 hover:opacity-100"
+            >
+              Previous
+            </button>
+          )}
+          <button
+            onClick={nextStep}
+            disabled={checkInMutation.isLoading}
+            className="flex-[2] py-5 rounded-2xl nm-button font-black text-[10px] uppercase tracking-[0.2rem] text-blue-500 flex items-center justify-center gap-3"
+          >
+            {step === steps.length ? (
+              <>
+                <Check className="w-4 h-4" />
+                Initialize Uplink
+              </>
+            ) : (
+              "Next Core Variable"
+            )}
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+import { Sparkles } from "lucide-react";

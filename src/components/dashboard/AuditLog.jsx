@@ -8,17 +8,35 @@ export default function AuditLog() {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['auditLogs'],
     queryFn: async () => {
-      // In a real app we'd query a 'guild_activity_log' table.
-      // For now, we'll use quest completions as a proxy or mocked logic.
       const { data } = await supabase
-        .from('quest_completions')
+        .from('guild_activity_log')
         .select(`
           *,
-          quests(title)
+          profiles:user_id(display_name)
         `)
-        .order('completed_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(10);
-      return data || [];
+      
+      if (!data || data.length === 0) {
+        // Fallback to quest completions as a secondary registry
+        const { data: completions } = await supabase
+          .from('quest_completions')
+          .select(`
+            *,
+            quests(title),
+            profiles:user_id(display_name)
+          `)
+          .order('completed_at', { ascending: false })
+          .limit(10);
+          
+        return (completions || []).map(c => ({
+          ...c,
+          event_type: 'protocol_complete',
+          message: `PROTOCOL: ${c.quests?.title || "System Sync"} validated.`,
+          created_at: c.completed_at
+        }));
+      }
+      return data;
     },
     refetchInterval: 5000,
   });
@@ -65,12 +83,12 @@ export default function AuditLog() {
                  {getLogIcon(log.type || 'COMPLIANCE')}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-black uppercase tracking-tight truncate opacity-80 decoration-blue-500/20 group-hover:underline">
-                  PROTOCOL: {log.quests?.title || "System Sync"}
+                <p className="text-xs font-black uppercase tracking-[0.05rem] truncate opacity-90 transition-opacity">
+                  {log.message}
                 </p>
                 <div className="flex items-center gap-2 mt-1 opacity-40">
                   <UserCircle className="w-3 h-3" />
-                  <span className="text-[10px] font-black tracking-widest uppercase">Member ID: {log.user_id?.substring(0, 8)}</span>
+                  <span className="text-[10px] font-black tracking-widest uppercase">{log.profiles?.display_name || `Member: ${log.user_id?.substring(0, 8)}`}</span>
                 </div>
               </div>
               <div className="text-right">
