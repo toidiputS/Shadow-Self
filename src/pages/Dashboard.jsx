@@ -1,6 +1,5 @@
-
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Sparkles, Store } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
@@ -23,48 +22,77 @@ export default function Dashboard() {
   // Fetch current user
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
     staleTime: Infinity,
   });
 
-  // Fetch or create user wallet
+  // Fetch or create user progress (wallet)
   const { data: wallet } = useQuery({
-    queryKey: ['userWallet', user?.email],
+    queryKey: ['userWallet', user?.id],
     queryFn: async () => {
-      if (!user?.email) return null;
-      const wallets = await base44.entities.UserWallet.filter({ user_id: user.email });
-      if (wallets.length > 0) {
-        return wallets[0];
-      }
-      // Create wallet if doesn't exist
-      return await base44.entities.UserWallet.create({
-        user_id: user.email,
-        sp_balance: 0,
-        total_xp: 0,
-        current_level: 1,
-        total_perfect_days: 0
-      });
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (data) return data;
+      
+      // Create progress if doesn't exist (triggers usually handle this, but for safety)
+      const { data: newData } = await supabase
+        .from('progress')
+        .insert([{ user_id: user.id }])
+        .select()
+        .single();
+      return newData;
     },
-    enabled: !!user?.email,
+    enabled: !!user?.id,
   });
 
   // Fetch all active quests
   const { data: quests = [], isLoading: questsLoading } = useQuery({
     queryKey: ['quests'],
-    queryFn: () => base44.entities.Quest.filter({ active: true }, '-created_date'),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('quests')
+        .select('*')
+        .eq('active', true)
+        .order('created_at', { ascending: false });
+      return data || [];
+    },
     initialData: [],
   });
 
   // Fetch all completion logs
   const { data: completionLogs = [] } = useQuery({
     queryKey: ['completionLogs'],
-    queryFn: () => base44.entities.CompletionLog.list('-completion_date'),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('quest_completions')
+        .select('*')
+        .order('completed_at', { ascending: false });
+      return data || [];
+    },
     initialData: [],
   });
 
   // Create quest mutation
   const createQuestMutation = useMutation({
-    mutationFn: (questData) => base44.entities.Quest.create(questData),
+    mutationFn: async (questData) => {
+      const { data } = await supabase
+        .from('quests')
+        .insert([{ 
+          ...questData,
+          creator_id: user.id
+        }])
+        .select()
+        .single();
+      return data;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quests'] });
       setShowCreateForm(false);
@@ -76,29 +104,33 @@ export default function Dashboard() {
   const completeQuestMutation = useMutation({
     mutationFn: async (quest) => {
       // Log completion
-      await base44.entities.CompletionLog.create({
-        quest_id: quest.id,
-        quest_name: quest.name,
-        quest_type: quest.type,
-        completion_date: new Date().toISOString(),
-      });
+      await supabase
+        .from('quest_completions')
+        .insert([{
+          quest_id: quest.id,
+          user_id: user.id
+        }]);
 
-      // Update wallet
+      // Update wallet/progress
       if (wallet) {
-        const newXp = (wallet.total_xp || 0) + (quest.xp_reward || 0);
-        const newSp = (wallet.sp_balance || 0) + (quest.sp_reward || 0);
-        const newLevel = getCurrentRank(newXp).level;
-
-        await base44.entities.UserWallet.update(wallet.id, {
-          total_xp: newXp,
-          sp_balance: newSp,
-          current_level: newLevel,
-        });
+        const newXp = (wallet.xp || 0) + (quest.xp_reward || 0);
+        const newSp = (wallet.sp || 0) + (quest.sp_reward || 0);
+        
+        await supabase
+          .from('progress')
+          .update({
+            xp: newXp,
+            sp: newSp,
+          })
+          .eq('user_id', user.id);
       }
 
       // If single action, deactivate the quest
       if (quest.type === "SINGLE_ACTION") {
-        await base44.entities.Quest.update(quest.id, { active: false });
+        await supabase
+          .from('quests')
+          .update({ active: false })
+          .eq('id', quest.id);
       }
 
       return quest;
@@ -113,11 +145,11 @@ export default function Dashboard() {
     },
   });
 
-  // Calculate streak for a quest
   const calculateStreak = (questId) => {
+    // Look for completions in quest_completions table
     const questLogs = completionLogs
       .filter(log => log.quest_id === questId)
-      .sort((a, b) => new Date(b.completion_date) - new Date(a.completion_date));
+      .sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
 
     if (questLogs.length === 0) return 0;
 
@@ -125,7 +157,7 @@ export default function Dashboard() {
     let checkDate = startOfDay(new Date());
 
     for (const log of questLogs) {
-      const logDate = startOfDay(new Date(log.completion_date));
+      const logDate = startOfDay(new Date(log.completed_at));
       
       if (logDate.getTime() === checkDate.getTime()) {
         streak++;
@@ -140,7 +172,7 @@ export default function Dashboard() {
 
   // Check for perfect day
   const checkPerfectDay = async () => {
-    const dailyHabits = quests.filter(q => q.type === "DAILY_HABIT");
+    const dailyHabits = quests.filter(q => q.type === "DAILY_HABIT" || q.type === "daily");
     if (dailyHabits.length === 0) return;
 
     const allCompleted = dailyHabits.every(quest => completedToday.has(quest.id));
@@ -148,10 +180,13 @@ export default function Dashboard() {
     if (allCompleted && wallet) {
       // Award perfect day bonus
       const perfectDayBonus = 100;
-      await base44.entities.UserWallet.update(wallet.id, {
-        sp_balance: (wallet.sp_balance || 0) + perfectDayBonus,
-        total_perfect_days: (wallet.total_perfect_days || 0) + 1,
-      });
+      await supabase
+        .from('progress')
+        .update({
+          sp: (wallet.sp || 0) + perfectDayBonus,
+          perfect_days: (wallet.perfect_days || 0) + 1,
+        })
+        .eq('user_id', user.id);
       
       queryClient.invalidateQueries({ queryKey: ['userWallet'] });
       setShowPerfectDayBanner(true);
@@ -162,18 +197,18 @@ export default function Dashboard() {
   // Calculate metrics
   const todayStart = startOfDay(new Date()).toISOString();
   const todayCount = completionLogs.filter(log => 
-    new Date(log.completion_date) >= new Date(todayStart)
+    new Date(log.completed_at) >= new Date(todayStart)
   ).length;
   const totalCount = completionLogs.length;
 
-  const currentRank = getCurrentRank(wallet?.total_xp || 0);
+  const currentRank = getCurrentRank(wallet?.xp || 0);
 
   // Calculate which daily habits were completed today
   const completedToday = React.useMemo(() => {
     return new Set(
       completionLogs
         .filter(log => {
-          const logDate = startOfDay(new Date(log.completion_date));
+          const logDate = startOfDay(new Date(log.completed_at));
           const today = startOfDay(new Date());
           return logDate.getTime() === today.getTime();
         })
@@ -245,7 +280,7 @@ export default function Dashboard() {
         </div>
 
         {/* Level Progress */}
-        <LevelProgress totalXp={wallet?.total_xp || 0} />
+        <LevelProgress totalXp={wallet?.xp || 0} />
 
         {/* Metrics */}
         <MetricsDisplay 
@@ -283,8 +318,8 @@ export default function Dashboard() {
             <div className="grid gap-6 md:grid-cols-2">
               <AnimatePresence>
                 {quests.map((quest) => {
-                  const isCompleted = quest.type === "DAILY_HABIT" && completedToday.has(quest.id);
-                  const streak = quest.type === "DAILY_HABIT" ? calculateStreak(quest.id) : 0;
+                  const isCompleted = (quest.type === "DAILY_HABIT" || quest.type === "daily") && completedToday.has(quest.id);
+                  const streak = (quest.type === "DAILY_HABIT" || quest.type === "daily") ? calculateStreak(quest.id) : 0;
                   return (
                     <QuestCard
                       key={quest.id}

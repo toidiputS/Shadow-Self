@@ -4,6 +4,7 @@ import { Sparkles } from "lucide-react";
 import { getCurrentRank, getNextRank } from "@/utils";
 
 export default function LevelProgress({ totalXp }) {
+  const MotionDiv = motion.div;
   const currentRank = getCurrentRank(totalXp);
   const nextRank = getNextRank(currentRank.level);
   
@@ -49,7 +50,7 @@ export default function LevelProgress({ totalXp }) {
             h-4 rounded-full overflow-hidden
             bg-[#e0e0e0] shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff]
           ">
-            <motion.div
+            <MotionDiv
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent}%` }}
               transition={{ duration: 1, ease: "easeOut" }}

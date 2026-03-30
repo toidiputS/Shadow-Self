@@ -1,7 +1,7 @@
 import React from "react";
 import { TrendingUp, Award, Coins, Flame } from "lucide-react";
 
-export default function MetricsDisplay({ todayCount, totalCount, wallet, currentRank }) {
+export default function MetricsDisplay({ todayCount, wallet, currentRank }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div className="
@@ -36,7 +36,7 @@ export default function MetricsDisplay({ todayCount, totalCount, wallet, current
           </div>
           <div>
             <p className="text-xs text-gray-500 font-medium">Shadow Points</p>
-            <h3 className="text-3xl font-bold text-gray-800">{wallet?.sp_balance || 0}</h3>
+            <h3 className="text-3xl font-bold text-gray-800">{wallet?.sp || 0}</h3>
           </div>
         </div>
         <p className="text-xs text-gray-500">Available to spend</p>
@@ -74,7 +74,7 @@ export default function MetricsDisplay({ todayCount, totalCount, wallet, current
           </div>
           <div>
             <p className="text-xs text-gray-500 font-medium">Perfect Days</p>
-            <h3 className="text-3xl font-bold text-gray-800">{wallet?.total_perfect_days || 0}</h3>
+            <h3 className="text-3xl font-bold text-gray-800">{wallet?.perfect_days || 0}</h3>
           </div>
         </div>
         <p className="text-xs text-gray-500">All habits completed</p>

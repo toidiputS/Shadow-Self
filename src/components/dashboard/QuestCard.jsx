@@ -3,10 +3,12 @@ import { CheckCircle, Repeat, Zap, Flame, Coins, Award } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function QuestCard({ quest, onComplete, isCompleted, streak = 0 }) {
+  const MotionDiv = motion.div;
+  const MotionAnimatePresence = AnimatePresence;
   const [isPressed, setIsPressed] = useState(false);
   const [showRewards, setShowRewards] = useState(false);
   
-  const isDailyHabit = quest.type === "DAILY_HABIT";
+  const isDailyHabit = quest.type === "daily" || quest.type === "DAILY_HABIT";
 
   const handleComplete = () => {
     setShowRewards(true);
@@ -15,7 +17,7 @@ export default function QuestCard({ quest, onComplete, isCompleted, streak = 0 }
   };
 
   return (
-    <motion.div
+    <MotionDiv
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9 }}
@@ -51,7 +53,7 @@ export default function QuestCard({ quest, onComplete, isCompleted, streak = 0 }
             </div>
             <div>
               <h3 className={`text-lg font-semibold ${isCompleted ? 'line-through text-gray-500' : 'text-gray-800'}`}>
-                {quest.name}
+                {quest.title || quest.name}
               </h3>
               <p className="text-xs text-gray-500 mt-1">
                 {isDailyHabit ? 'Daily Habit' : 'Single Action'}
@@ -120,9 +122,9 @@ export default function QuestCard({ quest, onComplete, isCompleted, streak = 0 }
       </div>
 
       {/* Floating Rewards Animation */}
-      <AnimatePresence>
+      <MotionAnimatePresence>
         {showRewards && (
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 1, y: 0 }}
             animate={{ opacity: 0, y: -50 }}
             exit={{ opacity: 0 }}
@@ -143,9 +145,9 @@ export default function QuestCard({ quest, onComplete, isCompleted, streak = 0 }
             ">
               +{quest.sp_reward} SP
             </div>
-          </motion.div>
+          </MotionDiv>
         )}
-      </AnimatePresence>
-    </motion.div>
+      </MotionAnimatePresence>
+    </MotionDiv>
   );
 }

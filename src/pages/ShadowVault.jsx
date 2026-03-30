@@ -1,5 +1,5 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Coins, Store, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -13,33 +13,49 @@ export default function ShadowVault() {
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
     staleTime: Infinity,
   });
 
   const { data: wallet, isLoading: walletLoading } = useQuery({
-    queryKey: ['userWallet', user?.email],
+    queryKey: ['userWallet', user?.id],
     queryFn: async () => {
-      if (!user?.email) return null;
-      const wallets = await base44.entities.UserWallet.filter({ user_id: user.email });
-      return wallets.length > 0 ? wallets[0] : null;
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      return data;
     },
-    enabled: !!user?.email,
+    enabled: !!user?.id,
   });
 
   const { data: items = [], isLoading: itemsLoading } = useQuery({
     queryKey: ['cosmeticItems'],
-    queryFn: () => base44.entities.CosmeticItem.list(),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('cosmetic_items')
+        .select('*');
+      return data || [];
+    },
     initialData: [],
   });
 
   const { data: inventory = [], isLoading: inventoryLoading } = useQuery({
-    queryKey: ['userInventory', user?.email],
+    queryKey: ['userInventory', user?.id],
     queryFn: async () => {
-      if (!user?.email) return [];
-      return base44.entities.UserCosmeticInventory.filter({ user_id: user.email });
+      if (!user?.id) return [];
+      const { data } = await supabase
+        .from('user_cosmetic_inventory')
+        .select('*')
+        .eq('user_id', user.id);
+      return data || [];
     },
-    enabled: !!user?.email,
+    enabled: !!user?.id,
     initialData: [],
   });
 
@@ -47,19 +63,24 @@ export default function ShadowVault() {
 
   const purchaseItemMutation = useMutation({
     mutationFn: async (item) => {
-      if (!user?.email || !wallet) throw new Error("User or wallet not loaded.");
-      if (wallet.sp_balance < item.sp_cost) throw new Error("Insufficient Shadow Points.");
+      if (!user?.id || !wallet) throw new Error("User or wallet not loaded.");
+      if (wallet.sp < item.sp_cost) throw new Error("Insufficient Shadow Points.");
 
-      await base44.entities.UserWallet.update(wallet.id, {
-        sp_balance: wallet.sp_balance - item.sp_cost,
-      });
+      // Transaction-like update (ideally would be an RPC or transaction in production)
+      await supabase
+        .from('progress')
+        .update({
+          sp: wallet.sp - item.sp_cost,
+        })
+        .eq('user_id', user.id);
 
-      await base44.entities.UserCosmeticInventory.create({
-        user_id: user.email,
-        item_id: item.id,
-        item_name: item.name,
-        purchase_date: new Date().toISOString(),
-      });
+      await supabase
+        .from('user_cosmetic_inventory')
+        .insert([{
+          user_id: user.id,
+          item_id: item.id,
+          item_name: item.name
+        }]);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userWallet'] });
@@ -97,7 +118,7 @@ export default function ShadowVault() {
               text-gray-800 font-bold
             ">
               <Coins className="w-5 h-5 text-yellow-600" />
-              <span className="text-base md:text-lg">{wallet?.sp_balance || 0} SP</span>
+              <span className="text-base md:text-lg">{wallet?.sp || 0} SP</span>
             </div>
             <Link
               to={createPageUrl('Dashboard')}
@@ -134,7 +155,7 @@ export default function ShadowVault() {
                 <CosmeticItemCard
                   key={item.id}
                   item={item}
-                  userSpBalance={wallet?.sp_balance || 0}
+                  userSpBalance={wallet?.sp || 0}
                   isOwned={ownedItemIds.has(item.id)}
                   onPurchase={handlePurchase}
                 />

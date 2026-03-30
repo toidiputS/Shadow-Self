@@ -3,8 +3,9 @@ import { Plus, X } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function CreateQuestForm({ onSubmit, onCancel }) {
+  const MotionDiv = motion.div;
   const [questName, setQuestName] = useState("");
-  const [questType, setQuestType] = useState("DAILY_HABIT");
+  const [questType, setQuestType] = useState("daily");
   const [xpReward, setXpReward] = useState(10);
   const [spReward, setSpReward] = useState(50);
 
@@ -12,21 +13,21 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
     e.preventDefault();
     if (questName.trim()) {
       onSubmit({
-        name: questName.trim(),
+        title: questName.trim(),
         type: questType,
         xp_reward: xpReward,
         sp_reward: spReward,
         active: true
       });
       setQuestName("");
-      setQuestType("DAILY_HABIT");
+      setQuestType("daily");
       setXpReward(10);
       setSpReward(50);
     }
   };
 
   return (
-    <motion.div
+    <MotionDiv
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -66,11 +67,11 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
               <div className="space-y-3">
                 <button
                   type="button"
-                  onClick={() => setQuestType("DAILY_HABIT")}
+                  onClick={() => setQuestType("daily")}
                   className={`
                     w-full px-4 py-3 rounded-2xl text-sm font-medium
                     transition-all duration-200
-                    ${questType === "DAILY_HABIT"
+                    ${questType === "daily"
                       ? 'bg-[#e0e0e0] shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] text-gray-800'
                       : 'bg-[#e0e0e0] shadow-[4px_4px_8px_#bebebe,-4px_-4px_8px_#ffffff] text-gray-600'
                     }
@@ -80,11 +81,11 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setQuestType("SINGLE_ACTION")}
+                  onClick={() => setQuestType("single")}
                   className={`
                     w-full px-4 py-3 rounded-2xl text-sm font-medium
                     transition-all duration-200
-                    ${questType === "SINGLE_ACTION"
+                    ${questType === "single"
                       ? 'bg-[#e0e0e0] shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] text-gray-800'
                       : 'bg-[#e0e0e0] shadow-[4px_4px_8px_#bebebe,-4px_-4px_8px_#ffffff] text-gray-600'
                     }
@@ -160,6 +161,6 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
           </div>
         </form>
       </div>
-    </motion.div>
+    </MotionDiv>
   );
 }
