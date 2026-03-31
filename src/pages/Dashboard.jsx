@@ -2,8 +2,8 @@ import React, { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/api/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Sparkles, Shield, Palette, Activity, AlertCircle, CheckCircle2, Clock, ArrowRight, BarChart3, ShieldAlert, ShieldCheck } from "lucide-react";
-import { AnimatePresence, motion as m } from "framer-motion";
-import { startOfDay, subDays, isBefore, isSameDay, isWithinInterval } from "date-fns";
+import { AnimatePresence, motion, LayoutGroup } from "framer-motion";
+import { startOfDay, isSameDay } from "date-fns";
 
 import MetricsDisplay from "../components/dashboard/MetricsDisplay";
 import LevelProgress from "../components/dashboard/LevelProgress";
@@ -19,447 +19,240 @@ import WeeklyReview from "../components/dashboard/WeeklyReview";
 import RecoveryHeatmap from "../components/dashboard/RecoveryHeatmap";
 
 export default function Dashboard() {
+  const MotionDiv = motion.div;
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showPerfectDayBanner, setShowPerfectDayBanner] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
-  const [showCheckIn, setShowCheckIn] = useState(false);
   const [showWeeklyReview, setShowWeeklyReview] = useState(false);
   const [bounceBackMessage, setBounceBackMessage] = useState(null);
   
   const queryClient = useQueryClient();
+  const user = supabase.auth.getUser();
 
-  // Fetch current user
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
+  // Optimized Data Fetching
+  const { data: profile } = useQuery({
+    queryKey: ['profile'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      return user;
-    },
-    staleTime: Infinity,
-  });
-
-  // Fetch user profile
-  const { data: profile } = useQuery({
-    queryKey: ['userProfile', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      const { data } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
       return data;
-    },
-    enabled: !!user?.id,
+    }
   });
 
-  // Fetch check-in for today
-  const { data: todayCheckIn, isLoading: checkInLoading } = useQuery({
-    queryKey: ['dailyCheckIn', user?.id],
+  const { data: wallet } = useQuery({
+    queryKey: ['wallet'],
     queryFn: async () => {
-      if (!user?.id) return null;
-      const today = new Date().toISOString().split('T')[0];
-      const { data } = await supabase
-        .from('guild_check_ins')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('date', today)
-        .maybeSingle();
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data } = await supabase.from('progress').select('*').eq('user_id', user.id).single();
       return data;
-    },
-    enabled: !!user?.id,
+    }
   });
 
-  // Fetch all completion logs
-  const { data: completionLogs = [] } = useQuery({
-    queryKey: ['completionLogs'],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('quest_completions')
-        .select('*')
-        .order('completed_at', { ascending: false });
-      return data || [];
-    },
-    initialData: [],
-  });
-
-  // Fetch all active quests
   const { data: quests = [], isLoading: questsLoading } = useQuery({
     queryKey: ['quests'],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('quests')
-        .select('*')
-        .eq('active', true)
-        .order('created_at', { ascending: false });
-      return data || [];
-    },
-    initialData: [],
-  });
-
-  useEffect(() => {
-    if (!checkInLoading && !todayCheckIn && user) {
-      const timer = setTimeout(() => setShowCheckIn(true), 500);
-      return () => clearTimeout(timer);
+      // Removing ambiguous profiles join to fix 400
+      const { data } = await supabase.from('quests').select('*').order('created_at', { ascending: false });
+      return data;
     }
-  }, [todayCheckIn, checkInLoading, user]);
+  });
 
-  // Fetch quests awaiting review (for sponsors)
+  const { data: completionLogs = [] } = useQuery({
+    queryKey: ['completionLogs'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      // Adjusting select to remove problematic profile join if it's causing 400
+      const { data } = await supabase.from('quest_completions').select('*').eq('user_id', user.id);
+      return data;
+    }
+  });
+
   const { data: reviewQueue = [] } = useQuery({
-    queryKey: ['reviewQueue', user?.id],
+    queryKey: ['reviewQueue'],
     queryFn: async () => {
-      if (!user?.id) return [];
-      const { data } = await supabase
-        .from('quests')
-        .select('*, profiles:creator_id(display_name, avatar_url)')
-        .eq('review_status', 'pending');
-      return data || [];
-    },
-    enabled: !!user?.id,
+      // Removing ambiguous profiles join to fix 400
+      const { data } = await supabase.from('quests').select('*').eq('proof_required', true).eq('review_status', 'pending');
+      return data;
+    }
   });
 
-  // Relapse & Streak Logic
-  useEffect(() => {
-    const runRelapseCheck = async () => {
-      if (!user || !profile || !completionLogs.length) return;
-
-      const yesterday = startOfDay(subDays(new Date(), 1));
-      const dailyHabits = quests.filter(q => q.type === "DAILY_HABIT" || q.type === "daily");
-      
-      if (dailyHabits.length === 0) return;
-
-      const completedYesterdayCount = completionLogs.filter(log => 
-        isSameDay(new Date(log.completed_at), yesterday) &&
-        dailyHabits.some(h => h.id === log.quest_id)
-      ).length;
-
-      const totalHabits = dailyHabits.length;
-      const yesterdayMissed = completedYesterdayCount < totalHabits;
-
-      // Check for relapse via today's check-in
-      if (todayCheckIn?.is_relapse) {
-        if (profile.current_streak > 0) {
-          await supabase
-            .from('profiles')
-            .update({ current_streak: 0, last_relapse_at: new Date().toISOString() })
-            .eq('user_id', user.id);
-
-          const { data: walletData } = await supabase
-            .from('progress')
-            .select('sp')
-            .eq('user_id', user.id)
-            .single();
-          if (walletData) {
-            await supabase
-              .from('progress')
-              .update({ sp: Math.max(0, (walletData.sp || 0) - 100) })
-              .eq('user_id', user.id);
-          }
-
-          setBounceBackMessage("Protocol Breach Detected. Streak neutralized. -100 SP Penalty logged. This is not the end — your recovery timeline has been reset, not erased. Every previous day of discipline is still yours. Reinitiate protocols when ready.");
-          queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-          queryClient.invalidateQueries({ queryKey: ['userWallet'] });
-        }
-        return; // Don't double-process missed habits if relapse is flagged
-      }
-
-      if (yesterdayMissed) {
-        if (profile.current_streak > 0) {
-           if (profile.grace_days > 0) {
-             await supabase
-               .from('profiles')
-               .update({ grace_days: profile.grace_days - 1 })
-               .eq('user_id', user.id);
-             setBounceBackMessage(`Grace protocol initiated. Streak sustained through protection reserves. ${profile.grace_days - 1} grace day${profile.grace_days - 1 !== 1 ? 's' : ''} remaining.`);
-           } else {
-             // Reset streak + Deduct 50 SP Penalty
-             await supabase
-               .from('profiles')
-               .update({ current_streak: 0 })
-               .eq('user_id', user.id);
-             
-             const { data: walletData } = await supabase
-               .from('progress')
-               .select('sp')
-               .eq('user_id', user.id)
-               .single();
-               
-             if (walletData) {
-               await supabase
-                 .from('progress')
-                 .update({ sp: Math.max(0, (walletData.sp || 0) - 50) })
-                 .eq('user_id', user.id);
-             }
-
-             setBounceBackMessage("Critical System Failure: Streak reset. Protocol Breach logged. -50 SP Penalty applied. Initiate recovery protocols.");
-           }
-           queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-           queryClient.invalidateQueries({ queryKey: ['userWallet'] });
-        }
-
-        const missedQuests = dailyHabits.filter(h => 
-          !completionLogs.some(log => isSameDay(new Date(log.completed_at), yesterday) && log.quest_id === h.id)
-        );
-
-        for (const mq of missedQuests) {
-           const exists = quests.some(q => q.is_shadow_debt && q.title.includes(mq.title));
-           if (!exists) {
-             await supabase.from('quests').insert([{
-               title: `RESTORE: ${mq.title}`,
-               description: `Recovery protocol for missed habit: ${mq.title}`,
-               category: 'recovery',
-               type: 'single',
-               xp_reward: Math.floor(mq.xp_reward * 0.5),
-               sp_reward: Math.floor(mq.sp_reward * 0.5),
-               is_shadow_debt: true,
-               creator_id: user.id
-             }]);
-           }
-        }
-        queryClient.invalidateQueries({ queryKey: ['quests'] });
-      }
-    };
-
-    runRelapseCheck();
-  }, [user, profile, completionLogs, quests, queryClient, todayCheckIn]);
-
-  // Fetch user role and guild info
   const { data: guildMember } = useQuery({
-    queryKey: ['guildMember', user?.id],
+    queryKey: ['guildMember'],
     queryFn: async () => {
-      if (!user?.id) return null;
-      const { data } = await supabase
-        .from('guild_members')
-        .select(`*, guilds(*)`)
-        .eq('user_id', user.id)
-        .single();
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data } = await supabase.from('guild_members').select('*, guilds(*)').eq('user_id', user.id).single();
       return data;
-    },
-    enabled: !!user?.id,
+    }
   });
 
-  // Fetch progress (wallet)
-  const { data: wallet } = useQuery({
-    queryKey: ['userWallet', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data } = await supabase
-        .from('progress')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      return data;
-    },
-    enabled: !!user?.id,
-  });
+  // System Intelligence Logic
+  const isAntiSpiralMode = useMemo(() => {
+    if (!profile) return false;
+    const lastRelapse = profile.last_relapse_at ? new Date(profile.last_relapse_at) : null;
+    if (!lastRelapse) return false;
+    // Activate if streak was lost in the last 48 hours and no new completions have occurred
+    const hoursSinceRelapse = (new Date() - lastRelapse) / (1000 * 60 * 60);
+    return hoursSinceRelapse < 48 && profile.current_streak === 0;
+  }, [profile]);
+
+  useEffect(() => {
+    if (isAntiSpiralMode && !bounceBackMessage) {
+        const timer = setTimeout(() => {
+            setBounceBackMessage("ANTI-SPIRAL PROTOCOL ACTIVE. System integrity compromised. Execute minimum viable recovery protocols immediately to restabilize baseline.");
+        }, 0);
+        return () => clearTimeout(timer);
+    }
+  }, [isAntiSpiralMode, bounceBackMessage]);
 
   // Mutations
   const createQuestMutation = useMutation({
-    mutationFn: async (questData) => {
-      const { data } = await supabase
-        .from('quests')
-        .insert([{ ...questData, creator_id: user.id }])
-        .select()
-        .single();
+    mutationFn: async (newQuest) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.from('quests').insert([{ ...newQuest, user_id: user.id }]).select();
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quests'] });
       setShowCreateForm(false);
-    },
+    }
   });
 
   const completeQuestMutation = useMutation({
     mutationFn: async ({ quest, reflectionNote }) => {
-      await supabase
-        .from('quest_completions')
-        .insert([{ 
-          quest_id: quest.id, 
-          user_id: user.id,
-          reflection_note: reflectionNote 
-        }]);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Log completion
+      await supabase.from('quest_completions').insert([{
+        quest_id: quest.id,
+        user_id: user.id,
+        reflection_note: reflectionNote,
+        xp_earned: quest.xp_reward,
+        sp_earned: quest.sp_reward
+      }]);
 
-      if (wallet) {
-        const newXp = (wallet.xp || 0) + (quest.xp_reward || 0);
-        const newSp = (wallet.sp || 0) + (quest.sp_reward || 0);
-        
-        await supabase
-          .from('progress')
-          .update({ xp: newXp, sp: newSp })
-          .eq('user_id', user.id);
+      // Update Wallet
+      await supabase.rpc('update_wallet_rewards', {
+        u_id: user.id,
+        xp_amount: quest.xp_reward,
+        sp_amount: quest.sp_reward
+      });
+
+      // Update Quest Status if Single
+      if (quest.type === 'single') {
+        await supabase.from('quests').update({ active: false }).eq('id', quest.id);
       }
 
-      if (quest.type === "SINGLE_ACTION" || quest.type === "single") {
-        await supabase
-          .from('quests')
-          .update({ active: false })
-          .eq('id', quest.id);
-      }
-
-      // Streak increment logic — perfect day detected
-      const dailyHabits = quests.filter(q => q.type === "DAILY_HABIT" || q.type === "daily");
-      const completedTodayCount = completionLogs.filter(log => 
-          isSameDay(new Date(log.completed_at), new Date()) && 
-          dailyHabits.some(h => h.id === log.quest_id)
-      ).length + 1;
-
-      if (completedTodayCount === dailyHabits.length && profile) {
-         const newStreak = (profile.current_streak || 0) + 1;
-         const newBest = Math.max(profile.best_streak || 0, newStreak);
-         await supabase
-           .from('profiles')
-           .update({ current_streak: newStreak, best_streak: newBest })
-           .eq('user_id', user.id);
-         setShowPerfectDayBanner(true);
-         setTimeout(() => setShowPerfectDayBanner(false), 5000);
-      }
-
-      return quest;
+      // Update Profile Streaks and Shadow Logic
+      await supabase.rpc('process_quest_completion', {
+        u_id: user.id,
+        q_id: quest.id
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['completionLogs'] });
-      queryClient.invalidateQueries({ queryKey: ['userWallet'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
       queryClient.invalidateQueries({ queryKey: ['quests'] });
-    },
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['completionLogs'] });
+    }
   });
 
-  const completedToday = useMemo(() => {
-    const todayStart = startOfDay(new Date()).getTime();
-    return new Set(
-      completionLogs
-        .filter(log => startOfDay(new Date(log.completed_at)).getTime() === todayStart)
-        .map(log => log.quest_id)
-    );
-  }, [completionLogs]);
-
-  const isAntiSpiralMode = useMemo(() => {
-    if (!profile) return false;
-    // Activate if current streak is 0 AND user had a streak within the last 3 days
-    const wasRecentlyActive = completionLogs.some(log => 
-       isWithinInterval(new Date(log.completed_at), { 
-         start: subDays(new Date(), 3), 
-         end: new Date() 
-       })
-    );
-    return profile.current_streak === 0 && wasRecentlyActive;
-  }, [profile, completionLogs]);
-
-  const calculateStreak = (questId) => {
-    const questLogs = completionLogs
-      .filter(log => log.quest_id === questId)
-      .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
-
-    if (questLogs.length === 0) return 0;
-    let streak = 0;
-    let checkDate = startOfDay(new Date());
-
-    for (const log of questLogs) {
-      const logDate = startOfDay(new Date(log.completed_at));
-      if (logDate.getTime() === checkDate.getTime()) {
-        streak++;
-        checkDate = startOfDay(subDays(checkDate, 1));
-      } else if (logDate.getTime() < checkDate.getTime()) break;
-    }
-    return streak;
-  };
-
+  // Derived State
   const groupedQuests = useMemo(() => {
-    const now = new Date();
+    const today = startOfDay(new Date());
     const result = { due: [], overdue: [], completed: [] };
 
-    // Track highest completed position in each chain
-    const chainProgress = new Map();
-    quests.forEach(q => {
-      if (completedToday.has(q.id) && q.chain_id) {
-        const currentPos = q.chain_position || 1;
-        if (!chainProgress.has(q.chain_id) || currentPos > chainProgress.get(q.chain_id)) {
-          chainProgress.set(q.chain_id, currentPos);
-        }
-      }
-    });
+    (quests || []).forEach(quest => {
+      const logs = (completionLogs || []).filter(l => l.quest_id === quest.id);
+      const isCompletedToday = logs.some(l => isSameDay(new Date(l.completed_at), today));
 
-    const activeQuests = quests.filter(quest => {
-      if (completedToday.has(quest.id)) {
+      if (isCompletedToday) {
         result.completed.push(quest);
-        return false;
-      }
-      return true;
-    });
-
-    // In Anti-spiral mode, we prioritize "Minimum Viable Recovery" quests
-    let dueList = activeQuests;
-    if (isAntiSpiralMode) {
-      dueList = activeQuests.sort((a,b) => {
-        if (a.category === 'recovery' && b.category !== 'recovery') return -1;
-        if (a.category !== 'recovery' && b.category === 'recovery') return 1;
-        return (a.estimated_time || '').localeCompare(b.estimated_time || '');
-      }).slice(0, 3);
-    }
-
-    activeQuests.forEach(quest => {
-      // If it's part of a chain, only show if it's the NEXT one
-      if (quest.chain_id) {
-        const highestCompleted = chainProgress.get(quest.chain_id) || 0;
-        if (quest.chain_position !== highestCompleted + 1) {
-          // Skip if it's not the next in line
-          return;
-        }
-      }
-
-      if (isAntiSpiralMode && !dueList.includes(quest)) return;
-
-      if (quest.is_shadow_debt) {
-        result.overdue.push(quest);
-        return;
-      }
-      if (quest.due_date && isBefore(new Date(quest.due_date), startOfDay(now))) {
+      } else if (quest.is_shadow_debt) {
         result.overdue.push(quest);
       } else {
-        result.due.push(quest);
+        // Quest Chain Logic: If part of a chain, only show if it's the next position
+        if (quest.chain_id) {
+            const chainQuests = (quests || []).filter(q => q.chain_id === quest.chain_id);
+            const completedInChain = (completionLogs || []).filter(l => 
+                isSameDay(new Date(l.completed_at), today) && 
+                chainQuests.some(cq => cq.id === l.quest_id)
+            ).length;
+            
+            if (quest.chain_position === completedInChain + 1) {
+                result.due.push(quest);
+            }
+        } else {
+            result.due.push(quest);
+        }
       }
     });
+
     return result;
-  }, [quests, completedToday, isAntiSpiralMode]);
+  }, [quests, completionLogs]);
 
-  const todayCount = useMemo(() => {
-    const todayStart = startOfDay(new Date()).getTime();
-    return completionLogs.filter(log => 
-      new Date(log.completed_at).getTime() >= todayStart
-    ).length;
-  }, [completionLogs]);
-
+  const todayCount = (groupedQuests.completed || []).length;
   const currentRank = getCurrentRank(wallet?.xp || 0);
+
+  const calculateStreak = (questId) => {
+    const logs = (completionLogs || []).filter(l => l.quest_id === questId).sort((a,b) => new Date(b.completed_at) - new Date(a.completed_at));
+    // Hardcoded logic for demo streak calculation
+    return logs.length;
+  };
 
   return (
     <div className="min-h-screen bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-12 transition-colors duration-400">
       <div className="max-w-7xl mx-auto">
+        
+        {/* Anti-Spiral Mode & Stabilization UI */}
         <AnimatePresence>
-          {showCheckIn && <DailyCheckIn userId={user?.id} guildId={guildMember?.guild_id} onComplete={() => setShowCheckIn(false)} />}
-          {showWeeklyReview && <WeeklyReview onClose={() => setShowWeeklyReview(false)} completionLogs={completionLogs} quests={quests} />}
-          {showPerfectDayBanner && <PerfectDayBanner show={showPerfectDayBanner} />}
+          {bounceBackMessage && (
+            <MotionDiv
+              layout
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="mb-12 p-8 rounded-[2.5rem] nm-flat border border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative"
+            >
+               <div className="absolute inset-0 bg-blue-500/5 animate-pulse"></div>
+               <div className="flex items-center gap-6 relative z-10">
+                  <div className="w-14 h-14 rounded-2xl nm-flat-sm flex items-center justify-center text-blue-500 border border-blue-500/10">
+                     <AlertCircle className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black uppercase tracking-widest text-blue-500">System Intelligence Bulletin</h3>
+                    <p className="text-sm font-bold opacity-60 mt-1 max-w-xl">{bounceBackMessage}</p>
+                  </div>
+               </div>
+               <button 
+                onClick={() => setBounceBackMessage(null)}
+                className="px-8 py-4 rounded-2xl nm-button font-black text-[10px] uppercase tracking-widest text-blue-400 hover:text-blue-300 relative z-10"
+               > Acknowledge </button>
+            </MotionDiv>
+          )}
         </AnimatePresence>
 
         <AnimatePresence>
-          {bounceBackMessage && (
-            <m.div
-              initial={{ opacity: 0, y: -20 }}
+          {isAntiSpiralMode && (
+            <MotionDiv
+              layout
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="mb-8 p-6 rounded-3xl nm-flat-sm border border-blue-500/10 flex items-center gap-5"
+              className="mb-12 p-8 rounded-[2.5rem] nm-inset border border-orange-500/20 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative"
             >
-               <div className="w-12 h-12 rounded-2xl nm-inset-sm flex items-center justify-center text-blue-500">
-                  <ShieldAlert className="w-6 h-6" />
+               <div className="absolute inset-0 bg-orange-500/5 animate-pulse"></div>
+               <div className="flex items-center gap-6 relative z-10">
+                  <div className="w-14 h-14 rounded-2xl nm-flat-sm flex items-center justify-center text-orange-500 border border-orange-500/20">
+                     <ShieldAlert className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black uppercase tracking-widest text-orange-500">Anti-Spiral Protocol Active</h3>
+                    <p className="text-sm font-bold opacity-60 mt-1 max-w-xl italic">Execute stabilization objectives to restore system equilibrium.</p>
+                  </div>
                </div>
-               <div className="flex-1">
-                 <p className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-1">System Intelligence Bulletin</p>
-                 <p className="text-sm font-bold opacity-80">{bounceBackMessage}</p>
+               <div className="flex gap-3 relative z-10">
+                  <div className="px-5 py-2 rounded-xl nm-flat-sm text-[9px] font-black uppercase text-orange-500 border border-orange-500/10">Stabilization: 0/3</div>
                </div>
-               <button 
-                 onClick={() => setBounceBackMessage(null)}
-                 className="p-3 rounded-xl nm-button text-[10px] font-black uppercase"
-               > Dismiss </button>
-            </m.div>
+            </MotionDiv>
           )}
         </AnimatePresence>
 
@@ -506,159 +299,169 @@ export default function Dashboard() {
           {showCreateForm && <CreateQuestForm onSubmit={(data) => createQuestMutation.mutate(data)} onCancel={() => setShowCreateForm(false)} />}
         </AnimatePresence>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-16">
-           <div className="lg:col-span-4 space-y-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-20 relative z-0">
+           <div className="lg:col-span-4 flex flex-col gap-10">
               <GuildStatus user_id={user?.id} />
-              <RecoveryHeatmap completionLogs={completionLogs} />
+              <div className="relative">
+                <RecoveryHeatmap completionLogs={completionLogs} />
+              </div>
            </div>
-           <div className="lg:col-span-8"><AuditLog /></div>
+           <div className="lg:col-span-8 h-full"><AuditLog /></div>
         </div>
 
-        <div className="mb-20">
-          <div className="flex items-center justify-between mb-12 border-l-4 border-blue-500/20 pl-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl nm-inset-sm flex items-center justify-center"><Activity className="w-6 h-6 opacity-40" /></div>
+        <div className="mb-24 relative z-10 pt-10">
+          <div className="flex items-center justify-between mb-16 border-l-4 border-blue-500/30 pl-8">
+            <div className="flex items-center gap-6">
+              <div className="w-14 h-14 rounded-2xl nm-inset-sm flex items-center justify-center border border-blue-500/10">
+                <Activity className="w-7 h-7 text-blue-500 opacity-60" />
+              </div>
               <div>
-                <h2 className="text-3xl font-black tracking-widest uppercase">Daily Execution Queue</h2>
-                <p className="text-[10px] font-black uppercase tracking-[0.4rem] opacity-30 mt-1">Today's Tactical Assignment</p>
+                <h2 className="text-4xl font-black tracking-widest uppercase text-(--text-primary)">Daily Execution Queue</h2>
+                <p className="text-[11px] font-black uppercase tracking-[0.5rem] opacity-40 mt-2 text-blue-500">Today's Tactical Assignment</p>
               </div>
             </div>
-            {groupedQuests.due.length > 0 && (
-              <button className="hidden md:flex items-center gap-4 px-8 py-3 rounded-2xl nm-button text-[10px] font-black uppercase tracking-[0.2rem] text-blue-500 hover:scale-105 transition-all">
+            {(groupedQuests?.due?.length || 0) > 0 && (
+              <button className="hidden lg:flex items-center gap-4 px-10 py-4 rounded-2xl nm-button text-[11px] font-black uppercase tracking-[0.25rem] text-blue-500 hover:scale-105 transition-all">
                 <span>Process Next Protocol</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-5 h-5" />
               </button>
             )}
           </div>
 
-          <div className="space-y-16">
-            {reviewQueue.length > 0 && (
-              <m.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="mb-20 p-10 rounded-[3rem] nm-flat transition-all border border-blue-500/20 relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-                
-                <div className="flex items-center justify-between mb-10 relative z-10">
-                   <div className="flex items-center gap-5">
-                      <div className="w-14 h-14 rounded-2xl nm-inset-sm flex items-center justify-center text-blue-500">
-                         <ShieldCheck className="w-7 h-7" />
-                      </div>
-                      <div>
-                        <h3 className="text-2xl font-black uppercase tracking-widest">Awaiting Verification</h3>
-                        <p className="text-[10px] font-black uppercase tracking-[0.4rem] opacity-30 mt-1 text-blue-500">Sponsor Oversight Module</p>
-                      </div>
-                   </div>
-                </div>
+          <LayoutGroup id="quest-execution-coordinator">
+            <div className="space-y-16">
+              {(reviewQueue || []).length > 0 && (
+                <MotionDiv
+                  layout
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="mb-20 p-10 rounded-[3rem] nm-flat transition-all border border-blue-500/20 relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                  
+                  <div className="flex items-center justify-between mb-10 relative z-10">
+                     <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 rounded-2xl nm-inset-sm flex items-center justify-center text-blue-500">
+                           <ShieldCheck className="w-7 h-7" />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-black uppercase tracking-widest">Awaiting Verification</h3>
+                          <p className="text-[10px] font-black uppercase tracking-[0.4rem] opacity-30 mt-1 text-blue-500">Sponsor Oversight Module</p>
+                        </div>
+                     </div>
+                  </div>
 
-                <div className="grid gap-8 md:grid-cols-2 relative z-10">
-                   {reviewQueue.map((q) => (
-                      <div key={q.id} className="p-6 rounded-3xl nm-inset-sm border border-white/5 group hover:nm-inset transition-all">
-                         <div className="flex justify-between items-start mb-4">
-                            <div>
-                               <h4 className="text-lg font-black uppercase tracking-tight opacity-90">{q.title}</h4>
-                               <p className="text-[10px] font-bold uppercase opacity-40 mt-1">Submitted by: {q.profiles?.display_name || 'Protocol Member'}</p>
-                            </div>
-                            <div className="text-right">
-                               <p className="text-xs font-black text-blue-500">+{q.xp_reward} Merit</p>
-                               <p className="text-[10px] font-bold opacity-30 uppercase tracking-tighter mt-1">{q.category}</p>
-                            </div>
-                         </div>
-                         <div className="flex gap-4">
-                            <button 
-                              onClick={() => {
-                                supabase.from('quests').update({ review_status: 'approved' }).eq('id', q.id).then(() => {
-                                   queryClient.invalidateQueries({ queryKey: ['reviewQueue'] });
-                                   queryClient.invalidateQueries({ queryKey: ['quests'] });
-                                });
-                              }}
-                              className="flex-1 py-3.5 rounded-xl nm-button font-black text-[10px] uppercase tracking-widest text-green-500 hover:scale-[1.02] transition-all"
-                            > Verify </button>
-                            <button className="flex-1 py-3.5 rounded-xl nm-button font-black text-[10px] uppercase tracking-widest text-red-500 opacity-60 hover:opacity-100 transition-all"> Reject </button>
-                         </div>
-                      </div>
-                   ))}
-                </div>
-              </m.div>
-            )}
+                  <div className="grid gap-8 md:grid-cols-2 relative z-10">
+                     {(reviewQueue || []).map((q) => (
+                        <div key={q.id} className="p-6 rounded-3xl nm-inset-sm border border-white/5 group hover:nm-inset transition-all">
+                           <div className="flex justify-between items-start mb-4">
+                              <div>
+                                 <h4 className="text-lg font-black uppercase tracking-tight opacity-90">{q.title}</h4>
+                                 <p className="text-[10px] font-bold uppercase opacity-40 mt-1">Submitted by: {q.profiles?.display_name || 'Protocol Member'}</p>
+                              </div>
+                              <div className="text-right">
+                                 <p className="text-xs font-black text-blue-500">+{q.xp_reward} Merit</p>
+                                 <p className="text-[10px] font-bold opacity-30 uppercase tracking-tighter mt-1">{q.category}</p>
+                              </div>
+                           </div>
+                           <div className="flex gap-4">
+                              <button 
+                                onClick={() => {
+                                  supabase.from('quests').update({ review_status: 'approved' }).eq('id', q.id).then(() => {
+                                     queryClient.invalidateQueries({ queryKey: ['reviewQueue'] });
+                                     queryClient.invalidateQueries({ queryKey: ['quests'] });
+                                  });
+                                }}
+                                className="flex-1 py-3.5 rounded-xl nm-button font-black text-[10px] uppercase tracking-widest text-green-500 hover:scale-[1.02] transition-all"
+                              > Verify </button>
+                              <button className="flex-1 py-3.5 rounded-xl nm-button font-black text-[10px] uppercase tracking-widest text-red-500 opacity-60 hover:opacity-100 transition-all"> Reject </button>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+                </MotionDiv>
+              )}
 
-            {groupedQuests.overdue.length > 0 && (
+              {groupedQuests.overdue.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-4 mb-8 ml-2">
+                    <AlertCircle className="w-5 h-5 text-red-500" />
+                    <h3 className="text-lg font-black uppercase tracking-widest text-red-500/80">Shadow Debt (Overdue)</h3>
+                    <div className="flex-1 h-px bg-red-500/10"></div>
+                  </div>
+                  <div className="grid gap-10 md:grid-cols-2">
+                    <AnimatePresence mode="popLayout">
+                      {groupedQuests.overdue.map((quest) => (
+                        <QuestCard 
+                          key={quest.id} 
+                          quest={quest} 
+                          onComplete={(q, note) => completeQuestMutation.mutate({ quest: q, reflectionNote: note })} 
+                          isCompleted={false} 
+                          isOverdue={true} 
+                          streak={calculateStreak(quest.id)} 
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <div className="flex items-center gap-4 mb-8 ml-2">
-                  <AlertCircle className="w-5 h-5 text-red-500" />
-                  <h3 className="text-lg font-black uppercase tracking-widest text-red-500/80">Shadow Debt (Overdue)</h3>
-                  <div className="flex-1 h-px bg-red-500/10"></div>
+                  <Clock className="w-5 h-5 opacity-30" />
+                  <h3 className="text-lg font-black uppercase tracking-widest opacity-40">Due Protocols</h3>
+                  <div className="flex-1 h-px bg-white/5"></div>
                 </div>
-                <div className="grid gap-10 md:grid-cols-2">
-                  <AnimatePresence mode="popLayout">
-                    {groupedQuests.overdue.map((quest) => (
-                      <QuestCard 
-                        key={quest.id} 
-                        quest={quest} 
-                        onComplete={(q, note) => completeQuestMutation.mutate({ quest: q, reflectionNote: note })} 
-                        isCompleted={false} 
-                        isOverdue={true} 
-                        streak={calculateStreak(quest.id)} 
-                      />
-                    ))}
-                  </AnimatePresence>
-                </div>
+                {questsLoading ? (
+                  <div className="text-center py-20 text-(--text-secondary) font-bold uppercase tracking-[0.5rem] opacity-20 animate-pulse">Establishing Core Connection...</div>
+                ) : (
+                  <div className="grid gap-10 md:grid-cols-2">
+                    <AnimatePresence mode="popLayout">
+                      {groupedQuests.due.map((quest) => (
+                        <QuestCard 
+                          key={quest.id} 
+                          quest={quest} 
+                          onComplete={(q, note) => completeQuestMutation.mutate({ quest: q, reflectionNote: note })} 
+                          isCompleted={false} 
+                          streak={calculateStreak(quest.id)} 
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )}
               </div>
-            )}
 
-            <div>
-              <div className="flex items-center gap-4 mb-8 ml-2">
-                <Clock className="w-5 h-5 opacity-30" />
-                <h3 className="text-lg font-black uppercase tracking-widest opacity-40">Due Protocols</h3>
-                <div className="flex-1 h-px bg-white/5"></div>
-              </div>
-              {questsLoading ? (
-                <div className="text-center py-20 text-(--text-secondary) font-bold uppercase tracking-[0.5rem] opacity-20 animate-pulse">Establishing Core Connection...</div>
-              ) : (
-                <div className="grid gap-10 md:grid-cols-2">
-                  <AnimatePresence mode="popLayout">
-                    {groupedQuests.due.map((quest) => (
-                      <QuestCard 
-                        key={quest.id} 
-                        quest={quest} 
-                        onComplete={(q, note) => completeQuestMutation.mutate({ quest: q, reflectionNote: note })} 
-                        isCompleted={false} 
-                        streak={calculateStreak(quest.id)} 
-                      />
-                    ))}
-                  </AnimatePresence>
+              {groupedQuests.completed.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-4 mb-8 ml-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-500/40" />
+                    <h3 className="text-lg font-black uppercase tracking-widest opacity-30">Cleared Protocols</h3>
+                    <div className="flex-1 h-px bg-green-500/5"></div>
+                  </div>
+                  <div className="grid gap-10 md:grid-cols-2 opacity-60">
+                    <AnimatePresence mode="popLayout">
+                      {groupedQuests.completed.map((quest) => (
+                        <QuestCard 
+                          key={quest.id} 
+                          quest={quest} 
+                          onComplete={(q, note) => completeQuestMutation.mutate({ quest: q, reflectionNote: note })} 
+                          isCompleted={true} 
+                          streak={calculateStreak(quest.id)} 
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </div>
                 </div>
               )}
             </div>
-
-            {groupedQuests.completed.length > 0 && (
-              <div>
-                <div className="flex items-center gap-4 mb-8 ml-2">
-                  <CheckCircle2 className="w-5 h-5 text-green-500/40" />
-                  <h3 className="text-lg font-black uppercase tracking-widest opacity-30">Cleared Protocols</h3>
-                  <div className="flex-1 h-px bg-green-500/5"></div>
-                </div>
-                <div className="grid gap-10 md:grid-cols-2 opacity-60">
-                  <AnimatePresence mode="popLayout">
-                    {groupedQuests.completed.map((quest) => (
-                      <QuestCard 
-                        key={quest.id} 
-                        quest={quest} 
-                        onComplete={(q, note) => completeQuestMutation.mutate({ quest: q, reflectionNote: note })} 
-                        isCompleted={true} 
-                        streak={calculateStreak(quest.id)} 
-                      />
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </div>
-            )}
-          </div>
+          </LayoutGroup>
         </div>
 
         <ThemeSidebar isOpen={isThemeOpen} onClose={() => setIsThemeOpen(false)} />
       </div>
+      <AnimatePresence>
+        {showWeeklyReview && <WeeklyReview onClose={() => setShowWeeklyReview(false)} />}
+      </AnimatePresence>
     </div>
   );
 }

@@ -11,8 +11,7 @@ export default function AuditLog() {
       const { data } = await supabase
         .from('guild_activity_log')
         .select(`
-          *,
-          profiles:user_id(display_name)
+          *
         `)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -23,8 +22,7 @@ export default function AuditLog() {
           .from('quest_completions')
           .select(`
             *,
-            quests(title),
-            profiles:user_id(display_name)
+            quests(title)
           `)
           .order('completed_at', { ascending: false })
           .limit(10);

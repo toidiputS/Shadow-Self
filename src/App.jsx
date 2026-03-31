@@ -6,6 +6,7 @@ import ShadowVault from './pages/ShadowVault';
 import Guild from './pages/Guild';
 import System from './pages/System';
 import BottomNav from './components/BottomNav';
+import DesktopNav from './components/DesktopNav';
 
 const queryClient = new QueryClient();
 
@@ -31,7 +32,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="min-h-screen bg-(--bg-color) transition-colors duration-400">
+        <div className="min-h-screen bg-(--bg-color) transition-colors duration-400 pb-32">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
@@ -40,6 +41,7 @@ function App() {
             <Route path="/system" element={<System />} />
           </Routes>
           <BottomNav />
+          <DesktopNav />
         </div>
       </BrowserRouter>
     </QueryClientProvider>

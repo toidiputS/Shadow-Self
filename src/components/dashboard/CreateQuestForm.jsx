@@ -11,6 +11,9 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
   const [category, setCategory] = useState("recovery");
   const [estimatedTime, setEstimatedTime] = useState("");
   const [triggerText, setTriggerText] = useState("");
+  const [chainId, setChainId] = useState("");
+  const [chainPosition, setChainPosition] = useState(1);
+  const [proofRequired, setProofRequired] = useState(false);
 
   const MotionDiv = motion.div;
 
@@ -26,6 +29,9 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
         category: category,
         estimated_time: estimatedTime,
         trigger_text: triggerText,
+        chain_id: chainId || null,
+        chain_position: chainPosition,
+        proof_required: proofRequired,
         active: true
       });
       setQuestName("");
@@ -39,8 +45,10 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
       exit={{ opacity: 0, scale: 0.95, y: -20 }}
       className="mb-12 text-(--text-primary) relative z-10"
     >
-      <div className="p-8 rounded-4xl nm-flat-lg border border-white/10">
-        <div className="flex items-center justify-between mb-8">
+      <div className="p-8 rounded-4xl nm-flat-lg border border-white/10 overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+        
+        <div className="flex items-center justify-between mb-8 relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center text-blue-500">
               <Target className="w-5 h-5" />
@@ -55,7 +63,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
           {/* Protocol Name */}
           <div className="group">
             <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
@@ -145,38 +153,70 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             {/* Estimated Time */}
-             <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
-                Temporal Requirement
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={estimatedTime}
-                  onChange={(e) => setEstimatedTime(e.target.value)}
-                  placeholder="e.g. 20 min"
-                  className="w-full px-6 py-4 rounded-2xl nm-inset font-bold text-(--text-primary) focus:outline-none"
-                />
-                <Clock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 pointer-events-none" />
+             {/* Estimated Time & Trigger Mapping */}
+             <div className="p-6 rounded-3xl nm-inset-sm border border-blue-500/10 space-y-6">
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-blue-500 mb-3 ml-1">
+                  Temporal Requirement
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={estimatedTime}
+                    onChange={(e) => setEstimatedTime(e.target.value)}
+                    placeholder="e.g. 20 min"
+                    className="w-full px-6 py-4 rounded-2xl nm-inset font-bold text-(--text-primary) focus:outline-none border-0"
+                  />
+                  <Clock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-blue-500 mb-3 ml-1">
+                  Trigger Mapping (PATTERN TRACKING)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={triggerText}
+                    onChange={(e) => setTriggerText(e.target.value)}
+                    placeholder="When X happens..."
+                    className="w-full px-6 py-4 rounded-2xl nm-inset font-bold text-(--text-primary) focus:outline-none border-0"
+                  />
+                  <HelpCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 pointer-events-none" />
+                </div>
+                <p className="mt-3 text-[9px] font-bold opacity-40 uppercase tracking-tight">Anchors protocols to real-life situations</p>
               </div>
             </div>
 
-            {/* Trigger */}
-            <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
-                System Trigger
+            {/* Quest Chains (New Section Highlight) */}
+            <div className="p-6 rounded-3xl nm-inset-sm border border-purple-500/10">
+              <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-purple-500 mb-3 ml-1">
+                Quest Chains (ROUTINE STRUCTURE)
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={triggerText}
-                  onChange={(e) => setTriggerText(e.target.value)}
-                  placeholder="e.g. After coffee"
-                  className="w-full px-6 py-4 rounded-2xl nm-inset font-bold text-(--text-primary) focus:outline-none"
-                />
-                <HelpCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 pointer-events-none" />
+              <div className="flex gap-4">
+                <div className="flex-1">
+                   <p className="text-[8px] font-black opacity-30 uppercase mb-2">Protocol Order</p>
+                   <input
+                    type="number"
+                    min="1"
+                    value={chainPosition}
+                    onChange={(e) => setChainPosition(parseInt(e.target.value) || 1)}
+                    className="w-full px-5 py-4 rounded-xl nm-inset font-bold text-(--text-primary) focus:outline-none"
+                  />
+                </div>
+                <div className="flex-[2]">
+                   <p className="text-[8px] font-black opacity-30 uppercase mb-2">Chain ID (Optional UUID)</p>
+                   <input
+                    type="text"
+                    value={chainId}
+                    onChange={(e) => setChainId(e.target.value)}
+                    placeholder="Auto-groups protocols"
+                    className="w-full px-5 py-4 rounded-xl nm-inset text-xs font-bold text-(--text-primary) focus:outline-none"
+                  />
+                </div>
               </div>
+              <p className="mt-3 text-[9px] font-bold opacity-40 uppercase tracking-tight">Unlocked sequentially in execution queue</p>
             </div>
           </div>
 
@@ -236,6 +276,20 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                 <ShieldAlert className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 pointer-events-none" />
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center gap-4 px-6 py-4 rounded-3xl nm-inset-sm border border-white/5">
+             <div className="flex-1">
+                <p className="text-[10px] font-black uppercase tracking-widest leading-none">Evidence Requirement</p>
+                <p className="text-[9px] font-bold opacity-30 uppercase mt-1">Force verification via sponsor review</p>
+             </div>
+             <button 
+               type="button"
+               onClick={() => setProofRequired(!proofRequired)}
+               className={`w-14 h-8 rounded-full nm-inset-sm relative p-1 transition-all ${proofRequired ? 'bg-blue-500/20' : ''}`}
+             >
+                <div className={`absolute w-6 h-6 rounded-full nm-flat transition-all ${proofRequired ? 'right-1 bg-blue-500' : 'left-1 bg-gray-500'}`} />
+             </button>
           </div>
 
           {/* Footer Actions */}

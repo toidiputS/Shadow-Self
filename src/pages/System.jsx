@@ -12,14 +12,21 @@ import {
   CreditCard,
   Cloud,
   ChevronRight,
-  LogOut
+  LogOut,
+  Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { motion, AnimatePresence } from "framer-motion";
 import ThemeSidebar from "../components/dashboard/ThemeSidebar";
+import NotificationsHub from "../components/system/NotificationsHub";
+import SubscriptionNode from "../components/system/SubscriptionNode";
+
+const MotionDiv = motion.div;
 
 export default function System() {
   const [isThemeOpen, setIsThemeOpen] = React.useState(false);
+  const [activeSection, setActiveSection] = React.useState(null);
   
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -131,31 +138,87 @@ export default function System() {
               </div>
            </section>
 
-           {/* Security Settings */}
+           {/* Security & Finance Hub */}
            <section>
               <div className="flex items-center gap-3 mb-6 ml-2">
                  <ShieldCheck className="w-4 h-4 opacity-40" />
-                 <h3 className="text-xs font-black uppercase tracking-[0.3rem] opacity-60">Access & Intelligence</h3>
+                 <h3 className="text-xs font-black uppercase tracking-[0.3rem] opacity-60">Access & Institutional Node</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div className="p-6 rounded-3xl nm-button flex flex-col gap-4 group hover:nm-flat">
-                    <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center text-blue-500">
-                       <Bell className="w-5 h-5" />
-                    </div>
-                    <div className="text-left">
-                       <p className="text-xs font-black uppercase tracking-widest">Notifications Hub</p>
-                       <p className="text-[9px] opacity-30 mt-1 leading-relaxed font-bold uppercase tracking-tight">Status: Alerts Muted. Protocol Overrides in Play.</p>
-                    </div>
+              <div className="space-y-4">
+                 {/* Notifications Hub Module */}
+                 <div className={`p-1 rounded-4xl transition-all duration-700 ${activeSection === 'notifications' ? 'nm-inset p-4 bg-blue-500/5' : ''}`}>
+                    <button 
+                      onClick={() => setActiveSection(activeSection === 'notifications' ? null : 'notifications')}
+                      className={`w-full p-6 rounded-3xl nm-button flex items-start gap-4 text-left transition-all group ${activeSection === 'notifications' ? 'nm-inset-sm border border-blue-500/20' : 'hover:nm-flat border border-transparent'}`}
+                    >
+                       <div className={`w-12 h-12 rounded-2xl nm-inset-sm flex items-center justify-center transition-colors ${activeSection === 'notifications' ? 'text-blue-500' : 'text-blue-500 opacity-60 group-hover:opacity-100'}`}>
+                          <Bell className="w-6 h-6" />
+                       </div>
+                       <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                             <h4 className="text-xs font-black uppercase tracking-widest leading-none">Notifications Hub</h4>
+                             <ChevronRight className={`w-5 h-5 opacity-20 transition-transform duration-500 ${activeSection === 'notifications' ? 'rotate-90 opacity-100' : 'group-hover:opacity-100 group-hover:translate-x-1'}`} />
+                          </div>
+                          <p className="text-[10px] font-bold uppercase tracking-tighter opacity-40 mt-1 mb-2">Configure escalation logic and channel routing</p>
+                          <div className="flex gap-2">
+                             <span className="px-2 py-0.5 rounded-md nm-inset-sm text-[8px] font-black uppercase text-green-500/80">4 Channels Online</span>
+                             <span className="px-2 py-0.5 rounded-md nm-inset-sm text-[8px] font-black uppercase text-orange-500/80 italic">Overrides Active</span>
+                          </div>
+                       </div>
+                    </button>
+                    
+                    <AnimatePresence>
+                       {activeSection === 'notifications' && (
+                         <MotionDiv
+                           initial={{ height: 0, opacity: 0 }}
+                           animate={{ height: "auto", opacity: 1 }}
+                           exit={{ height: 0, opacity: 0 }}
+                           className="overflow-hidden"
+                         >
+                            <div className="mt-4 pt-4 border-t border-white/5">
+                               <NotificationsHub />
+                            </div>
+                         </MotionDiv>
+                       )}
+                    </AnimatePresence>
                  </div>
 
-                 <div className="p-6 rounded-3xl nm-button flex flex-col gap-4 group hover:nm-flat">
-                    <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center text-green-500">
-                       <CreditCard className="w-5 h-5" />
-                    </div>
-                    <div className="text-left">
-                       <p className="text-xs font-black uppercase tracking-widest">Subscription Node</p>
-                       <p className="text-[9px] opacity-30 mt-1 leading-relaxed font-bold uppercase tracking-tight">Status: Legacy Access. Institutional Billing Active.</p>
-                    </div>
+                 {/* Subscription Node Module */}
+                 <div className={`p-1 rounded-4xl transition-all duration-700 ${activeSection === 'subscription' ? 'nm-inset p-4 bg-green-500/5' : ''}`}>
+                    <button 
+                      onClick={() => setActiveSection(activeSection === 'subscription' ? null : 'subscription')}
+                      className={`w-full p-6 rounded-3xl nm-button flex items-start gap-4 text-left transition-all group ${activeSection === 'subscription' ? 'nm-inset-sm border border-green-500/20' : 'hover:nm-flat border border-transparent'}`}
+                    >
+                       <div className={`w-12 h-12 rounded-2xl nm-inset-sm flex items-center justify-center transition-colors ${activeSection === 'subscription' ? 'text-green-500' : 'text-green-500 opacity-60 group-hover:opacity-100'}`}>
+                          <CreditCard className="w-6 h-6" />
+                       </div>
+                       <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                             <h4 className="text-xs font-black uppercase tracking-widest leading-none">Subscription Node</h4>
+                             <ChevronRight className={`w-5 h-5 opacity-20 transition-transform duration-500 ${activeSection === 'subscription' ? 'rotate-90 opacity-100' : 'group-hover:opacity-100 group-hover:translate-x-1'}`} />
+                          </div>
+                          <p className="text-[10px] font-bold uppercase tracking-tighter opacity-40 mt-1 mb-2">Manage institutional entitlements and resource caps</p>
+                          <div className="flex gap-2">
+                             <span className="px-2 py-0.5 rounded-md nm-inset-sm text-[8px] font-black uppercase text-blue-500/80 italic">Legacy Active</span>
+                             <span className="px-2 py-0.5 rounded-md nm-inset-sm text-[8px] font-black uppercase opacity-20 italic">Renewal: Dec 31</span>
+                          </div>
+                       </div>
+                    </button>
+
+                    <AnimatePresence>
+                       {activeSection === 'subscription' && (
+                         <MotionDiv
+                           initial={{ height: 0, opacity: 0 }}
+                           animate={{ height: "auto", opacity: 1 }}
+                           exit={{ height: 0, opacity: 0 }}
+                           className="overflow-hidden"
+                         >
+                            <div className="mt-4 pt-4 border-t border-white/5">
+                               <SubscriptionNode />
+                            </div>
+                         </MotionDiv>
+                       )}
+                    </AnimatePresence>
                  </div>
               </div>
            </section>

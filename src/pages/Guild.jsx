@@ -208,15 +208,7 @@ export default function Guild() {
           </div>
         </div>
 
-        {/* Footer Navigation (Desktop) */}
-        <div className="hidden md:flex justify-center mt-12">
-           <div className="flex items-center gap-6 p-4 rounded-3xl nm-inset">
-              <Link to="/dashboard" className="px-8 py-3 rounded-xl nm-button text-[10px] font-black uppercase tracking-widest hover:text-blue-500">Overview</Link>
-              <Link to="/guild" className="px-8 py-3 rounded-xl nm-inset-sm text-[10px] font-black uppercase tracking-widest text-blue-500">Guild</Link>
-              <Link to="/shadowvault" className="px-8 py-3 rounded-xl nm-button text-[10px] font-black uppercase tracking-widest hover:text-blue-500">Vault</Link>
-              <div className="px-8 py-3 rounded-xl nm-button opacity-20 cursor-not-allowed text-[10px] font-black uppercase tracking-widest">System</div>
-           </div>
-        </div>
+        <div className="pb-32" />
       </div>
     </div>
   );
