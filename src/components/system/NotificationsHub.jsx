@@ -20,32 +20,55 @@ import {
   Volume2,
   FileText,
   BarChart3,
-  Heart
+  Heart,
+  RefreshCw,
+  MoreVertical
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/api/supabase";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
 
 const MotionDiv = motion.div;
-
-const MOCK_LOGS = [
-  { id: 1, time: "14:22:01", trigger: "Quest: Morning Protocol", recipient: "Member 09", channel: "App", outcome: "Verified", status: "delivered" },
-  { id: 2, time: "11:05:44", trigger: "Relapse Stable Mode", recipient: "Sponsor 02", channel: "SMS", outcome: "Alerted", status: "failed" },
-  { id: 3, time: "09:00:15", trigger: "Night Bridge Sync", recipient: "Member 09", channel: "Email", outcome: "Delivered", status: "delivered" },
-  { id: 4, time: "08:15:22", trigger: "Breach: Restricted Access", recipient: "Admin Hub", channel: "Sys", outcome: "Logged", status: "delivered" },
-  // Mocking more for visualization
-  ...Array.from({ length: 15 }).map((_, i) => ({
-    id: i + 5,
-    time: `0${Math.floor(i % 8)}:12:00`,
-    trigger: "Automated Pulse",
-    recipient: "System Core",
-    channel: "Int",
-    outcome: "Synced",
-    status: "delivered"
-  }))
-];
 
 export default function NotificationsHub() {
   const [activeTab, setActiveTab] = React.useState("alerts");
   const [activeOverride, setActiveOverride] = React.useState("none");
+  const queryClient = useQueryClient();
+
+  const { data: recentSignals = [], isLoading: isLoadingSignals } = useQuery({
+    queryKey: ['system-notifications'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 10000,
+  });
+
+  const triggerMutation = useMutation({
+    mutationFn: async ({ type, title, message }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: user.id,
+          type,
+          title,
+          message,
+          metadata: { icon: "Zap", color: "text-blue-500" }
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['system-notifications']);
+      queryClient.invalidateQueries(['notifications']); // Also invalidate user-facing ones
+    }
+  });
 
   const channels = [
     { id: 'in-app', name: 'In-App Engine', status: 'active', icon: Bell, health: 100 },
@@ -56,16 +79,12 @@ export default function NotificationsHub() {
   ];
 
   const triggers = [
-    { event: "Missed Protocol Quest", urgency: "High", channel: "Member + Sponsor", escalation: "Leader T+4h" },
-    { event: "Missed Protocol Chain", urgency: "Critical", channel: "Sponsor + Leader", escalation: "Admin T+2h" },
-    { event: "Sponsor Review Needed", urgency: "Medium", channel: "Sponsor Direct", escalation: "Leader T+12h" },
-    { event: "Protocol Breach Flagged", urgency: "Critical", channel: "All Channels", escalation: "Immediate Admin" },
-    { event: "Grace Day Activation", urgency: "Warning", channel: "In-App + Log", escalation: "Sponsor Summary" },
-    { event: "Relapse Check-In Required", urgency: "High", channel: "Member Direct", escalation: "Sponsor T+30m" },
-    { event: "No Activity (24 Hours)", urgency: "High", channel: "Member + Sponsor", escalation: "Leader T+6h" },
+    { event: "Missed Protocol Quest", urgency: "High", channel: "Member + Sponsor", escalation: "Leader T+4h", type: 'assignment' },
+    { event: "Missed Protocol Chain", urgency: "Critical", channel: "Sponsor + Leader", escalation: "Admin T+2h", type: 'breach' },
+    { event: "Sponsor Review Needed", urgency: "Medium", channel: "Sponsor Direct", escalation: "Leader T+12h", type: 'message' },
+    { event: "Protocol Breach Flagged", urgency: "Critical", channel: "All Channels", escalation: "Immediate Admin", type: 'breach' },
+    { event: "Grace Day Activation", urgency: "Warning", channel: "In-App + Log", escalation: "Sponsor Summary", type: 'alert' },
   ];
-
-   const logs = MOCK_LOGS;
 
    const tabs = [
      { id: "alerts", name: "Alerts & Triggers", icon: Zap },
@@ -76,6 +95,21 @@ export default function NotificationsHub() {
 
   return (
     <div className="space-y-8 py-4">
+      {/* Dynamic Signal Counter */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+         {[
+           { label: 'Total Transmissions', value: recentSignals.length, color: 'text-blue-500' },
+           { label: 'Unread Status', value: recentSignals.filter(s => !s.read).length, color: 'text-orange-500' },
+           { label: 'Uptime Stability', value: '99.9%', color: 'text-green-500' },
+           { label: 'Active Channels', value: channels.filter(c => c.status === 'active').length + '/5', color: 'text-purple-500' },
+         ].map((stat, i) => (
+           <div key={i} className="p-4 rounded-2xl nm-inset-sm">
+              <p className="text-[8px] font-black uppercase opacity-30 tracking-widest leading-none mb-2">{stat.label}</p>
+              <p className={`text-xl font-black italic tracking-tighter ${stat.color}`}>{stat.value}</p>
+           </div>
+         ))}
+      </div>
+
       {/* Tabs Header */}
       <div className="flex gap-2 p-2 rounded-4xl nm-inset-sm overflow-x-auto no-scrollbar">
          {tabs.map((tab) => {
@@ -118,30 +152,45 @@ export default function NotificationsHub() {
                       <h3 className="text-xs font-black uppercase tracking-widest leading-none">Intelligence Triggers</h3>
                    </div>
                    <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 rounded-lg text-green-500 text-[8px] font-black uppercase tracking-widest border border-green-500/10">
-                      Matrix Optimized
+                      Matrix Core Live
                    </div>
                 </div>
                 <div className="rounded-4xl nm-inset border border-white/5 overflow-hidden">
                    <table className="w-full text-left border-collapse">
                       <thead>
                          <tr className="border-b border-white/5 bg-black/5">
-                            <th className="p-6 text-[9px] font-black uppercase tracking-[0.3em] opacity-40">Operational Event</th>
+                            <th className="p-6 text-[9px] font-black uppercase tracking-[0.3em] opacity-40">System Event Node</th>
                             <th className="p-6 text-[9px] font-black uppercase tracking-[0.3em] opacity-40">Urgency</th>
-                            <th className="p-6 text-[9px] font-black uppercase tracking-[0.3em] opacity-40">Primary Routing</th>
                             <th className="p-6 text-[9px] font-black uppercase tracking-[0.3em] opacity-40">Escalation</th>
+                            <th className="p-6 text-[9px] font-black uppercase tracking-[0.3em] opacity-40 text-right">Action</th>
                          </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5 font-black uppercase tracking-tighter text-[10px]">
                          {triggers.map((trigger, i) => (
                            <tr key={i} className="group hover:bg-white/5 transition-colors">
-                              <td className="p-6 text-(--text-primary)">{trigger.event}</td>
+                              <td className="p-6">
+                                 <p className="text-(--text-primary)">{trigger.event}</p>
+                                 <p className="text-[8px] opacity-20 font-black tracking-widest mt-1">Route: {trigger.channel}</p>
+                              </td>
                               <td className="p-6 italic">
                                  <span className={`px-2 py-1 rounded-lg nm-inset-sm ${trigger.urgency === 'Critical' ? 'text-red-500' : trigger.urgency === 'High' ? 'text-orange-500' : trigger.urgency === 'Warning' ? 'text-yellow-500' : 'text-blue-500'}`}>
                                    {trigger.urgency}
                                  </span>
                               </td>
-                              <td className="p-6 opacity-60">{trigger.channel}</td>
                               <td className="p-6 opacity-20 italic font-medium">{trigger.escalation}</td>
+                              <td className="p-6 text-right">
+                                 <button 
+                                   onClick={() => triggerMutation.mutate({ 
+                                     type: trigger.type, 
+                                     title: `Trigger: ${trigger.event}`, 
+                                     message: `Simulated ${trigger.urgency} event detected by manual administrator override.` 
+                                   })}
+                                   disabled={triggerMutation.isPending}
+                                   className="px-4 py-2 rounded-xl nm-button text-[9px] hover:text-blue-500 transition-colors disabled:opacity-20"
+                                 >
+                                    {triggerMutation.isPending ? <RefreshCw className="w-3 h-3 animate-spin mx-auto" /> : 'Fire Signal'}
+                                 </button>
+                              </td>
                            </tr>
                          ))}
                       </tbody>
@@ -208,7 +257,6 @@ export default function NotificationsHub() {
               </section>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                 {/* Override Center */}
                  <section className="space-y-6">
                     <div className="flex items-center gap-3 ml-2 opacity-60">
                        <VolumeX className="w-4 h-4" />
@@ -238,7 +286,6 @@ export default function NotificationsHub() {
                     </div>
                  </section>
 
-                 {/* Quiet Hours */}
                  <section className="space-y-6">
                     <div className="flex items-center gap-3 ml-2 opacity-60">
                        <Moon className="w-4 h-4" />
@@ -301,9 +348,9 @@ export default function NotificationsHub() {
                          </div>
                          <div className="h-2 w-full bg-black/10 rounded-full overflow-hidden nm-inset-sm">
                             <MotionDiv 
-                              initial={{ width: 0 }}
-                              animate={{ width: `${channel.health}%` }}
-                              className={`h-full ${channel.health > 80 ? 'bg-blue-500' : 'bg-red-500/20'}`}
+                               initial={{ width: 0 }}
+                               animate={{ width: `${channel.health}%` }}
+                               className={`h-full ${channel.health > 80 ? 'bg-blue-500' : 'bg-red-500/20'}`}
                             />
                          </div>
                       </div>
@@ -322,28 +369,35 @@ export default function NotificationsHub() {
                      <h3 className="text-xs font-black uppercase tracking-widest leading-none">Transmission Intelligence Ledger</h3>
                   </div>
                   <div className="text-[9px] font-black uppercase tracking-widest opacity-20 italic">
-                     Retaining last 25 system alerts
+                     Retaining last 20 system alerts
                   </div>
                </div>
                <div className="space-y-3">
-                  {logs.map((log) => (
+                  {isLoadingSignals ? (
+                    <div className="py-20 opacity-20 animate-pulse text-center uppercase tracking-widest text-xs font-black">Decrypting Ledger...</div>
+                  ) : recentSignals.length === 0 ? (
+                    <div className="py-20 opacity-20 text-center uppercase tracking-widest text-xs font-black">No Signals Logged</div>
+                  ) : recentSignals.map((log) => (
                     <div key={log.id} className="p-5 rounded-3xl nm-inset-sm flex items-center justify-between text-[11px] font-black uppercase tracking-tight group hover:nm-inset transition-all border border-white/5">
                        <div className="flex items-center gap-8 flex-1">
-                          <span className="opacity-20 tabular-nums w-16">{log.time}</span>
+                          <span className="opacity-20 tabular-nums w-20">{formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}</span>
                           <div className="flex items-center gap-3">
-                             <div className={`w-2 h-2 rounded-full ${log.status === 'delivered' ? 'bg-green-500' : 'bg-red-500'}`} />
-                             <span className="text-(--text-primary) italic opacity-80">{log.trigger}</span>
+                             <div className={`w-2 h-2 rounded-full ${log.read ? 'bg-green-500' : 'bg-blue-500 animate-pulse'}`} />
+                             <span className="text-(--text-primary) italic opacity-80">{log.title}</span>
                           </div>
                        </div>
                        <div className="flex items-center gap-8">
                           <div className="flex items-center gap-3 opacity-30 italic">
-                             <span className="px-3 py-1 rounded bg-black/5 border border-white/5">{log.channel}</span>
-                             <span>{log.recipient}</span>
+                             <span className="px-3 py-1 rounded bg-black/5 border border-white/5">{log.type}</span>
+                             <span>Resident {log.user_id.substring(0, 4)}</span>
                           </div>
-                          <div className={`flex items-center gap-3 w-28 justify-end ${log.status === 'delivered' ? 'text-blue-400' : 'text-red-500 opacity-60'}`}>
-                             {log.status === 'delivered' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                             <span>{log.status === 'delivered' ? log.outcome : 'Transmission Err'}</span>
+                          <div className={`flex items-center gap-3 w-28 justify-end text-blue-400`}>
+                             <CheckCircle className="w-4 h-4" />
+                             <span>Delivered</span>
                           </div>
+                          <button className="p-2 opacity-20 hover:opacity-100 transition-opacity">
+                             <MoreVertical className="w-4 h-4" />
+                          </button>
                        </div>
                     </div>
                   ))}

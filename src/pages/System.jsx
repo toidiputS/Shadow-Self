@@ -13,7 +13,11 @@ import {
   Cloud,
   ChevronRight,
   LogOut,
-  Lock
+  Lock,
+  Sparkles,
+  RefreshCw,
+  Sun,
+  Moon
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -100,41 +104,103 @@ export default function System() {
 
         {/* Settings Groups */}
         <div className="space-y-8">
-           {/* Visual Settings */}
+           {/* Visual Settings & Theme Orchestration */}
            <section>
               <div className="flex items-center gap-3 mb-6 ml-2">
                  <Palette className="w-4 h-4 opacity-40" />
-                 <h3 className="text-xs font-black uppercase tracking-[0.3rem] opacity-60">Environment Orchestration</h3>
+                 <h3 className="text-xs font-black uppercase tracking-[0.3rem] opacity-60">Visual Orchestration</h3>
               </div>
-              <div className="grid gap-4">
+              <div className={`p-1 rounded-4xl transition-all duration-700 ${activeSection === 'theme' ? 'nm-inset p-4 bg-blue-500/5' : ''}`}>
                  <button 
-                   onClick={() => setIsThemeOpen(true)}
-                   className="p-6 rounded-3xl nm-button flex items-center justify-between group hover:border-blue-500/20 border border-transparent transition-all"
+                   onClick={() => setActiveSection(activeSection === 'theme' ? null : 'theme')}
+                   className={`w-full p-6 rounded-3xl nm-button flex items-center justify-between group transition-all ${activeSection === 'theme' ? 'nm-inset-sm border border-blue-500/20' : 'hover:nm-flat border border-transparent'}`}
                  >
                     <div className="flex items-center gap-5">
-                       <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center text-blue-500">
+                       <div className={`w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center transition-colors ${activeSection === 'theme' ? 'text-blue-500' : 'text-blue-500 opacity-60'}`}>
                           <Palette className="w-5 h-5" />
                        </div>
                        <div className="text-left">
                           <p className="text-xs font-black uppercase tracking-widest">Interface Theme Presets</p>
-                          <p className="text-[10px] opacity-40 mt-1 uppercase font-black tracking-tighter">Switch between Alpha Core, Veracity, Blood Moon, and more</p>
+                          <p className="text-[10px] opacity-40 mt-1 uppercase font-black tracking-tighter italic">Live Spectral Hub — Alpha, Veracity, Blood Moon</p>
                        </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                    <ChevronRight className={`w-5 h-5 opacity-20 transition-transform duration-500 ${activeSection === 'theme' ? 'rotate-90 opacity-100' : 'group-hover:opacity-100 group-hover:translate-x-1'}`} />
                  </button>
 
-                 <div className="p-6 rounded-3xl nm-button flex items-center justify-between group opacity-50 cursor-not-allowed">
-                    <div className="flex items-center gap-5">
-                       <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center text-orange-500">
-                          <HardDrive className="w-5 h-5" />
-                       </div>
-                       <div className="text-left">
-                          <p className="text-xs font-black uppercase tracking-widest">System Asset Cache</p>
-                          <p className="text-[10px] opacity-40 mt-1 uppercase font-black tracking-tighter">0.0B Synchronized Resources</p>
-                       </div>
-                    </div>
-                    <Lock className="w-4 h-4 opacity-40" />
-                 </div>
+                 <AnimatePresence>
+                    {activeSection === 'theme' && (
+                      <MotionDiv
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                         <div className="mt-8 p-8 border-t border-white/5 space-y-12">
+                            {/* In-page Theme Controls for Immediate Feedback */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                               <div className="space-y-6">
+                                  <div className="flex items-center justify-between">
+                                     <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Spectral Hue</p>
+                                     <button onClick={() => document.documentElement.style.setProperty('--hue', '210')}><RefreshCw className="w-3 h-3 opacity-20 hover:opacity-100" /></button>
+                                  </div>
+                                  <div className="nm-inset-sm p-4 rounded-2xl">
+                                     <input 
+                                       type="range" 
+                                       min="0" 
+                                       max="360" 
+                                       onChange={(e) => document.documentElement.style.setProperty('--hue', e.target.value)}
+                                       className="w-full h-1.5 rounded-full appearance-none bg-linear-to-r from-red-500 via-green-500 to-blue-500 cursor-pointer"
+                                     />
+                                  </div>
+                               </div>
+                               <div className="space-y-6">
+                                  <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Base Protocol</p>
+                                  <div className="grid grid-cols-2 gap-4">
+                                     <button 
+                                       onClick={() => document.documentElement.style.setProperty('--light', '88%')}
+                                       className="p-4 rounded-xl nm-button flex items-center gap-3"
+                                     >
+                                        <Sun className="w-4 h-4 text-yellow-500" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest">Light Core</span>
+                                     </button>
+                                     <button 
+                                       onClick={() => document.documentElement.style.setProperty('--light', '15%')}
+                                       className="p-4 rounded-xl nm-button flex items-center gap-3"
+                                     >
+                                        <Moon className="w-4 h-4 text-blue-500" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest">Stealth Node</span>
+                                     </button>
+                                  </div>
+                               </div>
+                            </div>
+                            
+                            <div className="space-y-6 pt-4">
+                               <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Institutional Presets</p>
+                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                  {[
+                                    { name: 'Alpha Core', h: 210, s: '15%', l: '88%' },
+                                    { name: 'Veracity', h: 155, s: '20%', l: '88%' },
+                                    { name: 'Blood Moon', h: 355, s: '25%', l: '15%' },
+                                    { name: 'Stealth', h: 220, s: '10%', l: '12%' },
+                                  ].map((p, i) => (
+                                    <button 
+                                      key={i}
+                                      onClick={() => {
+                                        document.documentElement.style.setProperty('--hue', p.h);
+                                        document.documentElement.style.setProperty('--sat', p.s);
+                                        document.documentElement.style.setProperty('--light', p.l);
+                                      }}
+                                      className="p-4 rounded-xl nm-button text-[9px] font-black uppercase tracking-widest hover:text-blue-500"
+                                    >
+                                       {p.name}
+                                    </button>
+                                  ))}
+                               </div>
+                            </div>
+                         </div>
+                      </MotionDiv>
+                    )}
+                 </AnimatePresence>
               </div>
            </section>
 
