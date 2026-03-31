@@ -109,7 +109,7 @@ export default function Auth({ mode = "login" }) {
   };
 
   return (
-    <div className="min-h-screen bg-(--bg-color) text-(--text-primary) flex flex-col items-center pt-12 md:pt-24 pb-32 px-6 transition-all duration-700 overflow-y-auto relative">
+    <div className="fixed inset-0 bg-(--bg-color) text-(--text-primary) flex flex-col items-center pt-12 md:pt-24 pb-32 px-6 transition-all duration-700 overflow-y-auto overflow-x-hidden hide-scrollbar">
       {/* Background Ambience */}
       <div className={`absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-[120px] -mr-32 -mt-32 animate-pulse ${mode === 'admin-login' ? 'bg-purple-500/5' : 'bg-blue-500/5'}`}></div>
       <div className={`absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full blur-[100px] -ml-20 -mb-20 opacity-30 ${mode === 'admin-login' ? 'bg-red-500/5' : 'bg-orange-500/5'}`}></div>

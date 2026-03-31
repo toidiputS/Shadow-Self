@@ -64,11 +64,15 @@ body {
   color: var(--text-primary);
   overflow-x: hidden;
   padding-top: var(--safe-top);
-  /* Global bottom padding for the mobile BottomNav */
-  padding-bottom: calc(6rem + var(--safe-bottom)); 
+  /* Global bottom padding for the mobile BottomNav - disabled by default, enabled via class */
+  padding-bottom: var(--safe-bottom); 
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
   transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.has-nav {
+  padding-bottom: calc(6rem + var(--safe-bottom)); 
 }
 
 @media (min-width: 768px) {

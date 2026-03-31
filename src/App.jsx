@@ -18,7 +18,7 @@ const queryClient = new QueryClient();
 const MasterLayout = ({ children }) => {
   const { session } = useAuth();
   return (
-    <div className={`min-h-screen bg-(--bg-color) transition-colors duration-400 ${session ? 'pb-32' : ''}`}>
+    <div className={`min-h-screen bg-(--bg-color) transition-colors duration-400 ${session ? 'pb-32 md:pb-0' : ''}`}>
       {children}
       {session && (
         <>
