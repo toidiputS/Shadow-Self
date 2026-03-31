@@ -44,6 +44,29 @@ export default function NotificationInbox({ isOpen, onClose }) {
     staleTime: 30000,
   });
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const channel = supabase
+      .channel('notifications-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+        },
+        () => {
+          queryClient.invalidateQueries(['notifications']);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isOpen, queryClient]);
+
   const clearMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -120,42 +143,50 @@ export default function NotificationInbox({ isOpen, onClose }) {
                       <p className="text-[10px] font-black uppercase tracking-[0.3em]">Zero Active Signals</p>
                   </div>
                ) : (
-                  notifications.map((n) => (
-                    <motion.div 
-                      key={n.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className={`p-6 rounded-4xl nm-flat group hover:nm-flat-lg transition-all relative overflow-hidden ${!n.read ? 'border-r-4 border-blue-500/30' : ''}`}
-                    >
-                       <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                           <Sparkles className="w-12 h-12" />
-                       </div>
-                       
-                       <div className="flex gap-5 relative z-10">
-                           <div className="w-12 h-12 shrink-0 rounded-2xl nm-inset-sm flex items-center justify-center">
-                               {ICON_MAP[n.type] || <Bell className="text-blue-500" />}
-                           </div>
-                           <div className="flex-1">
-                               <div className="flex justify-between items-start mb-2">
-                                   <h3 className="text-sm font-black uppercase tracking-wider leading-none">{n.title}</h3>
-                                   <span className="text-[9px] font-black opacity-30 uppercase tabular-nums">
-                                      {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
-                                   </span>
-                               </div>
-                               <p className="text-[11px] font-bold opacity-60 leading-relaxed mb-4">{n.message}</p>
-                               <div className="flex items-center justify-between">
-                                 <button 
-                                   onClick={() => markReadMutation.mutate(n.id)}
-                                   className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all ${n.read ? 'opacity-30' : 'text-blue-500 hover:gap-4'}`}
-                                 >
-                                     {n.read ? 'Acknowledged' : 'View Protocol'} <ArrowRight className="w-3 h-3" />
-                                 </button>
-                                 {!n.read && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]" />}
-                               </div>
-                           </div>
-                       </div>
-                    </motion.div>
-                  ))
+                  <AnimatePresence initial={false}>
+                    {notifications.map((n) => (
+                      <motion.div 
+                        key={n.id}
+                        initial={{ opacity: 0, x: 20, height: 0 }}
+                        animate={{ opacity: 1, x: 0, height: 'auto' }}
+                        exit={{ opacity: 0, x: -20, height: 0 }}
+                        transition={{ 
+                           height: { duration: 0.3 },
+                           opacity: { duration: 0.2 },
+                           x: { type: "spring", stiffness: 300, damping: 30 }
+                        }}
+                        className={`p-6 rounded-4xl nm-flat group hover:nm-flat-lg transition-all relative overflow-hidden mb-6 ${!n.read ? 'border-r-4 border-blue-500/30' : ''}`}
+                      >
+                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                             <Sparkles className="w-12 h-12" />
+                         </div>
+                         
+                         <div className="flex gap-5 relative z-10">
+                             <div className="w-12 h-12 shrink-0 rounded-2xl nm-inset-sm flex items-center justify-center">
+                                 {ICON_MAP[n.type] || <Bell className="text-blue-500" />}
+                             </div>
+                             <div className="flex-1">
+                                 <div className="flex justify-between items-start mb-2">
+                                     <h3 className="text-sm font-black uppercase tracking-wider leading-none">{n.title}</h3>
+                                     <span className="text-[9px] font-black opacity-30 uppercase tabular-nums">
+                                        {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                                     </span>
+                                 </div>
+                                 <p className="text-[11px] font-bold opacity-60 leading-relaxed mb-4">{n.message}</p>
+                                 <div className="flex items-center justify-between">
+                                   <button 
+                                     onClick={() => markReadMutation.mutate(n.id)}
+                                     className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all ${n.read ? 'opacity-30' : 'text-blue-500 hover:gap-4'}`}
+                                   >
+                                       {n.read ? 'Acknowledged' : 'View Protocol'} <ArrowRight className="w-3 h-3" />
+                                   </button>
+                                   {!n.read && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.5)]" />}
+                                 </div>
+                             </div>
+                         </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                )}
             </div>
 

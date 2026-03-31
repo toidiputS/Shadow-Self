@@ -50,6 +50,27 @@ export default function NotificationsHub() {
     staleTime: 10000,
   });
 
+  React.useEffect(() => {
+    const channel = supabase
+      .channel('system-notifications-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+        },
+        () => {
+          queryClient.invalidateQueries(['system-notifications']);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const triggerMutation = useMutation({
     mutationFn: async ({ type, title, message }) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -377,30 +398,40 @@ export default function NotificationsHub() {
                     <div className="py-20 opacity-20 animate-pulse text-center uppercase tracking-widest text-xs font-black">Decrypting Ledger...</div>
                   ) : recentSignals.length === 0 ? (
                     <div className="py-20 opacity-20 text-center uppercase tracking-widest text-xs font-black">No Signals Logged</div>
-                  ) : recentSignals.map((log) => (
-                    <div key={log.id} className="p-5 rounded-3xl nm-inset-sm flex items-center justify-between text-[11px] font-black uppercase tracking-tight group hover:nm-inset transition-all border border-white/5">
-                       <div className="flex items-center gap-8 flex-1">
-                          <span className="opacity-20 tabular-nums w-20">{formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}</span>
-                          <div className="flex items-center gap-3">
-                             <div className={`w-2 h-2 rounded-full ${log.read ? 'bg-green-500' : 'bg-blue-500 animate-pulse'}`} />
-                             <span className="text-(--text-primary) italic opacity-80">{log.title}</span>
-                          </div>
-                       </div>
-                       <div className="flex items-center gap-8">
-                          <div className="flex items-center gap-3 opacity-30 italic">
-                             <span className="px-3 py-1 rounded bg-black/5 border border-white/5">{log.type}</span>
-                             <span>Resident {log.user_id.substring(0, 4)}</span>
-                          </div>
-                          <div className={`flex items-center gap-3 w-28 justify-end text-blue-400`}>
-                             <CheckCircle className="w-4 h-4" />
-                             <span>Delivered</span>
-                          </div>
-                          <button className="p-2 opacity-20 hover:opacity-100 transition-opacity">
-                             <MoreVertical className="w-4 h-4" />
-                          </button>
-                       </div>
-                    </div>
-                  ))}
+                  ) : (
+                    <AnimatePresence initial={false}>
+                       {recentSignals.map((log) => (
+                         <motion.div 
+                           key={log.id}
+                           initial={{ opacity: 0, x: -10, height: 0 }}
+                           animate={{ opacity: 1, x: 0, height: 'auto' }}
+                           exit={{ opacity: 0, x: 10, height: 0 }}
+                           className="p-5 rounded-3xl nm-inset-sm flex items-center justify-between text-[11px] font-black uppercase tracking-tight group hover:nm-inset transition-all border border-white/5 mb-3"
+                         >
+                            <div className="flex items-center gap-8 flex-1">
+                               <span className="opacity-20 tabular-nums w-20">{formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}</span>
+                               <div className="flex items-center gap-3">
+                                  <div className={`w-2 h-2 rounded-full ${log.read ? 'bg-green-500' : 'bg-blue-500 animate-pulse'}`} />
+                                  <span className="text-(--text-primary) italic opacity-80">{log.title}</span>
+                               </div>
+                            </div>
+                            <div className="flex items-center gap-8">
+                               <div className="flex items-center gap-3 opacity-30 italic">
+                                  <span className="px-3 py-1 rounded bg-black/5 border border-white/5">{log.type}</span>
+                                  <span>Resident {log.user_id.substring(0, 4)}</span>
+                               </div>
+                               <div className={`flex items-center gap-3 w-28 justify-end text-blue-400`}>
+                                  <CheckCircle className="w-4 h-4" />
+                                  <span>Delivered</span>
+                               </div>
+                               <button className="p-2 opacity-20 hover:opacity-100 transition-opacity">
+                                  <MoreVertical className="w-4 h-4" />
+                               </button>
+                            </div>
+                         </motion.div>
+                       ))}
+                    </AnimatePresence>
+                  )}
                </div>
                <button className="w-full py-6 rounded-4xl nm-button text-[10px] font-black uppercase tracking-[0.4em] opacity-40 hover:opacity-100 transition-all mt-8 border border-white/5">
                   Fetch Archival Sync Data (90D+)
