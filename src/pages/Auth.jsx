@@ -109,7 +109,7 @@ export default function Auth({ mode = "login" }) {
   };
 
   return (
-    <div className="min-h-screen bg-(--bg-color) text-(--text-primary) flex flex-col items-center justify-center p-6 transition-all duration-700 overflow-hidden relative">
+    <div className="min-h-screen bg-(--bg-color) text-(--text-primary) flex flex-col items-center pt-12 md:pt-24 pb-32 px-6 transition-all duration-700 overflow-y-auto relative">
       {/* Background Ambience */}
       <div className={`absolute top-0 right-0 w-[500px] h-[500px] rounded-full blur-[120px] -mr-32 -mt-32 animate-pulse ${mode === 'admin-login' ? 'bg-purple-500/5' : 'bg-blue-500/5'}`}></div>
       <div className={`absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full blur-[100px] -ml-20 -mb-20 opacity-30 ${mode === 'admin-login' ? 'bg-red-500/5' : 'bg-orange-500/5'}`}></div>
@@ -129,16 +129,35 @@ export default function Auth({ mode = "login" }) {
                 </div>
             </div>
             <h1 className="text-3xl font-black uppercase tracking-[0.4rem] leading-none mb-3 italic">Shadow Self</h1>
-            <div className="flex items-center gap-2 opacity-30">
-                <Sparkles className="w-3 h-3" />
+            <div className="flex items-center gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
+                <Sparkles className="w-3 h-3 text-blue-500" />
                 <p className="text-[9px] font-black uppercase tracking-[0.2em]">
-                  {mode === 'admin-login' ? "Restricted Executive Entry" : "Protocol Entry Authorized"}
+                  {mode === 'admin-login' ? "Restricted Executive Entry" : "Shadow Protocol Authorized"}
                 </p>
             </div>
         </div>
 
+        {/* Institutional / Executive Switch (Only shown on Standard Login) */}
+        {mode === 'login' && (
+            <Link 
+              to="/admin/login"
+              className="mb-8 w-full p-6 rounded-4xl nm-button border border-purple-500/10 flex items-center justify-between group hover:nm-flat transition-all"
+            >
+               <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center text-purple-500">
+                     <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                     <p className="text-[10px] font-black uppercase tracking-widest text-purple-500">Institutional Portal</p>
+                     <p className="text-[8px] opacity-40 font-bold uppercase tracking-tighter">System Owner & Facility Management</p>
+                  </div>
+               </div>
+               <ArrowRight className="w-4 h-4 opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-purple-500" />
+            </Link>
+        )}
+
         {/* Auth Interface Hub */}
-        <div className={`p-10 rounded-[3rem] nm-flat relative overflow-hidden group`}>
+        <div className={`p-10 rounded-[3rem] nm-flat relative overflow-hidden group border border-white/5`}>
             {error && (
                 <MotionDiv 
                     initial={{ opacity: 0, x: -10 }}
@@ -166,12 +185,14 @@ export default function Auth({ mode = "login" }) {
                 </div>
             ) : (
                 <form onSubmit={mode === 'request-access' ? handleRequestAccess : handleLogin}>
-                    <div className="mb-8">
-                        <h2 className="text-xl font-black uppercase tracking-widest leading-none mb-2">
-                            {mode === 'request-access' ? "Enrollment Hub" : mode === 'admin-login' ? "Executive Node" : "System Access"}
+                    <div className="mb-8 border-b border-white/5 pb-6">
+                        <h2 className="text-xl font-black uppercase tracking-widest leading-none mb-3">
+                            {mode === 'request-access' ? "Institutional Enrollment" : mode === 'admin-login' ? "Executive Node" : "System Access"}
                         </h2>
-                        <p className="text-[9px] font-black uppercase tracking-widest opacity-30 italic">
-                            {mode === 'request-access' ? "Initiate Vested Member Application" : "Validate existing identity node"}
+                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 leading-relaxed italic">
+                            {mode === 'request-access' 
+                              ? "Joining a recovery program? Link your profile to your facility using your unique institutional credentials." 
+                              : "Validate your identity node to resume your recovery journey."}
                         </p>
                     </div>
 
@@ -233,6 +254,7 @@ export default function Auth({ mode = "login" }) {
                                             className="w-full bg-transparent p-5 pl-14 rounded-3xl nm-inset-sm border border-transparent focus:border-blue-500/20 focus:outline-hidden transition-all text-[11px] font-bold uppercase tracking-widest"
                                         />
                                     </div>
+                                    <p className="text-[8px] font-black uppercase tracking-widest opacity-20 ml-4 italic">Provided by your Sponsor or Program Coordinator</p>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-4">Security: Establish Cipher</label>
@@ -318,10 +340,10 @@ export default function Auth({ mode = "login" }) {
             )}
         </div>
 
-        {mode !== 'admin-login' && (
+        {mode !== 'admin-login' && mode !== 'login' && (
             <div className="mt-10 flex justify-center">
-                <Link to="/admin/login" className="text-[8px] font-black uppercase tracking-widest opacity-15 hover:opacity-100 transition-all flex items-center gap-2">
-                    Executive Gateway <ChevronRight className="w-3 h-3" />
+                <Link to="/admin/login" className="text-[8px] font-black uppercase tracking-widest opacity-15 hover:opacity-100 transition-all flex items-center gap-2 italic">
+                    Administrative Gateway <ChevronRight className="w-3 h-3" />
                 </Link>
             </div>
         )}
