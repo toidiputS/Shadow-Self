@@ -227,7 +227,7 @@ export default function DailyCheckIn({ onComplete }) {
           <button
             onClick={nextStep}
             disabled={checkInMutation.isLoading}
-            className="flex-[2] py-5 rounded-2xl nm-button font-black text-[10px] uppercase tracking-[0.2rem] text-blue-500 flex items-center justify-center gap-3 relative overflow-visible"
+            className="flex-2 py-5 rounded-2xl nm-button font-black text-[10px] uppercase tracking-[0.2rem] text-blue-500 flex items-center justify-center gap-3 relative overflow-visible"
           >
             <span className={checkInMutation.isLoading ? "animate-pulse" : ""}>
                 {checkInMutation.isLoading ? "SYNCHRONIZING..." : step === steps.length ? "Initialize Uplink" : "Next Core Variable"}
