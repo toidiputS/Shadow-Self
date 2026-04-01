@@ -61,9 +61,14 @@ export default function Dashboard() {
   });
 
   useQuery({
-    queryKey: ['wallet'],
+    queryKey: ['wallet', user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from('progress').select('*').eq('user_id', user.id).single();
+      if (!user?.id) return null;
+      const { data, error } = await supabase.from('progress').select('*').eq('user_id', user.id).maybeSingle();
+      if (error) {
+        console.error("❌ Resource Pool Retrieval Error:", error.message);
+        return null;
+      }
       return data;
     },
     enabled: !!user?.id

@@ -8,14 +8,19 @@ export default function GuildStatus({ user_id }) {
     queryKey: ['guildStatus', user_id],
     queryFn: async () => {
       if (!user_id) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('guild_members')
         .select(`
           *,
           guilds(*)
         `)
         .eq('user_id', user_id)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error("❌ Guild Retrieval Error:", error.message);
+        return null;
+      }
       return data;
     },
     enabled: !!user_id,

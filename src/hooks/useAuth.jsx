@@ -15,16 +15,16 @@ export const AuthProvider = ({ children }) => {
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
       if (error) {
-        console.error("Error fetching profile:", error);
+        console.error("❌ Profile Retrieval Breach:", error.message);
         setProfile(null);
       } else {
         setProfile(data);
       }
     } catch (err) {
-      console.error("Profile fetch exception:", err);
+      console.error("❌ Crisis in Identity Fetching:", err);
     } finally {
       setLoading(false);
       setIsInitialized(true);
@@ -33,54 +33,55 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     let mounted = true;
+    let subscription = null;
 
-    // Combined initialization logic
     const initializeAuth = async () => {
-      const { data: { session: initialSession } } = await supabase.auth.getSession();
-      
-      if (!mounted) return;
-
-      if (initialSession) {
-        setSession(initialSession);
-        setUser(initialSession.user);
-        await fetchProfile(initialSession.user.id);
-      } else {
-        setLoading(false);
-        setIsInitialized(true);
-      }
-
-      // Start listener ONLY after initial check
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        
         if (!mounted) return;
-        
-        console.log(`🔐 Auth Event: ${event}`);
-        
-        if (event === 'SIGNED_OUT') {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-        } else if (currentSession) {
-          setSession(currentSession);
-          setUser(currentSession.user);
-          // Only trigger loading if we don't have a profile yet
-          if (!profile) setLoading(true); 
-          await fetchProfile(currentSession.user.id);
-        }
-      });
 
-      return () => {
-        subscription.unsubscribe();
-      };
+        if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+          await fetchProfile(initialSession.user.id);
+        } else {
+          setLoading(false);
+          setIsInitialized(true);
+        }
+
+        // Start listener ONLY after initial check
+        const { data } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+          if (!mounted) return;
+          
+          console.log(`🔐 System Auth Event: ${event}`);
+          
+          if (event === 'SIGNED_OUT') {
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setLoading(false);
+            setIsInitialized(true);
+          } else if (currentSession) {
+            setSession(currentSession);
+            setUser(currentSession.user);
+            await fetchProfile(currentSession.user.id);
+          }
+        });
+        
+        subscription = data.subscription;
+      } catch (err) {
+        console.error("❌ Auth Initialization Failure:", err);
+      }
     };
 
-    const cleanupPromise = initializeAuth();
+    initializeAuth();
 
     return () => {
       mounted = false;
-      cleanupPromise.then(cleanup => cleanup && cleanup());
+      if (subscription) subscription.unsubscribe();
     };
-  }, [profile]);
+  }, []); // Run ONLY once on mount
 
   const login = (email, password) => supabase.auth.signInWithPassword({ email, password });
   const logout = () => supabase.auth.signOut();
