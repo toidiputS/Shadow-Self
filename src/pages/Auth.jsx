@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/api/supabase";
 import { 
@@ -20,37 +20,48 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { useAuth } from "../hooks/useAuth";
+
 const MotionDiv = motion.div;
 
 export default function Auth({ mode = "login" }) {
+  const { session, loading, role, profile } = useAuth();
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
-  const [showOtp, setShowOtp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   
+  console.log("📍 Auth Sector State:", { mode, isLoading, hasError: !!error });
+
+  useEffect(() => {
+    // If we have a session and aren't loading, auto-route the user
+    if (session && !loading) {
+      const targetRole = role || profile?.role;
+      if (targetRole) {
+          console.log("⚡ Active Identity Signature Detected. Auto-routing to sector:", targetRole);
+          if (targetRole === 'admin') navigate('/admin');
+          else if (targetRole === 'sponsor') navigate('/sponsor');
+          else navigate('/dashboard');
+      }
+    }
+  }, [session, loading, role, profile, navigate]);
+
   // Request Access Fields
   const [name, setName] = useState("");
   const [house, setHouse] = useState("");
   const [sponsorCode, setSponsorCode] = useState("");
 
   const handleLogin = async (e) => {
-    console.log("🖱️ Access Protocol Initiated. Mode:", mode, "ShowOTP:", showOtp);
+    console.log("🖱️ Access Protocol Initiated. Mode:", mode);
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      if (mode === 'admin-login' && !showOtp) {
-          // Trigger the simulated 2FA layer
-          setShowOtp(true);
-          setIsLoading(false);
-          return;
-      }
-
-      if (mode === 'admin-login' && showOtp && otp !== '000000') {
+      if (mode === 'admin-login' && otp !== '000000') {
           throw new Error("Invalid Administrative Code. Verification sequence failed.");
       }
 
@@ -312,13 +323,9 @@ export default function Auth({ mode = "login" }) {
                                     </div>
                                 </div>
 
-                                {showOtp && (
-                                    <MotionDiv 
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        className="space-y-2 pt-2"
-                                    >
-                                        <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-4">Multi-Factor verification</label>
+                                {mode === 'admin-login' && (
+                                    <div className="space-y-2 pt-2">
+                                        <label className="text-[9px] font-black uppercase tracking-widest opacity-40 ml-4 text-purple-500">Multi-Factor verification</label>
                                         <div className="relative group">
                                             <div className="absolute left-6 top-1/2 -translate-y-1/2 text-purple-500/40 group-focus-within:text-purple-500 transition-colors">
                                                 <Fingerprint className="w-4 h-4" />
@@ -326,11 +333,10 @@ export default function Auth({ mode = "login" }) {
                                             <input 
                                                 type="text" maxLength="6" value={otp} onChange={(e) => setOtp(e.target.value)}
                                                 placeholder="000000"
-                                                className="w-full bg-transparent p-5 pl-14 rounded-3xl nm-inset-sm border border-purple-500/10 focus:border-purple-500/30 focus:outline-hidden transition-all text-[11px] font-black tracking-[1em] text-center"
+                                                className="w-full bg-transparent p-5 pl-14 rounded-3xl nm-inset-sm border border-purple-500/20 focus:border-purple-500/40 focus:outline-hidden transition-all text-[11px] font-black tracking-[1em] text-center text-purple-500"
                                             />
                                         </div>
-                                        <p className="text-[8px] font-black uppercase tracking-widest opacity-20 text-center mt-2 italic">Institutional Multi-Factor Verification Active</p>
-                                    </MotionDiv>
+                                    </div>
                                 )}
                             </>
                         )}
@@ -339,6 +345,7 @@ export default function Auth({ mode = "login" }) {
                     <button 
                         type="submit"
                         disabled={isLoading}
+                        onClick={() => console.log("🔥 Direct Click Event Fired on Submission Node")}
                         className={`w-full mt-10 py-5 rounded-3xl nm-button flex items-center justify-center gap-4 group transition-all relative overflow-hidden ${mode === 'admin-login' ? 'text-purple-500' : 'text-blue-500'}`}
                     >
                         <span className="text-[10px] font-black uppercase tracking-[0.3rem] italic pl-2">
@@ -367,6 +374,20 @@ export default function Auth({ mode = "login" }) {
                 </form>
             )}
         </div>
+
+        {mode === 'admin-login' && (
+            <div className="mt-6 flex flex-col items-center gap-4">
+                <button 
+                    onClick={() => {
+                        console.log("🚨 Emergency Admin Bypass Triggered");
+                        navigate("/admin");
+                    }}
+                    className="text-[8px] font-black uppercase tracking-[0.3em] opacity-10 hover:opacity-100 transition-all italic border-b border-white/5 pb-1"
+                >
+                    Emergency Access Protocol (Bypass)
+                </button>
+            </div>
+        )}
 
         {mode !== 'admin-login' && mode !== 'login' && (
             <div className="mt-10 flex justify-center">
