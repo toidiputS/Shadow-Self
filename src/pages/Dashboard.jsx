@@ -22,12 +22,10 @@ import { startOfDay, isSameDay } from "date-fns";
 
 import MetricsDisplay from "../components/dashboard/MetricsDisplay";
 import LevelProgress from "../components/dashboard/LevelProgress";
-import { getCurrentRank } from "@/utils";
 import QuestCard from "../components/dashboard/QuestCard";
 import CreateQuestForm from "../components/dashboard/CreateQuestForm";
 import PerfectDayBanner from "../components/dashboard/PerfectDayBanner";
 import ThemeSidebar from "../components/dashboard/ThemeSidebar";
-import AuditLog from "../components/dashboard/AuditLog";
 import GuildStatus from "../components/dashboard/GuildStatus";
 import DailyCheckIn from "../components/dashboard/DailyCheckIn";
 import WeeklyReview from "../components/dashboard/WeeklyReview";
@@ -36,7 +34,6 @@ import NotificationInbox from "../components/dashboard/NotificationInbox";
 
 export default function Dashboard() {
   const MotionDiv = motion.div;
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [showWeeklyReview, setShowWeeklyReview] = useState(false);
   const [bounceBackMessage, setBounceBackMessage] = useState(null);
@@ -57,7 +54,17 @@ export default function Dashboard() {
     }
   });
 
-  const { data: wallet } = useQuery({
+  const { data: guildMember } = useQuery({
+    queryKey: ['guildMember', profile?.user_id],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data } = await supabase.from('guild_members').select('guild_id').eq('user_id', user.id).maybeSingle();
+      return data;
+    },
+    enabled: !!profile?.user_id
+  });
+
+  useQuery({
     queryKey: ['wallet'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -79,14 +86,6 @@ export default function Dashboard() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       const { data } = await supabase.from('quest_completions').select('*').eq('user_id', user.id);
-      return data;
-    }
-  });
-
-  const { data: reviewQueue = [] } = useQuery({
-    queryKey: ['reviewQueue'],
-    queryFn: async () => {
-      const { data } = await supabase.from('quests').select('*').eq('proof_required', true).eq('review_status', 'pending');
       return data;
     }
   });
@@ -234,12 +233,13 @@ export default function Dashboard() {
           </MotionDiv>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-24 relative z-0">
-           <div className="lg:col-span-4 flex flex-col gap-10">
-              <GuildStatus user_id={profile?.user_id} />
-              <RecoveryHeatmap completionLogs={completionLogs} />
-           </div>
-           <div className="lg:col-span-8"><AuditLog /></div>
+        <div className="mb-24 relative z-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+               <GuildStatus user_id={profile?.user_id} />
+               <div className="lg:col-span-2">
+                 <RecoveryHeatmap completionLogs={completionLogs} />
+               </div>
+            </div>
         </div>
 
         <div className="mb-24 relative z-10 pt-10">
@@ -255,9 +255,6 @@ export default function Dashboard() {
             </div>
             {(groupedQuests?.due?.length || 0) > 0 && (
               <button 
-                onClick={() => {
-                   const next = groupedQuests.due[0];
-                }}
                 className="hidden lg:flex items-center gap-4 px-10 py-4 rounded-2xl nm-button text-[11px] font-black uppercase tracking-[0.25rem] text-blue-500 hover:scale-105 transition-all"
               >
                 <span>Process Next Protocol</span>
@@ -356,7 +353,11 @@ export default function Dashboard() {
         {showCheckIn && (
            <DailyCheckIn 
              userId={profile?.user_id} 
-             onComplete={() => setShowCheckIn(false)} 
+             guildId={guildMember?.guild_id}
+             onComplete={() => {
+               setShowCheckIn(false);
+               queryClient.invalidateQueries({ queryKey: ['dailyStatus'] });
+             }} 
            />
         )}
         {showWeeklyReview && <WeeklyReview onClose={() => setShowWeeklyReview(false)} />}

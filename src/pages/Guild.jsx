@@ -240,21 +240,21 @@ export default function Guild() {
           <div className="lg:col-span-8 space-y-12">
             <GuildRoster guildId={guildMember?.guild_id} />
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="w-full">
                 <GuildPotDetails potData={potData} />
-                <div className="h-full flex flex-col">
-                   <div className="flex items-center gap-5 mb-8 pl-4">
-                      <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center text-blue-500">
-                         <History className="w-5 h-5" />
-                      </div>
-                      <h3 className="text-lg font-black uppercase tracking-widest">Protocol Registry</h3>
-                   </div>
-                   <div className="flex-1 min-h-[500px]">
-                      <AuditLog />
-                   </div>
-                </div>
             </div>
           </div>
+        </div>
+
+        {/* Historical Insight (Non-Tactical Registry) */}
+        <div className="mt-32 pt-20 border-t border-white/5">
+            <div className="flex items-center gap-5 mb-12 pl-4 opacity-20 hover:opacity-60 transition-opacity cursor-default uppercase italic">
+                <History className="w-5 h-5 text-blue-500" />
+                <h3 className="text-sm font-black tracking-[0.5rem]">Institutional Log Output / Protocol Registry</h3>
+            </div>
+            <div className="opacity-60 hover:opacity-100 transition-opacity duration-1000">
+                <AuditLog />
+            </div>
         </div>
 
         <div className="pb-40" />

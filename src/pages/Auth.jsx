@@ -43,9 +43,14 @@ export default function Auth({ mode = "login" }) {
 
     try {
       if (mode === 'admin-login' && !showOtp) {
-          // Simulate a 2FA trigger or check if email is admin
+          // Trigger the simulated 2FA layer
           setShowOtp(true);
+          setIsLoading(false);
           return;
+      }
+
+      if (mode === 'admin-login' && showOtp && otp !== '000000') {
+          throw new Error("Invalid Administrative Code. Verification sequence failed.");
       }
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
@@ -299,10 +304,11 @@ export default function Auth({ mode = "login" }) {
                                             </div>
                                             <input 
                                                 type="text" maxLength="6" value={otp} onChange={(e) => setOtp(e.target.value)}
-                                                placeholder="6-DIGIT_CODE"
+                                                placeholder="000000"
                                                 className="w-full bg-transparent p-5 pl-14 rounded-3xl nm-inset-sm border border-purple-500/10 focus:border-purple-500/30 focus:outline-hidden transition-all text-[11px] font-black tracking-[1em] text-center"
                                             />
                                         </div>
+                                        <p className="text-[8px] font-black uppercase tracking-widest opacity-20 text-center mt-2 italic">Standard Dev Bypass: 000000</p>
                                     </MotionDiv>
                                 )}
                             </>

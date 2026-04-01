@@ -38,6 +38,9 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
       queryClient.invalidateQueries({ queryKey: ['dailyCheckIn', userId] });
       queryClient.invalidateQueries({ queryKey: ['userProfile', userId] });
       onComplete?.();
+    },
+    onError: (err) => {
+      console.error("Uplink Protocol Failed:", err);
     }
   });
 
@@ -112,7 +115,21 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
       exit={{ opacity: 0, scale: 0.95 }}
       className="fixed inset-0 z-50 flex items-center justify-center px-6 bg-black/80 backdrop-blur-xl"
     >
+    >
       <div className="w-full max-w-lg nm-flat-lg rounded-[3rem] p-10 relative overflow-hidden ring-1 ring-white/10">
+        {(!userId || !guildId) && step === steps.length && (
+           <div className="absolute inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center p-10 text-center backdrop-blur-md">
+              <AlertCircle className="w-16 h-16 text-orange-500 mb-6 animate-pulse" />
+              <h3 className="text-xl font-black uppercase tracking-widest text-orange-500 mb-4 italic">Institutional Identity Lost</h3>
+              <p className="text-[10px] font-bold opacity-60 leading-relaxed italic uppercase">"Your terminal session is missing identity tokens. Re-stabilize connection by reloading the command hub before attempting uplink."</p>
+              <button 
+                onClick={onComplete}
+                className="mt-10 px-10 py-4 rounded-2xl nm-button font-black text-[10px] uppercase tracking-widest text-orange-400 group flex items-center gap-3"
+              >
+                Clear Node
+              </button>
+           </div>
+        )}
         {/* Progress bar */}
         <div className="absolute top-0 left-0 w-full h-1.5 bg-black/10">
           <motion.div 
@@ -204,18 +221,13 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
               Previous
             </button>
           )}
-          <button
-            onClick={nextStep}
-            disabled={checkInMutation.isLoading}
-            className="flex-[2] py-5 rounded-2xl nm-button font-black text-[10px] uppercase tracking-[0.2rem] text-blue-500 flex items-center justify-center gap-3"
-          >
-            {step === steps.length ? (
-              <>
-                <Check className="w-4 h-4" />
-                Initialize Uplink
-              </>
-            ) : (
-              "Next Core Variable"
+            <span className={checkInMutation.isLoading ? "animate-pulse" : ""}>
+              {checkInMutation.isLoading ? "SYNCHRONIZING..." : step === steps.length ? "Initialize Uplink" : "Next Core Variable"}
+            </span>
+            {checkInMutation.isError && (
+              <div className="absolute -top-12 left-0 right-0 py-2 px-4 rounded-xl bg-red-500/10 text-red-500 text-[8px] font-black uppercase tracking-widest border border-red-500/20">
+                 ERROR: INTERNAL_SYNCH_FAILED (Re-Verify Guild Node)
+              </div>
             )}
           </button>
         </div>
