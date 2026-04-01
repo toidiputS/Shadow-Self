@@ -37,6 +37,7 @@ export default function Auth({ mode = "login" }) {
   const [sponsorCode, setSponsorCode] = useState("");
 
   const handleLogin = async (e) => {
+    console.log("🖱️ Access Protocol Initiated. Mode:", mode, "ShowOTP:", showOtp);
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -53,19 +54,39 @@ export default function Auth({ mode = "login" }) {
           throw new Error("Invalid Administrative Code. Verification sequence failed.");
       }
 
+      console.log("🔐 Commencing Institutional Authentication for:", email);
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) throw signInError;
       
-      const { data: profile } = await supabase.from('profiles').select('role').eq('user_id', data.user.id).single();
+      if (signInError) {
+          console.error("❌ Authentication Breach:", signInError.message);
+          throw signInError;
+      }
+      
+      console.log("🛠️ Auth Session Established. Fetching Identity Profile...");
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .single();
+      
+      if (profileError) {
+          console.error("❌ Profile Retrieval Failed:", profileError.message);
+          throw profileError;
+      }
+
+      console.log("👤 Identity Verified. Role:", profile?.role);
       
       // Verification check for Admin mode
       if (mode === 'admin-login' && profile?.role !== 'admin') {
+          console.warn("⚠️ Unauthorized: Executive node requires admin clearance.");
           await supabase.auth.signOut();
           throw new Error("Unauthorized: Admin credentials required for this gateway.");
       }
 
       // Dynamic Institutional Routing
       const role = profile?.role || 'member';
+      console.log("🚀 Initializing Routing to Sector:", role);
+      
       switch(role) {
           case 'admin':
               navigate("/admin");
@@ -308,7 +329,7 @@ export default function Auth({ mode = "login" }) {
                                                 className="w-full bg-transparent p-5 pl-14 rounded-3xl nm-inset-sm border border-purple-500/10 focus:border-purple-500/30 focus:outline-hidden transition-all text-[11px] font-black tracking-[1em] text-center"
                                             />
                                         </div>
-                                        <p className="text-[8px] font-black uppercase tracking-widest opacity-20 text-center mt-2 italic">Standard Dev Bypass: 000000</p>
+                                        <p className="text-[8px] font-black uppercase tracking-widest opacity-20 text-center mt-2 italic">Institutional Multi-Factor Verification Active</p>
                                     </MotionDiv>
                                 )}
                             </>
@@ -316,6 +337,7 @@ export default function Auth({ mode = "login" }) {
                     </div>
 
                     <button 
+                        type="submit"
                         disabled={isLoading}
                         className={`w-full mt-10 py-5 rounded-3xl nm-button flex items-center justify-center gap-4 group transition-all relative overflow-hidden ${mode === 'admin-login' ? 'text-purple-500' : 'text-blue-500'}`}
                     >
