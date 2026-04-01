@@ -65,8 +65,11 @@ export default function Auth({ mode = "login" }) {
           throw new Error("Invalid Administrative Code. Verification sequence failed.");
       }
 
-      console.log("🔐 Commencing Institutional Authentication for:", email);
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      console.log("🔐 Commencing Institutional Authentication for:", email.toLowerCase());
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ 
+        email: email.toLowerCase(), 
+        password 
+      });
       
       if (signInError) {
           console.error("❌ Authentication Breach:", signInError.message);
