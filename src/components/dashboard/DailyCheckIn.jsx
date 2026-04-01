@@ -3,8 +3,12 @@ import { motion, AnimatePresence } from "framer-motion"; // eslint-disable-line 
 import { supabase } from "@/api/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, Zap, Moon, Flame, Check, X, AlertCircle, Sparkles } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
 
-export default function DailyCheckIn({ userId, guildId, onComplete }) {
+export default function DailyCheckIn({ onComplete }) {
+  const { user, profile } = useAuth();
+  const userId = user?.id;
+  const guildId = profile?.guild_id; // Usually available in profile for this system
   const [step, setStep] = useState(1);
   const [data, setData] = useState({
     mood: 3,
@@ -116,7 +120,7 @@ export default function DailyCheckIn({ userId, guildId, onComplete }) {
       className="fixed inset-0 z-50 flex items-center justify-center px-6 bg-black/80 backdrop-blur-xl"
     >
       <div className="w-full max-w-lg nm-flat-lg rounded-[3rem] p-10 relative overflow-hidden ring-1 ring-white/10">
-        {(!userId || !guildId) && step === steps.length && (
+        {!user && step === steps.length && (
            <div className="absolute inset-0 z-60 bg-black/90 flex flex-col items-center justify-center p-10 text-center backdrop-blur-md">
               <AlertCircle className="w-16 h-16 text-orange-500 mb-6 animate-pulse" />
               <h3 className="text-xl font-black uppercase tracking-widest text-orange-500 mb-4 italic">Institutional Identity Lost</h3>

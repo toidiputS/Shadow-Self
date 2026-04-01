@@ -31,19 +31,50 @@ const MotionDiv = motion.div;
 export default function SubscriptionNode() {
   const [activePlan, setActivePlan] = React.useState("legacy");
 
+  const [isRFPModalOpen, setIsRFPModalOpen] = React.useState(false);
+  const [rfpForm, setRFPForm] = React.useState({
+    facilities: "1-5",
+    jurisdiction: "Private Facility",
+    requirements: ""
+  });
+  const [rfpSuccess, setRFPSuccess] = React.useState(false);
+  const [clearanceCode, setClearanceCode] = React.useState("");
+
   const rfpMutation = useMutation({
-    mutationFn: async (planName) => {
+    mutationFn: async (formData) => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase
+      
+      const { error: rfpError } = await supabase
+        .from('rfp_requests')
+        .insert({
+          user_id: user.id,
+          facility_count: parseInt(formData.facilities.split('-')[0]) || 1,
+          jurisdiction: formData.jurisdiction,
+          requirements: formData.requirements
+        });
+      
+      if (rfpError) throw rfpError;
+
+      const { error: notifError } = await supabase
         .from('notifications')
         .insert({
           user_id: user.id,
           type: 'alert',
           title: 'Infrastructure Expansion Requested',
-          message: `RFP Request initiated for ${planName} capacity expansion. A system administrator will contact you shortly.`,
-          metadata: { icon: "Globe", color: "text-purple-500", plan: planName }
+          message: `Formal RFP submitted for ${formData.facilities} facilities (${formData.jurisdiction}). System evaluation in progress.`,
+          metadata: { icon: "Globe", color: "text-purple-500" }
         });
-      if (error) throw error;
+        
+      if (notifError) throw notifError;
+    },
+    onSuccess: () => {
+      setClearanceCode(`EXP-${Math.random().toString(36).substring(7).toUpperCase()}`);
+      setRFPSuccess(true);
+      setTimeout(() => {
+        setIsRFPModalOpen(false);
+        setRFPSuccess(false);
+        setClearanceCode("");
+      }, 6000);
     }
   });
 
@@ -110,7 +141,6 @@ export default function SubscriptionNode() {
     }
   ];
 
-  const currentPlanData = plans.find(p => p.id === activePlan);
 
   return (
     <div className="space-y-8 py-4">
@@ -261,14 +291,109 @@ export default function SubscriptionNode() {
                </p>
             </div>
             <button 
-              onClick={() => rfpMutation.mutate(currentPlanData.name)}
-              disabled={rfpMutation.isPending}
-              className="px-12 py-6 rounded-4xl nm-button text-xs font-black uppercase tracking-[0.4em] text-purple-400 hover:text-purple-300 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              onClick={() => setIsRFPModalOpen(true)}
+              className="px-12 py-6 rounded-4xl nm-button text-xs font-black uppercase tracking-[0.4em] text-purple-400 hover:text-purple-300 transition-all hover:scale-105 active:scale-95"
             >
-               {rfpMutation.isPending ? 'TRANSMITTING...' : 'REQUEST EXPANSION RFP'}
+               REQUEST EXPANSION RFP
             </button>
          </div>
       </section>
+
+      {/* RFP Intake Modal Overlay */}
+      <AnimatePresence>
+        {isRFPModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
+            <MotionDiv
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-2xl nm-flat bg-(--bg-color) rounded-[3rem] p-10 relative overflow-hidden border border-purple-500/10"
+            >
+              {rfpSuccess ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-20 h-20 rounded-full nm-inset-sm flex items-center justify-center text-green-500 mb-8">
+                    <CheckCircle2 className="w-10 h-10 animate-bounce" />
+                  </div>
+                  <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-4">Request Authorized</h3>
+                  <div className="px-6 py-3 rounded-xl nm-inset-sm text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-8">
+                    Clearance Code: {clearanceCode}
+                  </div>
+                  <p className="text-xs font-black uppercase tracking-widest opacity-40 leading-relaxed italic max-w-xs">
+                    Institutional evaluation in progress. A system architect will contact your node within 24 hours.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-10 pb-6 border-b border-white/5">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center text-purple-500">
+                        <Globe className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-xl font-black italic tracking-tighter uppercase">RFP Expansion Request</h3>
+                    </div>
+                    <button onClick={() => setIsRFPModalOpen(false)} className="opacity-20 hover:opacity-100 transition-opacity">
+                      <Lock className="w-5 h-5" />
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-8">
+                    <div className="grid grid-cols-2 gap-8">
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 italic">Facility Scale</label>
+                        <select 
+                          value={rfpForm.facilities}
+                          onChange={(e) => setRFPForm({ ...rfpForm, facilities: e.target.value })}
+                          className="w-full p-5 rounded-2xl nm-inset-sm bg-transparent text-[11px] font-black uppercase tracking-widest outline-hidden border-none"
+                        >
+                          <option>1-5 Facilities</option>
+                          <option>5-15 Facilities</option>
+                          <option>15-50 Facilities</option>
+                          <option>Government/Multi-State</option>
+                        </select>
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 italic">Jurisdictional Scope</label>
+                        <select 
+                          value={rfpForm.jurisdiction}
+                          onChange={(e) => setRFPForm({ ...rfpForm, jurisdiction: e.target.value })}
+                          className="w-full p-5 rounded-2xl nm-inset-sm bg-transparent text-[11px] font-black uppercase tracking-widest outline-hidden border-none"
+                        >
+                          <option>Private Facility</option>
+                          <option>State-Run Recovery</option>
+                          <option>Federal Contract</option>
+                          <option>Academic Research</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 italic">Strategic Requirements</label>
+                      <textarea 
+                        value={rfpForm.requirements}
+                        onChange={(e) => setRFPForm({ ...rfpForm, requirements: e.target.value })}
+                        placeholder="Detail specific institutional needs (e.g., custom API, on-prem hosting, white-label UI)..."
+                        className="w-full h-32 p-5 rounded-2xl nm-inset-sm bg-transparent text-[11px] font-black uppercase tracking-wide outline-hidden border-none resize-none"
+                      />
+                    </div>
+                    
+                    <button 
+                      onClick={() => rfpMutation.mutate(rfpForm)}
+                      disabled={rfpMutation.isPending}
+                      className="w-full py-6 rounded-3xl nm-button text-[11px] font-black uppercase tracking-[0.4em] text-purple-500 hover:text-purple-300 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      {rfpMutation.isPending ? 'AUTHORIZING TRANSMISSION...' : 'TRANSMIT RFP SIGNAL'}
+                    </button>
+                    
+                    <p className="text-center text-[8px] font-black uppercase tracking-[0.2em] opacity-10">
+                      SHA-256 SECURED PROVINCIAL ENTRY CHANNEL
+                    </p>
+                  </div>
+                </>
+              )}
+            </MotionDiv>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Billing Ledger */}
       <section className="space-y-6">

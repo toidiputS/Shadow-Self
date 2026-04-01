@@ -78,6 +78,7 @@ export default function NotificationInbox({ isOpen, onClose }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(['notifications'], []);
+      queryClient.invalidateQueries(['unreadNotificationsCount']);
     }
   });
 
@@ -91,6 +92,7 @@ export default function NotificationInbox({ isOpen, onClose }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['notifications']);
+      queryClient.invalidateQueries(['unreadNotificationsCount']);
     }
   });
 

@@ -61,11 +61,8 @@ export default function Auth({ mode = "login" }) {
     setError(null);
 
     try {
-      if (mode === 'admin-login' && otp !== '000000') {
-          throw new Error("Invalid Administrative Code. Verification sequence failed.");
-      }
-
-      console.log("🔐 Commencing Institutional Authentication for:", email.toLowerCase());
+      console.log("📍 Access Protocol Initiated. Mode:", mode);
+      console.log("🔐 Checking Identity Node:", email.toLowerCase());
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ 
         email: email.toLowerCase(), 
         password 

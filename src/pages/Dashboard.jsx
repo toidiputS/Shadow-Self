@@ -48,17 +48,32 @@ export default function Dashboard() {
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+  
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false);
+    }
+    setDeferredPrompt(null);
+  };
+
   // Data Fetching
-  const { data: guildMember } = useQuery({
-    queryKey: ['guildMember', profile?.user_id],
-    queryFn: async () => {
-      const { data } = await supabase.from('guild_members').select('guild_id').eq('user_id', user.id).maybeSingle();
-      return data;
-    },
-    enabled: !!profile?.user_id
-  });
 
   useQuery({
     queryKey: ['wallet', user?.id],
@@ -92,13 +107,36 @@ export default function Dashboard() {
   });
 
   const { data: dailyStatus } = useQuery({
-    queryKey: ['dailyStatus'],
+    queryKey: ['dailyStatus', user?.id],
     queryFn: async () => {
+      if (!user?.id) return null;
       const today = new Date().toISOString().split('T')[0];
-      const { data } = await supabase.from('guild_check_ins').select('*').eq('user_id', user.id).eq('date', today).maybeSingle();
+      const { data } = await supabase
+        .from('guild_check_ins')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('date', today)
+        .maybeSingle();
       return data;
     },
     enabled: !!user?.id
+  });
+
+  const { data: unreadNotificationsCount = 0 } = useQuery({
+    queryKey: ['unreadNotificationsCount', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user?.id,
+    refetchInterval: 30000,
+    staleTime: 5000
   });
 
   // System Intelligence Logic
@@ -174,10 +212,10 @@ export default function Dashboard() {
                         <Activity className="w-8 h-8 relative z-10" />
                     </div>
                     <div>
-                        <h1 className="text-4xl font-black uppercase tracking-[0.5rem] leading-none mb-3 italic">Shadow Self</h1>
+                        <h1 className="text-3xl md:text-4xl font-black uppercase tracking-[0.3rem] md:tracking-[0.5rem] leading-none mb-3 italic">Shadow Self</h1>
                         <div className="flex items-center gap-3 opacity-30">
                             <Sparkles className="w-4 h-4" />
-                            <p className="text-[10px] font-black uppercase tracking-[0.4rem]">Member Command Hub Active</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2rem] md:tracking-[0.4rem]">Member Command Hub Active</p>
                         </div>
                     </div>
                 </div>
@@ -198,9 +236,11 @@ export default function Dashboard() {
                   className="w-16 h-16 rounded-4xl nm-button flex items-center justify-center text-blue-500 relative group"
                 >
                   <Bell className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 nm-flat flex items-center justify-center border-2 border-(--bg-color)">
-                    <span className="text-[8px] font-black text-white">4</span>
-                  </div>
+                  {unreadNotificationsCount > 0 && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 nm-flat flex items-center justify-center border-2 border-(--bg-color)">
+                      <span className="text-[8px] font-black text-white">{unreadNotificationsCount}</span>
+                    </div>
+                  )}
                 </button>
                 <button 
                   onClick={() => setIsThemeOpen(true)}
@@ -208,6 +248,15 @@ export default function Dashboard() {
                 >
                   <Palette className="w-6 h-6" />
                 </button>
+                {showInstallBtn && (
+                  <button 
+                    onClick={handleInstall}
+                    className="flex items-center gap-3 px-6 py-4 rounded-3xl nm-button text-[9px] font-black uppercase tracking-widest text-blue-500 bg-blue-500/5 border border-blue-500/20"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Secure App
+                  </button>
+                )}
             </div>
         </div>
 
@@ -352,8 +401,6 @@ export default function Dashboard() {
       <AnimatePresence>
         {showCheckIn && (
            <DailyCheckIn 
-             userId={profile?.user_id} 
-             guildId={guildMember?.guild_id}
              onComplete={() => {
                setShowCheckIn(false);
                queryClient.invalidateQueries({ queryKey: ['dailyStatus'] });
