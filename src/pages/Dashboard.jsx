@@ -32,7 +32,13 @@ import WeeklyReview from "../components/dashboard/WeeklyReview";
 import RecoveryHeatmap from "../components/dashboard/RecoveryHeatmap";
 import NotificationInbox from "../components/dashboard/NotificationInbox";
 
+import { useAuth } from "../hooks/useAuth";
+
 export default function Dashboard() {
+  const { profile: authProfile, user: authUser } = useAuth();
+  const profile = authProfile;
+  const user = authUser;
+  
   const MotionDiv = motion.div;
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [showWeeklyReview, setShowWeeklyReview] = useState(false);
@@ -45,19 +51,9 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
 
   // Data Fetching
-  const { data: profile } = useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
-      return data;
-    }
-  });
-
   const { data: guildMember } = useQuery({
     queryKey: ['guildMember', profile?.user_id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data } = await supabase.from('guild_members').select('guild_id').eq('user_id', user.id).maybeSingle();
       return data;
     },
@@ -67,10 +63,10 @@ export default function Dashboard() {
   useQuery({
     queryKey: ['wallet'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data } = await supabase.from('progress').select('*').eq('user_id', user.id).single();
       return data;
-    }
+    },
+    enabled: !!user?.id
   });
 
   const { data: quests = [], isLoading: questsLoading } = useQuery({
@@ -84,20 +80,20 @@ export default function Dashboard() {
   const { data: completionLogs = [] } = useQuery({
     queryKey: ['completionLogs'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { data } = await supabase.from('quest_completions').select('*').eq('user_id', user.id);
       return data;
-    }
+    },
+    enabled: !!user?.id
   });
 
   const { data: dailyStatus } = useQuery({
     queryKey: ['dailyStatus'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
       const today = new Date().toISOString().split('T')[0];
       const { data } = await supabase.from('guild_check_ins').select('*').eq('user_id', user.id).eq('date', today).maybeSingle();
       return data;
-    }
+    },
+    enabled: !!user?.id
   });
 
   // System Intelligence Logic
@@ -120,7 +116,6 @@ export default function Dashboard() {
 
   const completeQuestMutation = useMutation({
     mutationFn: async ({ quest, reflectionNote }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       await supabase.from('quest_completions').insert([{
         quest_id: quest.id,
         user_id: user.id,
