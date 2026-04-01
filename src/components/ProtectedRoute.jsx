@@ -7,10 +7,11 @@ import { motion } from 'framer-motion';
 const MotionDiv = motion.div;
 
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
-  const { session, loading, role, profile } = useAuth();
+  const { session, loading, role, profile, isInitialized } = useAuth();
   const location = useLocation();
 
-  if (loading) {
+  // 1. Critical Wait: Do not evaluate permissions until system is initialized
+  if (!isInitialized || loading) {
     return (
       <div className="min-h-screen bg-(--bg-color) flex items-center justify-center">
         <MotionDiv 
@@ -24,7 +25,7 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
     );
   }
 
-  // Redirect to login if unauthenticated
+  // 2. Authentication Gate
   if (!session) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
