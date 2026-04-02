@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion"; // eslint-disable-line 
 import { supabase } from "@/api/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, Zap, Moon, Flame, Check, X, AlertCircle, Sparkles } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function DailyCheckIn({ onComplete }) {
   const { user, profile } = useAuth();
