@@ -12,6 +12,8 @@ import {
   ArrowRight,
   ShieldMinus
 } from "lucide-react";
+
+const MotionDiv = motion.div;
 import { supabase } from "@/api/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -100,14 +102,14 @@ export default function NotificationInbox({ isOpen, onClose }) {
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div 
+          <MotionDiv 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 bg-black/60 backdrop-blur-md z-100"
           />
-          <motion.div
+          <MotionDiv
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -147,7 +149,7 @@ export default function NotificationInbox({ isOpen, onClose }) {
                ) : (
                   <AnimatePresence initial={false}>
                     {notifications.map((n) => (
-                      <motion.div 
+                      <MotionDiv 
                         key={n.id}
                         initial={{ opacity: 0, x: 20, height: 0 }}
                         animate={{ opacity: 1, x: 0, height: 'auto' }}
@@ -186,7 +188,7 @@ export default function NotificationInbox({ isOpen, onClose }) {
                                  </div>
                              </div>
                          </div>
-                      </motion.div>
+                      </MotionDiv>
                     ))}
                   </AnimatePresence>
                )}
@@ -201,7 +203,7 @@ export default function NotificationInbox({ isOpen, onClose }) {
                   {clearMutation.isPending ? 'Purging Feed...' : 'Clear All Signals'}
                </button>
             </div>
-          </motion.div>
+          </MotionDiv>
         </>
       )}
     </AnimatePresence>

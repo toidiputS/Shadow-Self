@@ -83,7 +83,7 @@ export default function SponsorPortal() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-3 px-8 py-4 rounded-3xl transition-all duration-500 whitespace-nowrap ${
+              className={`flex items-center gap-3 px-8 py-4 rounded-3xl transition-all duration-500 whitespace-nowrap relative ${
                 activeTab === tab.id 
                 ? 'nm-button text-orange-500 font-bold' 
                 : 'opacity-40 hover:opacity-100 hover:nm-flat-sm text-[11px] font-black uppercase tracking-widest'
@@ -91,6 +91,11 @@ export default function SponsorPortal() {
             >
               <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'animate-pulse' : ''}`} />
               <span className={activeTab === tab.id ? '' : 'text-[10px]'}>{tab.name}</span>
+              {tab.id === 'reviews' && reviewQueue.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-orange-500 nm-flat flex items-center justify-center border-2 border-(--bg-color) animate-pulse scale-75">
+                  <span className="text-[8px] font-black text-white">{reviewQueue.length}</span>
+                </span>
+              )}
             </button>
           ))}
         </div>

@@ -15,7 +15,8 @@ import {
   ShieldAlert, 
   ShieldCheck,
   Bell,
-  Heart
+  Heart,
+  HeartHandshake
 } from "lucide-react";
 import { AnimatePresence, motion, LayoutGroup } from "framer-motion";
 import { startOfDay, isSameDay } from "date-fns";
@@ -281,6 +282,34 @@ export default function Dashboard() {
              <button onClick={() => setBounceBackMessage(null)} className="px-10 py-5 rounded-2xl nm-button font-black text-[10px] uppercase tracking-widest text-blue-400 hover:text-blue-300 relative z-10"> Acknowledge Protocol </button>
           </MotionDiv>
         )}
+
+        {/* Sponsor Interaction Bridge */}
+        <div className="mb-24 relative z-10">
+           <div className="flex flex-col md:flex-row items-center gap-12 p-12 rounded-[3.5rem] nm-flat border border-orange-500/10 hover:border-orange-500/20 transition-all group overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-orange-500/10 transition-colors"></div>
+              <div className="w-24 h-24 rounded-4xl nm-inset-sm flex items-center justify-center text-orange-500 relative shrink-0">
+                  <HeartHandshake className="w-12 h-12 relative z-10" />
+                  <div className="absolute inset-0 bg-orange-500/10 rounded-4xl animate-pulse"></div>
+              </div>
+              <div className="flex-1 space-y-4 relative z-10 text-center md:text-left">
+                  <h3 className="text-xl font-black uppercase tracking-widest text-orange-500 italic">Institutional Alignment Feedback</h3>
+                  <p className="text-[11px] font-bold opacity-60 leading-relaxed italic max-w-2xl">
+                    "Great work on the morning routine, Marcus. Your consistency in the Identity Proof hub is setting a standard for the East Wing. Let's focus on the job search protocol next."
+                  </p>
+                  <div className="flex items-center justify-center md:justify-start gap-4">
+                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30 text-orange-500">— Sponsor: David Thorne</span>
+                     <span className="w-1.5 h-1.5 rounded-full bg-orange-500/40"></span>
+                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30 italic">2h ago</span>
+                  </div>
+              </div>
+              <button 
+                onClick={() => setIsInboxOpen(true)}
+                className="px-10 py-5 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest text-orange-500 hover:scale-105 transition-all relative z-10 group-hover:nm-flat-sm"
+              >
+                  Respond via Intel
+              </button>
+           </div>
+        </div>
 
         <div className="mb-24 relative z-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
