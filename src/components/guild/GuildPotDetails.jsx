@@ -304,7 +304,10 @@ export default function GuildPotDetails({ guildId, potData: initialPotData }) {
                      <span className={`text-sm font-black font-mono tracking-widest ${
                        (entry.amount > 0 || entry.sp_amount > 0) ? 'text-green-500' : 'text-red-500'
                      }`}>
-                       {(entry.amount > 0 ? '+' : (entry.amount < 0 ? '' : (entry.sp_amount > 0 ? '+' : ''))}{entry.amount || entry.sp_amount || 0} <span className="text-[9px] opacity-40">SP</span>
+                       {(function() {
+                         const val = entry.amount || entry.sp_amount || 0;
+                         return val > 0 ? '+' + val : val;
+                       })()} <span className="text-[9px] opacity-40">SP</span>
                      </span>
 
                   </div>
