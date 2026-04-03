@@ -17,14 +17,20 @@ export const AuthProvider = ({ children }) => {
         .eq('user_id', userId)
         .maybeSingle();
       
+      console.log("Profile fetch result:", { data, error });
+      
       if (error) {
-        console.error("❌ Profile Retrieval Breach:", error.message);
+        console.error("Profile Retrieval Breach:", error.message);
         setProfile(null);
-      } else {
+      } else if (data) {
         setProfile(data);
+        console.log("Profile loaded:", data.role, data.status);
+      } else {
+        console.warn("No profile found for user:", userId);
+        setProfile(null);
       }
     } catch (err) {
-      console.error("❌ Crisis in Identity Fetching:", err);
+      console.error("Crisis in Identity Fetching:", err);
     } finally {
       setLoading(false);
       setIsInitialized(true);
@@ -39,13 +45,17 @@ export const AuthProvider = ({ children }) => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         
+        console.log("Initial session check:", !!initialSession);
+        
         if (!mounted) return;
 
         if (initialSession) {
+          console.log("Session found, fetching profile...");
           setSession(initialSession);
           setUser(initialSession.user);
           await fetchProfile(initialSession.user.id);
         } else {
+          console.log("No session found");
           setLoading(false);
           setIsInitialized(true);
         }
@@ -54,7 +64,7 @@ export const AuthProvider = ({ children }) => {
         const { data } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
           if (!mounted) return;
           
-          console.log(`🔐 System Auth Event: ${event}`);
+          console.log("Auth state change:", event);
           
           if (event === 'SIGNED_OUT') {
             setSession(null);
@@ -71,7 +81,9 @@ export const AuthProvider = ({ children }) => {
         
         subscription = data.subscription;
       } catch (err) {
-        console.error("❌ Auth Initialization Failure:", err);
+        console.error("Auth Initialization Failure:", err);
+        setLoading(false);
+        setIsInitialized(true);
       }
     };
 
@@ -81,17 +93,16 @@ export const AuthProvider = ({ children }) => {
       mounted = false;
       if (subscription) subscription.unsubscribe();
     };
-  }, []); // Run ONLY once on mount
+  }, []);
 
   const login = (email, password) => supabase.auth.signInWithPassword({ email, password });
   const logout = () => supabase.auth.signOut();
 
-  // Memoize value to prevent unnecessary re-renders of the entire app tree
   const value = useMemo(() => ({
     user,
     profile,
     session,
-    loading: loading && !isInitialized, // Only truly loading on first mount/init
+    loading: loading && !isInitialized,
     isInitialized,
     login,
     logout,
