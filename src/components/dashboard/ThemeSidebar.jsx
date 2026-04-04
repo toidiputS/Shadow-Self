@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X, Palette, Contrast, Sun, Moon, Sparkles, Check, Droplets, HardDrive, Layout, ChevronRight, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { themeKernel } from "@/utils";
 
 const MotionDiv = motion.div;
 
@@ -53,21 +54,19 @@ const PROTOCOL_PRESETS = [
 ];
 
 export default function ThemeSidebar({ isOpen, onClose }) {
-  const [activePreset, setActivePreset] = useState('alpha-core');
+  const { hue: savedHue } = themeKernel.load();
+  const [activePreset, setActivePreset] = useState(null);
 
   const updateVar = (name, value) => {
-    document.documentElement.style.setProperty(name, value);
-    // Set data attribute to indicate manual override of dark mode
-    if (name === '--light') {
-        document.documentElement.setAttribute('data-theme', parseInt(value) < 40 ? 'dark' : 'light');
-    }
+    const theme = themeKernel.load();
+    if (name === '--hue') themeKernel.apply(value, theme.sat, theme.light);
+    if (name === '--light') themeKernel.apply(theme.hue, theme.sat, value);
+    setActivePreset(null); // Reset preset selection on manual override
   };
 
   const applyPreset = (preset) => {
     setActivePreset(preset.id);
-    updateVar('--hue', preset.hue);
-    updateVar('--sat', preset.sat);
-    updateVar('--light', preset.light);
+    themeKernel.apply(preset.hue, preset.sat, preset.light);
   };
 
   return (
@@ -148,7 +147,7 @@ export default function ThemeSidebar({ isOpen, onClose }) {
                     type="range" 
                     min="0" 
                     max="360" 
-                    defaultValue="210"
+                    defaultValue={savedHue}
                     onChange={(e) => updateVar('--hue', e.target.value)}
                     className="w-full h-2 rounded-full appearance-none bg-linear-to-r from-red-500 via-green-500 to-blue-500 cursor-pointer"
                   />

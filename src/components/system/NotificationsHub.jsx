@@ -77,7 +77,34 @@ export default function NotificationsHub() {
      'sponsor': 100,
      'leader': 45
    });
- 
+
+   const [escalationRules, setEscalationRules] = useState([
+      { id: 1, title: 'Protocol Deviation', trigger: 'Immediate', action: 'Institutional Redact', icon: 'Skull', color: 'text-red-500' },
+      { id: 2, title: 'Resource Exhaustion', trigger: '80% Threshold', action: 'Auto-Scaling RFP', icon: 'Zap', color: 'text-yellow-500' },
+      { id: 3, title: 'Node Interaction Lack', trigger: '48h Inactive', action: 'Signal Ping', icon: 'Wifi', color: 'text-blue-500' },
+      { id: 4, title: 'Billing Discontinuity', trigger: 'Grace Expiry', action: 'Service Hibernation', icon: 'Lock', color: 'text-orange-500' }
+   ]);
+
+   const handlePurgeRule = (id) => {
+      if (confirm("PURGE RITUAL: Are you sure you want to absolute-delete this escalation protocol?")) {
+         setEscalationRules(prev => prev.filter(r => r.id !== id));
+      }
+   };
+
+   const handleEditRule = (rule) => {
+      const newAction = prompt(`Override Action Protocol for [${rule.title.toUpperCase()}]:`, rule.action);
+      if (newAction) {
+         setEscalationRules(prev => prev.map(r => r.id === rule.id ? { ...r, action: newAction } : r));
+      }
+   };
+
+   const iconMap = {
+      Skull: <Skull className="w-5 h-5 text-red-500" />,
+      Zap: <Zap className="w-5 h-5 text-yellow-500" />,
+      Wifi: <Wifi className="w-5 h-5 text-blue-500" />,
+      Lock: <Lock className="w-5 h-5 text-orange-500" />
+   };
+
    const triggerMutation = useMutation({
      mutationFn: async ({ type, title, message }) => {
        const { data } = await supabase.auth.getUser();
@@ -431,39 +458,66 @@ export default function NotificationsHub() {
               )}
               
               {activeTab === 'escalation' && (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {[
-                         { title: 'Protocol Deviation', trigger: 'Immediate', action: 'Institutional Redact', icon: <Skull className="w-5 h-5 text-red-500" /> },
-                         { title: 'Resource Exhaustion', trigger: '80% Threshold', action: 'Auto-Scaling RFP', icon: <Zap className="w-5 h-5 text-yellow-500" /> },
-                         { title: 'Node Interaction Lack', trigger: '48h Inactive', action: 'Signal Ping', icon: <Wifi className="w-5 h-5 text-blue-500" /> },
-                         { title: 'Billing Discontinuity', trigger: 'Grace Expiry', action: 'Service Hibernation', icon: <Lock className="w-5 h-5 text-orange-500" /> }
-                      ].map((rule) => (
-                         <div key={rule.title} className="p-6 rounded-4xl nm-inset-sm border border-white/5 space-y-4">
-                            <div className="flex items-center justify-between">
-                               <div className="w-10 h-10 rounded-2xl nm-button flex items-center justify-center">
-                                  {rule.icon}
-                               </div>
-                               <span className="text-[9px] font-black uppercase tracking-widest text-blue-500 px-3 py-1 rounded-full nm-flat-xs">Active</span>
-                            </div>
-                            <div>
-                               <h4 className="text-sm font-black italic uppercase tracking-tight">{rule.title}</h4>
-                               <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-[10px] font-bold opacity-30 uppercase">Trigger:</span>
-                                  <span className="text-[10px] font-black text-white/80">{rule.trigger}</span>
-                               </div>
-                               <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-bold opacity-30 uppercase">Action:</span>
-                                  <span className="text-[10px] font-black text-orange-500">{rule.action}</span>
-                               </div>
-                            </div>
-                            <div className="pt-4 border-t border-white/5 flex gap-2">
-                               <button className="flex-1 py-3 rounded-2xl nm-button text-[9px] font-black uppercase hover:text-red-500 transition-all active:scale-95">Purge</button>
-                               <button className="flex-1 py-3 rounded-2xl nm-button text-[9px] font-black uppercase hover:text-blue-500 transition-all active:scale-95">Edit</button>
-                            </div>
-                         </div>
-                      ))}
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col">
+                   <div className="flex items-center justify-between mb-2">
+                       <div>
+                          <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Escalation Protocols</h3>
+                          <p className="text-[10px] font-black uppercase opacity-30 tracking-[0.3em] italic">Automated Incident Response Matrix</p>
+                       </div>
+                       <button 
+                         onClick={() => alert("UPLINK REQUIRED: Institutional rule creation is currently restricted to Root Core synchronization cycles. Please contact system architects for custom protocol deployment.")}
+                         className="px-6 py-4 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-3 hover:scale-105 active:scale-95 transition-all"
+                       >
+                          <Plus className="w-4 h-4" /> Deploy Rule
+                       </button>
                    </div>
+                   
+                   {escalationRules.length === 0 ? (
+                      <div className="flex-1 flex flex-col items-center justify-center py-20 opacity-20">
+                         <ShieldCheck className="w-16 h-16 mb-8 text-green-500" />
+                         <p className="text-xl font-black uppercase tracking-[0.4em] text-center max-w-sm leading-relaxed">
+                            All Protcols Purged. System in Blind-Faith High Compliance.
+                         </p>
+                      </div>
+                   ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-2 custom-scrollbar">
+                         {escalationRules.map((rule) => (
+                            <div key={rule.id} className="p-6 rounded-4xl nm-inset-sm border border-white/5 space-y-4 group">
+                               <div className="flex items-center justify-between">
+                                  <div className="w-10 h-10 rounded-2xl nm-button flex items-center justify-center">
+                                     {iconMap[rule.icon]}
+                                  </div>
+                                  <span className="text-[9px] font-black uppercase tracking-widest text-blue-500 px-3 py-1 rounded-full nm-flat-xs">Active</span>
+                               </div>
+                               <div>
+                                  <h4 className="text-sm font-black italic uppercase tracking-tight group-hover:text-blue-500 transition-colors">{rule.title}</h4>
+                                  <div className="flex items-center gap-2 mt-2">
+                                     <span className="text-[10px] font-bold opacity-30 uppercase">Trigger:</span>
+                                     <span className="text-[10px] font-black text-white/80">{rule.trigger}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                     <span className="text-[10px] font-bold opacity-30 uppercase">Action:</span>
+                                     <span className="text-[10px] font-black text-orange-500">{rule.action}</span>
+                                  </div>
+                               </div>
+                               <div className="pt-4 border-t border-white/5 flex gap-2">
+                                  <button 
+                                    onClick={() => handlePurgeRule(rule.id)}
+                                    className="flex-1 py-3 rounded-2xl nm-button text-[9px] font-black uppercase hover:text-red-500 transition-all active:scale-95"
+                                  >
+                                    Purge
+                                  </button>
+                                  <button 
+                                    onClick={() => handleEditRule(rule)}
+                                    className="flex-1 py-3 rounded-2xl nm-button text-[9px] font-black uppercase hover:text-blue-500 transition-all active:scale-95"
+                                  >
+                                    Edit
+                                  </button>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   )}
                 </div>
               )}
 

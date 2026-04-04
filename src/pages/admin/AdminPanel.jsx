@@ -27,8 +27,6 @@ import {
   FileDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import NotificationsHub from "../../components/system/NotificationsHub";
-import SubscriptionNode from "../../components/system/SubscriptionNode";
 import SetupWizard from "../../components/admin/SetupWizard";
 import TemplateManager from "../../components/admin/TemplateManager";
 import ImportTools from "../../components/admin/ImportTools";
@@ -166,6 +164,27 @@ export default function AdminPanel() {
                 <FileDown className="w-4 h-4" /> Export Audit Log
              </button>
           </div>
+        </div>
+
+        {/* Institutional Integrity Hub */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16 px-4">
+           {[
+             { label: "Active Residents", value: "18", trend: "+2", icon: Users, color: "text-blue-500" },
+             { label: "Stability Index", value: "94%", trend: "+5%", icon: ShieldCheck, color: "text-green-500" },
+             { label: "Breach Warnings", value: "0", trend: "-1", icon: ShieldAlert, color: "text-red-500" },
+             { label: "Resource Flow", value: "72%", trend: "Optimal", icon: Activity, color: "text-orange-500" }
+           ].map((stat, i) => (
+             <div key={i} className="p-8 rounded-4xl nm-flat border border-white/5 group hover:nm-button transition-all duration-500">
+                <div className="flex items-center justify-between mb-4">
+                   <div className={`w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center ${stat.color}`}>
+                      <stat.icon className="w-5 h-5" />
+                   </div>
+                   <span className="text-[10px] font-black italic tracking-tighter opacity-20 uppercase">{stat.trend}</span>
+                </div>
+                <p className="text-3xl font-black italic tracking-tighter uppercase leading-none mb-1">{stat.value}</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">{stat.label}</p>
+             </div>
+           ))}
         </div>
 
         {/* Tactical Navigation Tabs */}
@@ -322,19 +341,33 @@ export default function AdminPanel() {
               )}
 
               {activeTab === "system" && (
-                  <div className="space-y-12 pb-12">
-                     <div className="p-12 rounded-[3.5rem] nm-inset space-y-12">
-                        <NotificationsHub />
-                        <div className="border-t border-purple-500/10 pt-12">
-                          <SubscriptionNode />
-                        </div>
+                  <div className="py-24 px-4 max-w-4xl mx-auto text-center space-y-16">
+                     <div className="w-24 h-24 rounded-4xl nm-flat flex items-center justify-center text-purple-500 mx-auto">
+                        <Settings className="w-12 h-12" />
+                     </div>
+                     <div className="space-y-6">
+                        <h2 className="text-4xl font-black italic tracking-tighter uppercase leading-none">System Command Sector</h2>
+                        <p className="text-sm font-black uppercase tracking-widest opacity-30 leading-relaxed italic max-w-lg mx-auto">
+                           Orchestrate the Shadow Self spectral kernel, signal intelligence routing, and institutional resource allocation.
+                        </p>
+                     </div>
+                     <button 
+                        onClick={() => window.location.href = '/system'}
+                        className="px-16 py-8 rounded-4xl nm-button text-sm font-black uppercase tracking-[0.5em] text-purple-500 hover:text-purple-400 hover:scale-105 transition-all active:scale-95 flex items-center gap-6 mx-auto"
+                     >
+                        <Lock className="w-5 h-5 font-black" />
+                        ACCESS COMMAND NODE
+                        <ArrowRight className="w-5 h-5" />
+                     </button>
+                     <div className="pt-16 grid grid-cols-2 gap-12 opacity-10 text-[10px] font-black uppercase tracking-[0.4em]">
+                        <div className="py-6 rounded-3xl nm-inset-sm">Instance: WDZX-PRD-V3</div>
+                        <div className="py-6 rounded-3xl nm-inset-sm">Encryption: AES-256-GCM</div>
                      </div>
                   </div>
               )}
             </MotionDiv>
           )}
         </AnimatePresence>
-
       </div>
 
       <MemberIntelligenceModal 

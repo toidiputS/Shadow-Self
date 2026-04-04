@@ -12,6 +12,7 @@ import AdminPanel from './pages/admin/AdminPanel';
 import SponsorPortal from './pages/sponsor/SponsorPortal';
 import BottomNav from './components/BottomNav';
 import DesktopNav from './components/DesktopNav';
+import { themeKernel } from './utils';
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,10 @@ const MasterLayout = ({ children }) => {
 
 function App() {
   useEffect(() => {
+    // Spectral Kernel Initialization
+    const { hue, sat, light } = themeKernel.load();
+    themeKernel.apply(hue, sat, light);
+    
     const syncThemeColor = () => {
       const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color');
       const themeMeta = document.querySelector('meta[name="theme-color"]');
@@ -41,7 +46,7 @@ function App() {
     };
     syncThemeColor();
     const observer = new MutationObserver(syncThemeColor);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'data-theme'] });
     return () => observer.disconnect();
   }, []);
 

@@ -25,3 +25,38 @@ export function getCurrentRank(totalXp) {
 export function getNextRank(currentLevel) {
   return LEVEL_THRESHOLDS.find(rank => rank.level === currentLevel + 1);
 }
+
+/** 
+ * Institutional Spectral Kernel
+ * Handles persistent orchestration of theme variables
+ */
+export const themeKernel = {
+  save: (hue, sat, light) => {
+    localStorage.setItem('shadow_theme_hue', hue);
+    localStorage.setItem('shadow_theme_sat', sat);
+    localStorage.setItem('shadow_theme_light', light);
+  },
+  
+  load: () => {
+    return {
+      hue: localStorage.getItem('shadow_theme_hue') || '210',
+      sat: localStorage.getItem('shadow_theme_sat') || '15%',
+      light: localStorage.getItem('shadow_theme_light') || '88%'
+    };
+  },
+  
+  apply: (hue, sat, light) => {
+    const root = document.documentElement;
+    root.style.setProperty('--hue', hue);
+    root.style.setProperty('--sat', sat);
+    root.style.setProperty('--light', light);
+    
+    // Base Luminance Protocol (Dark/Light mode detection)
+    const lValue = parseInt(light);
+    const theme = lValue < 40 ? 'dark' : 'light';
+    root.setAttribute('data-theme', theme);
+    
+    // Persistence Sync
+    themeKernel.save(hue, sat, light);
+  }
+};

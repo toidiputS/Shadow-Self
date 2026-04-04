@@ -118,23 +118,23 @@ export default function GuildRoster({ guildId }) {
                          <div className="flex items-center justify-end gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
                             <button 
                                 onClick={() => handleAction(member, 'signal')}
-                                title="Signal Member" 
-                                className="p-2.5 rounded-xl nm-button hover:text-orange-500 transition-all active:scale-90"
+                                title="Institutional Signaling: View Signal History & Send Protocol Notices" 
+                                className="p-2.5 rounded-xl nm-button text-purple-500/60 hover:text-purple-500 transition-all hover:scale-110 active:scale-95"
                              >
                                <MessageSquare className="w-4 h-4" />
                             </button>
                             <button 
                                onClick={() => handleAction(member, 'view')}
-                               title="View Intelligence" 
-                               className="p-2.5 rounded-xl nm-button hover:text-blue-500 transition-all active:scale-90"
+                               title="Audit Intelligence: Review Habit Heatmap & Tactical Progress Logs"
+                               className="p-2.5 rounded-xl nm-button text-blue-500/60 hover:text-blue-500 transition-all hover:scale-110 active:scale-95"
                             >
                                <Search className="w-4 h-4" />
                             </button>
                             {member.role !== 'leader' && (
                                <button 
                                   onClick={() => handleAction(member, 'manage')}
-                                  title="Manage Protocol" 
-                                  className="p-2.5 rounded-xl nm-button hover:text-red-500 transition-all active:scale-90"
+                                  title="Registry Management: Purge Activity & Administrative Log Control" 
+                                  className="p-2.5 rounded-xl nm-button text-orange-500/60 hover:text-orange-500 transition-all hover:scale-110 active:scale-95"
                                 >
                                   <Settings className="w-4 h-4" />
                                 </button>

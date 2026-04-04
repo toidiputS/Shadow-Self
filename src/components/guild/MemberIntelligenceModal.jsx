@@ -28,6 +28,15 @@ export default function MemberIntelligenceModal({ isOpen, onClose, member, initi
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const userId = member?.user_id || member?.id; // Handle different object shapes
+  const [activeTab, setActiveTab] = React.useState('intel');
+
+  React.useEffect(() => {
+    if (isOpen && initialAction) {
+      if (initialAction === 'manage') setActiveTab('registry');
+      else if (initialAction === 'signal') setActiveTab('signals');
+      else setActiveTab('intel');
+    }
+  }, [isOpen, initialAction]);
 
 
   const { data: profile } = useQuery({
@@ -71,6 +80,21 @@ export default function MemberIntelligenceModal({ isOpen, onClose, member, initi
       return data || [];
     },
     enabled: !!userId && isOpen,
+  });
+
+  const { data: signals = [] } = useQuery({
+    queryKey: ['memberSignals', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+    enabled: !!userId && (isOpen && activeTab === 'signals'),
   });
 
    const breachMutation = useMutation({
@@ -238,91 +262,144 @@ export default function MemberIntelligenceModal({ isOpen, onClose, member, initi
                       <p className="text-[10px] font-black uppercase opacity-30 tracking-widest italic">Institutional Fidelity Log</p>
                    </div>
                 </div>
+
+                {/* Tactical Tabs */}
+                <div className="flex items-center gap-4 nm-inset-sm p-1.5 rounded-2xl">
+                   <button 
+                     onClick={() => setActiveTab('intel')}
+                     className={`flex-1 py-3 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'intel' ? 'nm-button text-blue-500' : 'opacity-40'}`}
+                   >
+                     Intelligence
+                   </button>
+                   <button 
+                     onClick={() => setActiveTab('signals')}
+                     className={`flex-1 py-3 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'signals' ? 'nm-button text-purple-500' : 'opacity-40'}`}
+                   >
+                     Signals
+                   </button>
+                   <button 
+                     onClick={() => setActiveTab('registry')}
+                     className={`flex-1 py-3 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'registry' ? 'nm-button text-orange-500' : 'opacity-40'}`}
+                   >
+                     Registry
+                   </button>
+                </div>
              </div>
 
              <div className="space-y-20">
-                <RecoveryHeatmap completionLogs={logs} />
-
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-16">
-                   <div className="space-y-8">
-                      <div className="flex items-center gap-4 mb-4 border-l-2 border-blue-500/30 pl-4">
-                         <Clock className="w-4 h-4 opacity-30 text-blue-500" />
-                         <h4 className="text-sm font-black uppercase tracking-widest opacity-40">Tactical Progress Logs</h4>
-                      </div>
-                      {logs.length === 0 ? (
-                         <div className="p-12 text-center nm-inset-sm opacity-20 italic uppercase tracking-widest text-xs rounded-3xl">No protocol data recorded.</div>
-                      ) : (
-                         <div className="space-y-4">
-                            {logs.map((log) => (
-                               <div key={log.id} className="p-6 rounded-3xl nm-inset-sm border border-white/5 flex flex-col gap-3 group hover:nm-inset transition-all">
-                                  <div className="flex items-center justify-between">
-                                     <p className="text-xs font-black uppercase tracking-wider text-blue-500">{log.quests?.title || "System Protocol"}</p>
-                                     <span className="text-[9px] font-black opacity-30 tabular-nums">
-                                        {formatDistanceToNow(new Date(log.completed_at), { addSuffix: true })}
-                                     </span>
-                                  </div>
-                                  <p className="text-[11px] font-bold opacity-60 leading-relaxed italic">{log.reflection_note || "Standard execution validated."}</p>
-                                  <div className="flex justify-end pt-2">
-                                     <span className="text-[10px] font-black text-blue-500/40">+{log.xp_earned || 50} XP</span>
-                                  </div>
-                               </div>
-                            ))}
-                         </div>
-                      )}
-                   </div>
-
-                   <div className="space-y-8">
-                       <div className="flex items-center justify-between gap-4 mb-4 border-l-2 border-orange-500/30 pl-4">
-                          <div className="flex items-center gap-4">
-                             <ShieldAlert className="w-4 h-4 opacity-30 text-orange-500" />
-                             <h4 className="text-sm font-black uppercase tracking-widest opacity-40">Action Registry</h4>
-                          </div>
-                          {activity.length > 0 && (
-                             <button 
-                               onClick={() => {
-                                 if (window.confirm("PURGE ALL RECORDS: This action is irreversible. Proceed?")) {
-                                   purgeAllMutation.mutate();
-                                 }
-                               }}
-                               disabled={purgeAllMutation.isPending}
-                               className="px-4 py-1.5 rounded-lg nm-button text-[9px] font-black uppercase tracking-widest text-red-500/60 hover:text-red-500 transition-all flex items-center gap-2"
-                             >
-                               <Trash2 className="w-3 h-3" /> Purge All
-                             </button>
-                          )}
+                {activeTab === 'intel' && (
+                  <>
+                    <RecoveryHeatmap completionLogs={logs} />
+                    <div className="space-y-8 max-w-3xl">
+                       <div className="flex items-center gap-4 mb-4 border-l-2 border-blue-500/30 pl-4">
+                          <Clock className="w-4 h-4 opacity-30 text-blue-500" />
+                          <h4 className="text-sm font-black uppercase tracking-widest opacity-40">Tactical Progress Logs</h4>
                        </div>
-                      {activity.length === 0 ? (
-                         <div className="p-12 text-center nm-inset-sm opacity-20 italic uppercase tracking-widest text-xs rounded-3xl">No registered actions recorded.</div>
+                       {logs.length === 0 ? (
+                          <div className="p-12 text-center nm-inset-sm opacity-20 italic uppercase tracking-widest text-xs rounded-3xl">No protocol data recorded.</div>
+                       ) : (
+                          <div className="space-y-4">
+                             {logs.map((log) => (
+                                <div key={log.id} className="p-6 rounded-3xl nm-inset-sm border border-white/5 flex flex-col gap-3 group hover:nm-inset transition-all">
+                                   <div className="flex items-center justify-between">
+                                      <p className="text-xs font-black uppercase tracking-wider text-blue-500">{log.quests?.title || "System Protocol"}</p>
+                                      <span className="text-[9px] font-black opacity-30 tabular-nums">
+                                         {formatDistanceToNow(new Date(log.completed_at), { addSuffix: true })}
+                                      </span>
+                                   </div>
+                                   <p className="text-[11px] font-bold opacity-60 leading-relaxed italic">{log.reflection_note || "Standard execution validated."}</p>
+                                   <div className="flex justify-end pt-2">
+                                      <span className="text-[10px] font-black text-blue-500/40">+{log.xp_earned || 50} XP</span>
+                                   </div>
+                                </div>
+                             ))}
+                          </div>
+                       )}
+                    </div>
+                  </>
+                )}
+
+                {activeTab === 'signals' && (
+                  <div className="space-y-8 max-w-3xl">
+                      <div className="flex items-center gap-4 mb-4 border-l-2 border-purple-500/30 pl-4">
+                         <MessageSquare className="w-4 h-4 opacity-30 text-purple-500" />
+                         <h4 className="text-sm font-black uppercase tracking-widest opacity-40">Institutional Signaling History</h4>
+                      </div>
+                      {signals.length === 0 ? (
+                         <div className="p-12 text-center nm-inset-sm opacity-20 italic uppercase tracking-widest text-xs rounded-3xl">No signal history found.</div>
                       ) : (
                          <div className="space-y-4">
-                            {activity.map((act) => (
-                               <div key={act.id} className="p-6 rounded-3xl nm-inset-sm border-y border-y-white/10 border-r border-r-white/10 border-l-2 border-l-orange-500/50 flex flex-col gap-3 group hover:nm-inset transition-all relative">
+                            {signals.map((sig) => (
+                               <div key={sig.id} className="p-6 rounded-3xl nm-inset-sm border border-white/5 flex flex-col gap-3">
                                   <div className="flex items-center justify-between mb-1">
-                                     <div className="flex items-center gap-3">
-                                        <span className="text-[9px] font-black uppercase opacity-30 italic px-2 py-0.5 rounded-md nm-flat-xs">{act.type || 'SYSTEM'}</span>
-                                        <button 
-                                          onClick={() => {
-                                            if (window.confirm("CONFIRM PURGE: Permanently remove this tactical record?")) {
-                                              purgeMutation.mutate(act.id);
-                                            }
-                                          }}
-                                          disabled={purgeMutation.isPending}
-                                          className="w-6 h-6 rounded-lg nm-button flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 disabled:opacity-30"
-                                        >
-                                          <Trash2 className="w-3 h-3" />
-                                        </button>
-                                     </div>
+                                     <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${sig.metadata?.priority === 'high' ? 'bg-red-500/20 text-red-500' : 'nm-flat-xs opacity-50'}`}>
+                                       {sig.type || 'SIGNAL'}
+                                     </span>
                                      <span className="text-[9px] font-black opacity-30 tabular-nums">
-                                        {formatDistanceToNow(new Date(act.created_at), { addSuffix: true })}
+                                        {formatDistanceToNow(new Date(sig.created_at), { addSuffix: true })}
                                      </span>
                                   </div>
-                                  <p className="text-xs font-bold opacity-80 leading-relaxed">{act.message}</p>
+                                  <p className="text-xs font-bold opacity-80 leading-relaxed">{sig.message}</p>
                                </div>
                             ))}
                          </div>
                       )}
-                   </div>
-                </div>
+                  </div>
+                )}
+
+                {activeTab === 'registry' && (
+                  <div className="space-y-8 max-w-3xl">
+                      <div className="flex items-center justify-between gap-4 mb-4 border-l-2 border-orange-500/30 pl-4">
+                         <div className="flex items-center gap-4">
+                            <ShieldAlert className="w-4 h-4 opacity-30 text-orange-500" />
+                            <h4 className="text-sm font-black uppercase tracking-widest opacity-40">Registry Management</h4>
+                         </div>
+                         {activity.length > 0 && (
+                            <button 
+                              onClick={() => {
+                                if (window.confirm("PURGE ALL RECORDS: This action is irreversible. Proceed?")) {
+                                  purgeAllMutation.mutate();
+                                }
+                              }}
+                              disabled={purgeAllMutation.isPending}
+                              className="px-4 py-1.5 rounded-lg nm-button text-[9px] font-black uppercase tracking-widest text-red-500/60 hover:text-red-500 transition-all flex items-center gap-2"
+                            >
+                              <Trash2 className="w-3 h-3" /> Purge All
+                            </button>
+                         )}
+                      </div>
+                     {activity.length === 0 ? (
+                        <div className="p-12 text-center nm-inset-sm opacity-20 italic uppercase tracking-widest text-xs rounded-3xl">No registered actions recorded.</div>
+                     ) : (
+                        <div className="space-y-4">
+                           {activity.map((act) => (
+                              <div key={act.id} className="p-6 rounded-3xl nm-inset-sm border-y border-y-white/10 border-r border-r-white/10 border-l-2 border-l-orange-500/50 flex flex-col gap-3 group hover:nm-inset transition-all relative">
+                                 <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-3">
+                                       <span className="text-[9px] font-black uppercase opacity-30 italic px-2 py-0.5 rounded-md nm-flat-xs">{act.type || 'SYSTEM'}</span>
+                                       <button 
+                                         onClick={() => {
+                                           if (window.confirm("CONFIRM PURGE: Permanently remove this tactical record?")) {
+                                             purgeMutation.mutate(act.id);
+                                           }
+                                         }}
+                                         disabled={purgeMutation.isPending}
+                                         className="w-6 h-6 rounded-lg nm-button flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:scale-110 active:scale-95 disabled:opacity-30"
+                                       >
+                                         <Trash2 className="w-3 h-3" />
+                                       </button>
+                                    </div>
+                                    <span className="text-[9px] font-black opacity-30 tabular-nums">
+                                       {formatDistanceToNow(new Date(act.created_at), { addSuffix: true })}
+                                    </span>
+                                 </div>
+                                 <p className="text-xs font-bold opacity-80 leading-relaxed">{act.message}</p>
+                              </div>
+                           ))}
+                        </div>
+                     )}
+                  </div>
+                )}
              </div>
           </div>
         </MotionDiv>

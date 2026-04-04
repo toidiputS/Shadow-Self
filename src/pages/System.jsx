@@ -6,18 +6,16 @@ import {
   User, 
   ArrowLeft, 
   Palette, 
-  HardDrive, 
   ShieldCheck, 
   Bell, 
   CreditCard,
   Cloud,
   ChevronRight,
   LogOut,
-  Lock,
-  Sparkles,
   RefreshCw,
   Sun,
-  Moon
+  Moon,
+  ShieldAlert
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -25,27 +23,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import ThemeSidebar from "../components/dashboard/ThemeSidebar";
 import NotificationsHub from "../components/system/NotificationsHub";
 import SubscriptionNode from "../components/system/SubscriptionNode";
+import { themeKernel } from "@/utils";
 
 const MotionDiv = motion.div;
 
 export default function System() {
   const [isThemeOpen, setIsThemeOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState(null);
+  const [isPurging, setIsPurging] = React.useState(null); // 'logs' or 'notifications'
   
-  const updateTheme = (name, value) => {
-    document.documentElement.style.setProperty(name, value);
-    if (name === '--light') {
-        const lightValue = parseInt(value);
-        document.documentElement.setAttribute('data-theme', lightValue < 40 ? 'dark' : 'light');
-    }
-  };
+  // Spectral State Initialization (Managed via ThemeSidebar)
+  const { hue: savedHue } = themeKernel.load();
 
-  const applyPreset = (p) => {
-    updateTheme('--hue', p.h);
-    updateTheme('--sat', p.s);
-    updateTheme('--light', p.l);
-    alert(`PRESET ACTIVATED: ${p.name.toUpperCase()} protocol deployed.`);
-  };
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
@@ -68,6 +57,46 @@ export default function System() {
     },
     enabled: !!user?.id,
   });
+
+  const handlePurgeLogs = async () => {
+    if (!window.confirm("CRITICAL ACTION: Execute full guild activity ledger and quest audit purge? This cannot be undone.")) return;
+    setIsPurging('logs');
+    try {
+      // Execute multi-table purge using independent delete operations for safety
+      const results = await Promise.all([
+        supabase.from('guild_activity_log').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        supabase.from('quest_audit_log').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+      ]);
+      
+      const errors = results.filter(r => r.error);
+      if (errors.length > 0) throw errors[0].error;
+      
+      alert("MATRIX SUCCESS: All institutional archives purged.");
+    } catch (err) {
+      console.error(err);
+      alert("UPLINK ERROR: Purge ritual failed at root node.");
+    } finally {
+      setIsPurging(null);
+    }
+  };
+
+  const handlePurgeNotifications = async () => {
+    if (!window.confirm("CRITICAL ACTION: Execute full notification signal purge? This cannot be undone.")) return;
+    setIsPurging('notifications');
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.id);
+      if (error) throw error;
+      alert("MATRIX SUCCESS: Signal archive cleared.");
+    } catch (err) {
+      console.error(err);
+      alert("UPLINK ERROR: Signal purge failed.");
+    } finally {
+      setIsPurging(null);
+    }
+  };
 
   return (
     <div className="bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-12 transition-colors duration-400">
@@ -117,211 +146,195 @@ export default function System() {
            </div>
         </div>
 
-        {/* Settings Groups */}
-        <div className="space-y-8">
-           {/* Visual Settings & Theme Orchestration */}
-           <section>
-              <div className="flex items-center gap-3 mb-6 ml-2">
-                 <Palette className="w-4 h-4 opacity-40" />
-                 <h3 className="text-xs font-black uppercase tracking-[0.3rem] opacity-60">Visual Orchestration</h3>
+        {/* Tactical Command Grid (Bento Style) */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-12">
+           
+           {/* 1. Visual Orchestration Node (Small Card) */}
+           <div className="md:col-span-4 group h-full">
+              <div 
+                onClick={() => setIsThemeOpen(true)}
+                className="h-full p-8 rounded-4xl nm-button flex flex-col justify-between border border-transparent hover:border-blue-500/20 hover:scale-[1.02] transition-all cursor-pointer group"
+              >
+                 <div className="space-y-6">
+                    <div className="w-14 h-14 rounded-2xl nm-inset-sm flex items-center justify-center text-blue-500 group-hover:nm-inset transition-all">
+                       <Palette className="w-7 h-7" />
+                    </div>
+                    <div>
+                       <h3 className="text-lg font-black uppercase tracking-widest mb-2">Spectral Kernel</h3>
+                       <p className="text-[10px] font-bold opacity-40 uppercase tracking-tighter leading-relaxed italic">
+                          Orchestrate institutional aesthetics through HSL-based dynamic variables. 
+                       </p>
+                    </div>
+                 </div>
+                 <div className="flex items-center justify-between mt-8">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-blue-500/60 font-mono">HUE: {savedHue}°</span>
+                    <div className="flex -space-x-2">
+                       <div className="w-4 h-4 rounded-full bg-blue-500 shadow-lg"></div>
+                       <div className="w-4 h-4 rounded-full bg-green-500 shadow-lg"></div>
+                       <div className="w-4 h-4 rounded-full bg-red-500 shadow-lg"></div>
+                    </div>
+                 </div>
               </div>
-              <div className={`p-1 rounded-4xl transition-all duration-700 ${activeSection === 'theme' ? 'nm-inset p-4 bg-blue-500/5' : ''}`}>
-                 <button 
-                   onClick={() => setActiveSection(activeSection === 'theme' ? null : 'theme')}
-                   className={`w-full p-6 rounded-3xl nm-button flex items-center justify-between group transition-all ${activeSection === 'theme' ? 'nm-inset-sm border border-blue-500/20' : 'hover:nm-flat border border-transparent'}`}
-                 >
-                    <div className="flex items-center gap-5">
-                       <div className={`w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center transition-colors ${activeSection === 'theme' ? 'text-blue-500' : 'text-blue-500 opacity-60'}`}>
-                          <Palette className="w-5 h-5" />
+           </div>
+
+           {/* 2. Notifications Intelligence (Large Header Card) */}
+           <div className="md:col-span-8 group h-full">
+              <div 
+                onClick={() => setActiveSection(activeSection === 'notifications' ? null : 'notifications')}
+                className={`h-full p-8 rounded-4xl flex flex-col justify-between transition-all cursor-pointer ${activeSection === 'notifications' ? 'nm-inset border border-blue-500/30' : 'nm-button border border-transparent hover:border-blue-500/20 hover:scale-[1.01]'}`}
+              >
+                 <div className="flex flex-col md:flex-row gap-8 items-start">
+                    <div className={`w-14 h-14 rounded-2xl nm-inset-sm flex items-center justify-center transition-colors shrink-0 ${activeSection === 'notifications' ? 'text-blue-500 nm-inset' : 'text-blue-500/60'}`}>
+                       <Bell className="w-7 h-7" />
+                    </div>
+                    <div className="flex-1">
+                       <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-black uppercase tracking-widest mb-2">Signal Intelligence Hub</h3>
+                          <ChevronRight className={`w-6 h-6 opacity-20 transition-transform duration-500 ${activeSection === 'notifications' ? 'rotate-90 opacity-100' : 'group-hover:opacity-100 group-hover:translate-x-1'}`} />
                        </div>
-                       <div className="text-left">
-                          <p className="text-xs font-black uppercase tracking-widest">Interface Theme Presets</p>
-                          <p className="text-[10px] opacity-40 mt-1 uppercase font-black tracking-tighter italic">Live Spectral Hub — Alpha, Veracity, Blood Moon</p>
+                       <p className="text-[10px] font-bold opacity-40 uppercase tracking-tighter leading-relaxed italic mb-6">
+                          Configure multi-channel escalation logic and ritual triggers for recovery compliance monitoring.
+                       </p>
+                       <div className="flex gap-3">
+                          <span className="px-3 py-1 rounded-lg nm-inset-sm text-[8px] font-black uppercase text-green-500/80">Active</span>
+                          <span className="px-3 py-1 rounded-lg nm-inset-sm text-[8px] font-black uppercase text-blue-500/80">4 Nodes</span>
+                          <span className="px-3 py-1 rounded-lg nm-inset-sm text-[8px] font-black uppercase opacity-20">Uplink Nominal</span>
                        </div>
                     </div>
-                    <ChevronRight className={`w-5 h-5 opacity-20 transition-transform duration-500 ${activeSection === 'theme' ? 'rotate-90 opacity-100' : 'group-hover:opacity-100 group-hover:translate-x-1'}`} />
-                 </button>
+                 </div>
 
                  <AnimatePresence>
-                    {activeSection === 'theme' && (
-                      <MotionDiv
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                         <div className="mt-8 p-8 border-t border-white/5 space-y-12">
-                            {/* In-page Theme Controls for Immediate Feedback */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                               <div className="space-y-6">
-                                  <div className="flex items-center justify-between">
-                                     <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Spectral Hue</p>
-                                     <button onClick={() => updateTheme('--hue', '210')}><RefreshCw className="w-3 h-3 opacity-20 hover:opacity-100" /></button>
-                                  </div>
-                                  <div className="nm-inset-sm p-4 rounded-2xl">
-                                     <input 
-                                       type="range" 
-                                       min="0" 
-                                       max="360" 
-                                       onChange={(e) => updateTheme('--hue', e.target.value)}
-                                       className="w-full h-1.5 rounded-full appearance-none bg-linear-to-r from-red-500 via-green-500 to-blue-500 cursor-pointer"
-                                     />
-                                  </div>
-                               </div>
-                               <div className="space-y-6">
-                                  <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Base Protocol</p>
-                                  <div className="grid grid-cols-2 gap-4">
-                                     <button 
-                                       onClick={() => updateTheme('--light', '88%')}
-                                       className="p-4 rounded-xl nm-button flex items-center gap-3"
-                                     >
-                                        <Sun className="w-4 h-4 text-yellow-500" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest">Light Core</span>
-                                     </button>
-                                     <button 
-                                       onClick={() => updateTheme('--light', '15%')}
-                                       className="p-4 rounded-xl nm-button flex items-center gap-3"
-                                     >
-                                        <Moon className="w-4 h-4 text-blue-500" />
-                                        <span className="text-[9px] font-black uppercase tracking-widest">Stealth Node</span>
-                                     </button>
-                                  </div>
-                               </div>
-                            </div>
-                            
-                            <div className="space-y-6 pt-4">
-                               <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Institutional Presets</p>
-                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                  {[
-                                    { name: 'Alpha Core', h: 210, s: '15%', l: '88%' },
-                                    { name: 'Veracity', h: 155, s: '20%', l: '88%' },
-                                    { name: 'Blood Moon', h: 355, s: '25%', l: '15%' },
-                                    { name: 'Stealth', h: 220, s: '10%', l: '12%' },
-                                  ].map((p, i) => (
-                                    <button 
-                                      key={i}
-                                      onClick={() => {
-                                        document.documentElement.style.setProperty('--hue', p.h);
-                                        document.documentElement.style.setProperty('--sat', p.s);
-                                        document.documentElement.style.setProperty('--light', p.l);
-                                      }}
-                                      className="p-4 rounded-xl nm-button text-[9px] font-black uppercase tracking-widest hover:text-blue-500"
-                                    >
-                                       {p.name}
-                                    </button>
-                                  ))}
-                               </div>
-                            </div>
-                         </div>
-                      </MotionDiv>
+                    {activeSection === 'notifications' && (
+                       <MotionDiv
+                         initial={{ height: 0, opacity: 0 }}
+                         animate={{ height: "auto", opacity: 1 }}
+                         exit={{ height: 0, opacity: 0 }}
+                         className="overflow-hidden mt-8 pt-8 border-t border-white/5"
+                         onClick={(e) => e.stopPropagation()}
+                       >
+                          <NotificationsHub />
+                       </MotionDiv>
                     )}
                  </AnimatePresence>
               </div>
-           </section>
+           </div>
 
-           {/* Security & Finance Hub */}
-           <section>
-              <div className="flex items-center gap-3 mb-6 ml-2">
-                 <ShieldCheck className="w-4 h-4 opacity-40" />
-                 <h3 className="text-xs font-black uppercase tracking-[0.3rem] opacity-60">Access & Institutional Node</h3>
-              </div>
-              <div className="space-y-4">
-                 {/* Notifications Hub Module */}
-                 <div className={`p-1 rounded-4xl transition-all duration-700 ${activeSection === 'notifications' ? 'nm-inset p-4 bg-blue-500/5' : ''}`}>
-                    <button 
-                      onClick={() => setActiveSection(activeSection === 'notifications' ? null : 'notifications')}
-                      className={`w-full p-6 rounded-3xl nm-button flex items-start gap-4 text-left transition-all group ${activeSection === 'notifications' ? 'nm-inset-sm border border-blue-500/20' : 'hover:nm-flat border border-transparent'}`}
-                    >
-                       <div className={`w-12 h-12 rounded-2xl nm-inset-sm flex items-center justify-center transition-colors ${activeSection === 'notifications' ? 'text-blue-500' : 'text-blue-500 opacity-60 group-hover:opacity-100'}`}>
-                          <Bell className="w-6 h-6" />
+           {/* 3. Resource & Subscription Node (Wide Bottom Card) */}
+           <div className="md:col-span-12 group">
+              <div 
+                onClick={() => setActiveSection(activeSection === 'subscription' ? null : 'subscription')}
+                className={`p-8 rounded-5xl flex flex-col transition-all cursor-pointer ${activeSection === 'subscription' ? 'nm-inset border border-green-500/30' : 'nm-button border border-transparent hover:border-green-500/20'}`}
+              >
+                 <div className="flex flex-col md:flex-row gap-8 items-center">
+                    <div className={`w-16 h-16 rounded-3xl nm-inset-sm flex items-center justify-center transition-colors shrink-0 ${activeSection === 'subscription' ? 'text-green-500 nm-inset' : 'text-green-500/60'}`}>
+                       <CreditCard className="w-8 h-8" />
+                    </div>
+                    <div className="flex-1 text-center md:text-left">
+                       <div className="flex items-center justify-between">
+                          <h3 className="text-xl font-black uppercase tracking-widest">Resource Allocation Node</h3>
+                          <ChevronRight className={`w-6 h-6 opacity-20 transition-transform duration-500 hidden md:block ${activeSection === 'subscription' ? 'rotate-90 opacity-100' : 'group-hover:opacity-100 group-hover:translate-x-1'}`} />
                        </div>
-                       <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                             <h4 className="text-xs font-black uppercase tracking-widest leading-none">Notifications Hub</h4>
-                             <ChevronRight className={`w-5 h-5 opacity-20 transition-transform duration-500 ${activeSection === 'notifications' ? 'rotate-90 opacity-100' : 'group-hover:opacity-100 group-hover:translate-x-1'}`} />
-                          </div>
-                          <p className="text-[10px] font-bold uppercase tracking-tighter opacity-40 mt-1 mb-2">Configure escalation logic and channel routing</p>
-                          <div className="flex gap-2">
-                             <span className="px-2 py-0.5 rounded-md nm-inset-sm text-[8px] font-black uppercase text-green-500/80">4 Channels Online</span>
-                             <span className="px-2 py-0.5 rounded-md nm-inset-sm text-[8px] font-black uppercase text-orange-500/80 italic">Overrides Active</span>
-                          </div>
-                       </div>
-                    </button>
-                    
-                    <AnimatePresence>
-                       {activeSection === 'notifications' && (
-                         <MotionDiv
-                           initial={{ height: 0, opacity: 0 }}
-                           animate={{ height: "auto", opacity: 1 }}
-                           exit={{ height: 0, opacity: 0 }}
-                           className="overflow-hidden"
-                         >
-                            <div className="mt-4 pt-4 border-t border-white/5">
-                               <NotificationsHub />
-                            </div>
-                         </MotionDiv>
-                       )}
-                    </AnimatePresence>
+                       <p className="text-[11px] font-bold opacity-40 uppercase tracking-widest mt-1 italic">
+                          Institutional Tier Management — {profile?.tier || 'Legacy Protocol'} Active
+                       </p>
+                    </div>
+                    <div className="px-8 py-3 rounded-2xl nm-inset-sm text-[10px] font-black uppercase text-green-500 tracking-[0.2em]">
+                       Verified: {profile?.id?.substring(0, 8)}
+                    </div>
                  </div>
 
-                 {/* Subscription Node Module */}
-                 <div className={`p-1 rounded-4xl transition-all duration-700 ${activeSection === 'subscription' ? 'nm-inset p-4 bg-green-500/5' : ''}`}>
-                    <button 
-                      onClick={() => setActiveSection(activeSection === 'subscription' ? null : 'subscription')}
-                      className={`w-full p-6 rounded-3xl nm-button flex items-start gap-4 text-left transition-all group ${activeSection === 'subscription' ? 'nm-inset-sm border border-green-500/20' : 'hover:nm-flat border border-transparent'}`}
-                    >
-                       <div className={`w-12 h-12 rounded-2xl nm-inset-sm flex items-center justify-center transition-colors ${activeSection === 'subscription' ? 'text-green-500' : 'text-green-500 opacity-60 group-hover:opacity-100'}`}>
-                          <CreditCard className="w-6 h-6" />
-                       </div>
-                       <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                             <h4 className="text-xs font-black uppercase tracking-widest leading-none">Subscription Node</h4>
-                             <ChevronRight className={`w-5 h-5 opacity-20 transition-transform duration-500 ${activeSection === 'subscription' ? 'rotate-90 opacity-100' : 'group-hover:opacity-100 group-hover:translate-x-1'}`} />
-                          </div>
-                          <p className="text-[10px] font-bold uppercase tracking-tighter opacity-40 mt-1 mb-2">Manage institutional entitlements and resource caps</p>
-                          <div className="flex gap-2">
-                             <span className="px-2 py-0.5 rounded-md nm-inset-sm text-[8px] font-black uppercase text-blue-500/80 italic">Legacy Active</span>
-                             <span className="px-2 py-0.5 rounded-md nm-inset-sm text-[8px] font-black uppercase opacity-20 italic">Renewal: Dec 31</span>
-                          </div>
-                       </div>
-                    </button>
+                 <AnimatePresence>
+                    {activeSection === 'subscription' && (
+                       <MotionDiv
+                         initial={{ height: 0, opacity: 0 }}
+                         animate={{ height: "auto", opacity: 1 }}
+                         exit={{ height: 0, opacity: 0 }}
+                         className="overflow-hidden mt-12 pt-12 border-t border-white/5"
+                         onClick={(e) => e.stopPropagation()}
+                       >
+                          <SubscriptionNode />
+                       </MotionDiv>
+                    )}
+                 </AnimatePresence>
+              </div>
+           </div>
+        </div>
 
-                    <AnimatePresence>
-                       {activeSection === 'subscription' && (
-                         <MotionDiv
-                           initial={{ height: 0, opacity: 0 }}
-                           animate={{ height: "auto", opacity: 1 }}
-                           exit={{ height: 0, opacity: 0 }}
-                           className="overflow-hidden"
-                         >
-                            <div className="mt-4 pt-4 border-t border-white/5">
-                               <SubscriptionNode />
-                            </div>
-                         </MotionDiv>
-                       )}
-                    </AnimatePresence>
+        {/* Institutional Integrity & Purge Protocols */}
+        <section className="mb-12">
+           <div className="flex items-center gap-3 mb-8 ml-2 text-red-500/60">
+              <ShieldAlert className="w-5 h-5 animate-pulse" />
+              <h3 className="text-xs font-black uppercase tracking-[0.4rem] opacity-80">Final Integrity Protocols</h3>
+           </div>
+           
+           <div className="p-12 rounded-[3.5rem] nm-inset border border-red-500/5 bg-red-500/1 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
+                 <ShieldAlert className="w-48 h-48 -mr-12 -mt-12" />
+              </div>
+              
+              <div className="relative z-10 max-w-2xl">
+                 <h4 className="text-xl font-black uppercase tracking-[0.3em] text-red-500 mb-6 italic">Institutional Reset Ritual</h4>
+                 <p className="text-xs opacity-50 font-medium leading-relaxed mb-10">
+                    Executing these protocols will permanently strip all non-contractual signals, logs, and notification archives from the instance. 
+                    <span className="block mt-2 font-black uppercase tracking-tighter text-red-500/40">WARNING: This action is irreversible and recorded in the audit log.</span>
+                 </p>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handlePurgeLogs(); }}
+                      disabled={isPurging === 'logs'}
+                      className="group relative overflow-hidden py-6 rounded-3xl nm-button text-[11px] font-black uppercase tracking-widest text-red-500 hover:nm-flat transition-all active:scale-95 disabled:opacity-20"
+                    >
+                       <span className="relative z-10">{isPurging === 'logs' ? 'Purging Activity...' : 'Execute Ritual: Purge Logs'}</span>
+                       <div className="absolute inset-0 bg-red-500/5 translate-y-full group-hover:translate-y-0 transition-transform"></div>
+                    </button>
+                    <button 
+                       onClick={(e) => { e.stopPropagation(); handlePurgeNotifications(); }}
+                       disabled={isPurging === 'notifications'}
+                       className="group relative overflow-hidden py-6 rounded-3xl nm-button text-[11px] font-black uppercase tracking-widest text-orange-500 hover:nm-flat transition-all active:scale-95 disabled:opacity-20"
+                    >
+                       <span className="relative z-10">{isPurging === 'notifications' ? 'Clearing Signals...' : 'Execute Ritual: Clear Signals'}</span>
+                       <div className="absolute inset-0 bg-orange-500/5 translate-y-full group-hover:translate-y-0 transition-transform"></div>
+                    </button>
                  </div>
               </div>
-           </section>
+           </div>
+        </section>
 
-           {/* Footer Action */}
-           <div className="pt-8 border-t border-white/5">
+        {/* Global Exit & Audit */}
+        <div className="pt-8 border-t border-white/5">
+           <div className="flex flex-col md:flex-row gap-6">
               <button 
                 onClick={async () => {
                   await supabase.auth.signOut();
                   window.location.href = '/';
                 }}
-                className="w-full py-5 rounded-3xl nm-button text-red-500/60 hover:text-red-500 font-black text-xs uppercase tracking-[0.4rem] flex items-center justify-center gap-4 transition-all"
+                className="flex-1 py-6 rounded-3xl nm-button text-red-500/60 hover:text-red-500 font-black text-xs uppercase tracking-[0.5rem] flex items-center justify-center gap-4 transition-all hover:nm-flat"
               >
                   <LogOut className="w-5 h-5" />
                   Terminate Connection
               </button>
-              <div className="mt-12 text-center opacity-20">
-                 <p className="text-[9px] font-black uppercase tracking-[0.5rem] mb-2 flex items-center justify-center gap-4">
-                    <Cloud className="w-3 h-3" />
-                    Shadow Core System Synced
-                 </p>
-                 <p className="text-[9px] font-black uppercase tracking-tighter opacity-60">Instance: mdyvmrglyffmokfufbf0.v3.01</p>
+              
+              <Link 
+                to="/admin"
+                className="flex-1 py-6 rounded-3xl nm-button text-blue-500/60 hover:text-blue-500 font-black text-xs uppercase tracking-[0.3rem] flex items-center justify-center gap-4 transition-all hover:nm-flat"
+              >
+                  <ShieldCheck className="w-5 h-5" />
+                  Administrative Portal
+              </Link>
+           </div>
+           
+           <div className="mt-16 text-center opacity-20">
+              <p className="text-[10px] font-black uppercase tracking-[0.6rem] mb-4 flex items-center justify-center gap-6">
+                 <Cloud className="w-4 h-4" />
+                 Shadow Core System Synced
+              </p>
+              <div className="flex items-center justify-center gap-4 text-[9px] font-black uppercase tracking-widest">
+                <span>Instance: wdzxbmzykwebozrxddlt</span>
+                <span className="w-1 h-1 rounded-full bg-blue-500"></span>
+                <span>Branch: PROD-v4.2.0</span>
+                <span className="w-1 h-1 rounded-full bg-blue-500"></span>
+                <span className="text-blue-500">All Systems Nominal</span>
               </div>
            </div>
         </div>
