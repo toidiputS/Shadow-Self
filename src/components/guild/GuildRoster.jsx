@@ -2,18 +2,27 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/api/supabase";
 import { 
-  Users, 
-  Activity, 
-  ShieldCheck, 
-  ShieldAlert, 
-  HardHat, 
-  MoreVertical,
-  ArrowRight,
-  TrendingUp,
-  Heart
+  Users,
+  Activity,
+  ShieldCheck,
+  ShieldAlert,
+  Heart,
+  Search,
+  MessageSquare,
+  Settings,
+  MoreHorizontal
 } from "lucide-react";
+import MemberIntelligenceModal from "./MemberIntelligenceModal";
 
 export default function GuildRoster({ guildId }) {
+  const [selectedMember, setSelectedMember] = React.useState(null);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+  const handleViewIntelligence = (member) => {
+    setSelectedMember(member);
+    setIsModalOpen(true);
+  };
+
   const { data: roster = [], isLoading } = useQuery({
     queryKey: ['guildRoster', guildId],
     queryFn: async () => {
@@ -68,7 +77,7 @@ export default function GuildRoster({ guildId }) {
                 {roster.map((member) => (
                    <tr key={member.id} className="group hover:bg-blue-500/5 transition-colors border-b border-white/5 last:border-none">
                       <td className="p-6">
-                         <div className="flex items-center gap-4">
+                         <div className="flex items-center gap-4 cursor-pointer" onClick={() => handleViewIntelligence(member)}>
                             <div className="w-12 h-12 rounded-2xl nm-inset-sm flex items-center justify-center text-blue-300 font-bold">
                                {member.profiles?.display_name?.charAt(0) || 'U'}
                             </div>
@@ -104,15 +113,43 @@ export default function GuildRoster({ guildId }) {
                          <span className="text-sm font-black tracking-widest">{member.profiles?.current_streak || 0}D</span>
                       </td>
                       <td className="p-6 text-right">
-                         <button className="p-3 rounded-xl nm-button opacity-0 group-hover:opacity-100 transition-all text-blue-500">
-                            <ArrowRight className="w-4 h-4" />
-                         </button>
+                         <div className="flex items-center justify-end gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
+                            <button 
+                                onClick={() => handleViewIntelligence(member)}
+                                title="Signal Member" 
+                                className="p-2.5 rounded-xl nm-button hover:text-orange-500 transition-all active:scale-90"
+                             >
+                               <MessageSquare className="w-4 h-4" />
+                            </button>
+                            <button 
+                               onClick={() => handleViewIntelligence(member)}
+                               title="View Intelligence" 
+                               className="p-2.5 rounded-xl nm-button hover:text-blue-500 transition-all active:scale-90"
+                            >
+                               <Search className="w-4 h-4" />
+                            </button>
+                            {member.role !== 'leader' && (
+                               <button 
+                                  onClick={() => handleViewIntelligence(member)}
+                                  title="Manage Protocol" 
+                                  className="p-2.5 rounded-xl nm-button hover:text-red-500 transition-all active:scale-90"
+                                >
+                                  <Settings className="w-4 h-4" />
+                                </button>
+                            )}
+                         </div>
                       </td>
                    </tr>
-                ))}
+                 ))}
              </tbody>
           </table>
        </div>
+
+       <MemberIntelligenceModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          member={selectedMember} 
+       />
     </div>
   );
 }

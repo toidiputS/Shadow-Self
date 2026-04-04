@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 
+import { supabase } from "../../api/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 const CONSEQUENCES = [
   { id: "sp_yield_reduction", name: "SP Yield Reduction", icon: TrendingDown, color: "text-red-400", description: "All members lose 20% of SP generation until cleared." },
   { id: "xp_debuff", name: "XP Gain Penalty", icon: Zap, color: "text-blue-400", description: "XP rewards globally reduced by 15%." },
@@ -20,11 +23,41 @@ const CONSEQUENCES = [
 ];
 
 export default function ContractBuilder({ isOpen, onClose }) {
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: "",
     threshold: 90,
     consequence: "sp_yield_reduction",
     durationDays: 7
+  });
+
+  const contractMutation = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: guildMember } = await supabase
+        .from('guild_members')
+        .select('guild_id')
+        .eq('user_id', user.id)
+        .single();
+
+      const { error } = await supabase.from('accountability_contracts').insert([{
+        guild_id: guildMember.guild_id,
+        name: formData.name,
+        threshold: parseInt(formData.threshold),
+        consequence_type: formData.consequence,
+        duration_days: formData.durationDays,
+        created_by: user.id
+      }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accountability_contracts'] });
+      alert("ACCOUNTABILITY BINDING EXECUTED: All nodes are now bound by the terms of " + formData.name);
+      onClose();
+    },
+    onError: (err) => {
+      alert("FINALIZATION FAILED: Institutional error - " + err.message);
+    }
   });
 
   return (
@@ -158,8 +191,18 @@ export default function ContractBuilder({ isOpen, onClose }) {
                </div>
 
                <div className="pt-6">
-                  <button className="w-full py-6 px-12 rounded-4xl nm-button text-[12px] font-black uppercase tracking-[0.4rem] text-blue-500 flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-xl">
-                    Finalize Accountability Binding <ArrowRight className="w-5 h-5" />
+                  <button 
+  onClick={() => {
+    if (!formData.name) {
+      alert("ERROR: Protocol Identity required to finalize binding.");
+      return;
+    }
+    contractMutation.mutate();
+  }}
+  disabled={contractMutation.isPending}
+  className="w-full py-6 px-12 rounded-4xl nm-button text-[12px] font-black uppercase tracking-[0.4rem] text-blue-500 flex items-center justify-center gap-4 hover:scale-[1.02] active:scale-95 transition-all shadow-xl disabled:opacity-30 disabled:cursor-not-allowed"
+>
+                    {contractMutation.isPending ? 'Executing Binding...' : 'Finalize Accountability Binding'} <ArrowRight className="w-5 h-5" />
                   </button>
                   <p className="text-center text-[9px] font-bold opacity-30 uppercase tracking-[0.2em] mt-8 italic">"All collective nodes will be bound by these terms upon execution."</p>
                </div>

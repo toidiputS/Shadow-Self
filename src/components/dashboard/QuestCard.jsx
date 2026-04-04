@@ -179,13 +179,22 @@ export default function QuestCard({ quest, onComplete, isCompleted, isOverdue, s
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
                 >
-                  <textarea
-                    rows={1}
-                    value={reflectionNote}
-                    onChange={(e) => setReflectionNote(e.target.value)}
-                    placeholder="Document protocol execution nuances..."
-                    className="w-full bg-transparent nm-inset rounded-2xl px-6 py-4.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all placeholder:opacity-20 border border-white/5 leading-relaxed"
-                  />
+                  <div className="relative group/note">
+                    <textarea
+                      rows={1}
+                      value={reflectionNote}
+                      onChange={(e) => setReflectionNote(e.target.value)}
+                      placeholder="Document protocol execution nuances..."
+                      className="w-full bg-transparent nm-inset rounded-2xl px-6 py-4.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all placeholder:opacity-20 border border-white/5 leading-relaxed pr-16"
+                    />
+                    <button 
+                      onClick={() => setIsNoteVisible(false)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg nm-button flex items-center justify-center opacity-40 hover:opacity-100 transition-all text-red-500 hover:scale-110 active:scale-90"
+                      title="Abort Observation"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </motion.div>
               )}
             </div>

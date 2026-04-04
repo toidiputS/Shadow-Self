@@ -19,7 +19,7 @@ import {
   HeartHandshake
 } from "lucide-react";
 import { AnimatePresence, motion, LayoutGroup } from "framer-motion";
-import { startOfDay, isSameDay } from "date-fns";
+import { startOfDay, isSameDay, formatDistanceToNow } from "date-fns";
 
 import MetricsDisplay from "../components/dashboard/MetricsDisplay";
 import LevelProgress from "../components/dashboard/LevelProgress";
@@ -33,7 +33,7 @@ import WeeklyReview from "../components/dashboard/WeeklyReview";
 import RecoveryHeatmap from "../components/dashboard/RecoveryHeatmap";
 import NotificationInbox from "../components/dashboard/NotificationInbox";
 
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Dashboard() {
   const { profile: authProfile, user: authUser } = useAuth();
@@ -48,6 +48,7 @@ export default function Dashboard() {
   // Tactical Member State
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
+  const [focusedInboxId, setFocusedInboxId] = useState(null);
   
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
@@ -102,6 +103,16 @@ export default function Dashboard() {
     queryKey: ['completionLogs'],
     queryFn: async () => {
       const { data } = await supabase.from('quest_completions').select('*').eq('user_id', user.id);
+      return data;
+    },
+    enabled: !!user?.id
+  });
+
+  const { data: notifications = [] } = useQuery({
+    queryKey: ['notifications', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data } = await supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
       return data;
     },
     enabled: !!user?.id
@@ -201,7 +212,8 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-12 transition-colors duration-400 overflow-x-hidden">
+    <div className="bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-12 transition-colors duration-400">
+
       <div className="max-w-7xl mx-auto">
         
         {/* Command Suite Header */}
@@ -294,19 +306,29 @@ export default function Dashboard() {
               <div className="flex-1 space-y-4 relative z-10 text-center md:text-left">
                   <h3 className="text-xl font-black uppercase tracking-widest text-orange-500 italic">Institutional Alignment Feedback</h3>
                   <p className="text-[11px] font-bold opacity-60 leading-relaxed italic max-w-2xl">
-                    "Great work on the morning routine, Marcus. Your consistency in the Identity Proof hub is setting a standard for the East Wing. Let's focus on the job search protocol next."
+                    {notifications?.[0]?.message || "Establish your connection node. Start by completing the morning reset protocol to signal synchronization."}
                   </p>
                   <div className="flex items-center justify-center md:justify-start gap-4">
-                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30 text-orange-500">— Sponsor: David Thorne</span>
+                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30 text-orange-500">— Sponsor: {notifications?.[0]?.metadata?.sender_name || "Protocol Core"}</span>
                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500/40"></span>
-                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30 italic">2h ago</span>
+                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30 italic">
+                        {notifications?.[0]?.created_at ? formatDistanceToNow(new Date(notifications[0].created_at)) + " ago" : "SYSTEM STABLE"}
+                     </span>
                   </div>
               </div>
               <button 
-                onClick={() => setIsInboxOpen(true)}
-                className="px-10 py-5 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest text-orange-500 hover:scale-105 transition-all relative z-10 group-hover:nm-flat-sm"
+                onClick={() => {
+                  if (notifications?.length > 0) {
+                    setFocusedInboxId(notifications[0].id);
+                  } else {
+                    setFocusedInboxId(null);
+                  }
+                  setIsInboxOpen(true);
+                }}
+                disabled={!notifications?.length}
+                className="px-10 py-5 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest text-orange-500 hover:scale-105 transition-all relative z-10 group-hover:nm-flat-sm disabled:opacity-20 active:scale-95"
               >
-                  Respond via Intel
+                  {notifications?.length > 0 ? 'Respond via Intel' : 'No Active Signals'}
               </button>
            </div>
         </div>
@@ -424,7 +446,14 @@ export default function Dashboard() {
         </div>
 
         <ThemeSidebar isOpen={isThemeOpen} onClose={() => setIsThemeOpen(false)} />
-        <NotificationInbox isOpen={isInboxOpen} onClose={() => setIsInboxOpen(false)} />
+        <NotificationInbox 
+          isOpen={isInboxOpen} 
+          onClose={() => {
+            setIsInboxOpen(false);
+            setFocusedInboxId(null);
+          }} 
+          initialReplyId={focusedInboxId}
+        />
       </div>
 
       <AnimatePresence>

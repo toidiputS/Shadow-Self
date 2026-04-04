@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { supabase } from "@/api/supabase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import { 
   Users, 
   ShieldCheck, 
@@ -29,6 +32,10 @@ import SubscriptionNode from "../../components/system/SubscriptionNode";
 import SetupWizard from "../../components/admin/SetupWizard";
 import TemplateManager from "../../components/admin/TemplateManager";
 import ImportTools from "../../components/admin/ImportTools";
+import CreateQuestForm from "../../components/dashboard/CreateQuestForm";
+import { RECOVERY_TEMPLATES } from "@/constants/recoveryTemplates";
+import { useAuth } from "@/hooks/useAuth";
+import MemberIntelligenceModal from "../../components/guild/MemberIntelligenceModal";
 
 const MotionDiv = motion.div;
 
@@ -44,18 +51,79 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("roster");
   const [searchTerm, setSearchTerm] = useState("");
   const [showWizard, setShowWizard] = useState(false);
+  const [showCreateQuest, setShowCreateQuest] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const queryClient = useQueryClient();
+  const { profile, user } = useAuth();
 
-  // Mock Data for the Admin Roster
+
+  const createQuestMutation = useMutation({
+    mutationFn: async (questData) => {
+      const dataToInsert = {
+        ...questData,
+        creator_id: user?.id,
+        guild_id: profile?.guild_id,
+        quest_source: 'admin_template'
+      };
+      const { data, error } = await supabase.from('quests').insert([dataToInsert]).select();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quests'] });
+      setShowCreateQuest(false);
+    },
+    onError: (error) => {
+      console.error("❌ Protocol Creation Breach:", error.message);
+    }
+  });
+
+  const cloneMutation = useMutation({
+    mutationFn: async (templateIds) => {
+      const templatesToClone = RECOVERY_TEMPLATES.filter(t => templateIds.includes(t.id));
+      const questsToInsert = templatesToClone.map(t => ({
+        title: t.name,
+        xp_reward: t.xp,
+        sp_reward: t.sp,
+        type: t.freq.toLowerCase().includes('daily') ? 'daily' : t.freq.toLowerCase() === 'once' ? 'once' : 'single',
+        category: 'recovery',
+        active: true,
+        description: t.desc,
+        creator_id: user?.id,
+        guild_id: profile?.guild_id,
+        quest_source: 'admin_template'
+      }));
+      const { data, error } = await supabase.from('quests').insert(questsToInsert).select();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quests'] });
+    },
+    onError: (error) => {
+      console.error("❌ Template Cloning Breach:", error.message);
+    }
+  });
+
+  const handleViewIntelligence = (member) => {
+    setSelectedMember(member);
+    setIsModalOpen(true);
+  };
+
+  // Mock Data for the Admin Roster (In production this would correspond to real user profiles)
   const rosterData = [
-    { id: 1, name: "Marcus Thorne", status: "Active", tier: "Gold", streak: 42, active: "2m ago", house: "North House" },
-    { id: 2, name: "Elena Vance", status: "Warning", tier: "Silver", streak: 5, active: "1h ago", house: "North House" },
-    { id: 3, name: "Julian Reed", status: "Breach", tier: "Bronze", streak: 0, active: "Offline", house: "North House" },
-    { id: 4, name: "Sarah Chen", status: "Active", tier: "Gold", streak: 128, active: "Now", house: "North House" },
-    { id: 5, name: "David Miller", status: "Pending", tier: "None", streak: 0, active: "Requested", house: "North House" },
+    { id: 1, name: "Marcus Thorne", status: "Active", tier: "Gold", streak: 42, active: "2m ago", house: "North House", user_id: "mock_1" },
+    { id: 2, name: "Elena Vance", status: "Warning", tier: "Silver", streak: 5, active: "1h ago", house: "North House", user_id: "mock_2" },
+    { id: 3, name: "Julian Reed", status: "Breach", tier: "Bronze", streak: 0, active: "Offline", house: "North House", user_id: "mock_3" },
+    { id: 4, name: "Sarah Chen", status: "Active", tier: "Gold", streak: 128, active: "Now", house: "North House", user_id: "mock_4" },
+    { id: 5, name: "David Miller", status: "Pending", tier: "None", streak: 0, active: "Requested", house: "North House", user_id: "mock_5" },
   ];
 
   return (
-    <div className="min-h-screen bg-(--bg-color) text-(--text-primary) p-4 md:p-12 transition-colors duration-400">
+    <div className="bg-(--bg-color) text-(--text-primary) p-4 md:p-12 transition-colors duration-400">
+
       <div className="max-w-7xl mx-auto">
         
         {/* Admin Command Header */}
@@ -84,12 +152,16 @@ export default function AdminPanel() {
           </div>
 
           <div className="flex gap-4">
-             <button 
-                onClick={() => setActiveTab("quests")}
+              <button 
+                onClick={() => {
+                  setActiveTab("quests");
+                  setShowCreateQuest(true);
+                }}
                 className="px-8 py-4 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest text-purple-500 hover:scale-105 transition-all flex items-center gap-3"
               >
                 <Plus className="w-4 h-4" /> Create Quest Template
              </button>
+
              <button className="px-8 py-4 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-all flex items-center gap-3">
                 <FileDown className="w-4 h-4" /> Export Audit Log
              </button>
@@ -200,8 +272,12 @@ export default function AdminPanel() {
                             <td className="p-8 text-center text-sm font-black tracking-widest">{member.streak}d</td>
                             <td className="p-8 text-[10px] font-black opacity-30 uppercase tracking-widest">{member.active}</td>
                             <td className="p-8 text-right">
-                               <button className="p-3 rounded-xl nm-button opacity-0 group-hover:opacity-100 transition-all text-purple-500">
-                                  <ArrowRight className="w-4 h-4" />
+                               <button 
+                                 onClick={() => handleViewIntelligence(member)}
+                                 className="p-3 rounded-xl nm-button opacity-0 group-hover:opacity-100 transition-all text-purple-500 active:scale-90"
+                                 title="View Intel"
+                                >
+                                  <Search className="w-4 h-4" />
                                 </button>
                             </td>
                           </tr>
@@ -219,10 +295,25 @@ export default function AdminPanel() {
               )}
 
               {activeTab === "quests" && (
-                <div className="pb-12">
-                   <TemplateManager onClone={(ids) => console.log("Cloning:", ids)} />
+                <div className="pb-12 space-y-12">
+                   {showCreateQuest ? (
+                      <CreateQuestForm 
+                        onCancel={() => setShowCreateQuest(false)} 
+                        onSubmit={(data) => {
+                          createQuestMutation.mutate(data);
+                        }} 
+                      />
+
+                   ) : (
+                      <TemplateManager 
+                        onClone={(ids) => cloneMutation.mutate(ids)} 
+                        onCreate={() => setShowCreateQuest(true)}
+                      />
+
+                   )}
                 </div>
               )}
+
 
               {activeTab === "growth" && (
                 <div className="pb-12">
@@ -245,6 +336,12 @@ export default function AdminPanel() {
         </AnimatePresence>
 
       </div>
+
+      <MemberIntelligenceModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        member={selectedMember} 
+      />
     </div>
   );
 }

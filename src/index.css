@@ -35,9 +35,8 @@
   --safe-right: env(safe-area-inset-right);
 }
 
-/* Dark Mode Overrides (Default override for prefers-color-scheme) */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
+  :root:not([data-theme="light"]) {
     --light: 15%;
     --sat: 10%;
     --text-primary: hsl(var(--hue), var(--sat), calc(var(--light) + 75%));
@@ -49,27 +48,64 @@
   }
 }
 
+:root[data-theme="dark"] {
+    --text-primary: hsl(var(--hue), var(--sat), calc(var(--light) + 75%));
+    --text-secondary: hsl(var(--hue), var(--sat), calc(var(--light) + 45%));
+    --nm-shadow-light: hsl(var(--hue), var(--sat), calc(var(--light) + 5%));
+    --nm-shadow-dark: hsl(var(--hue), var(--sat), calc(var(--light) - 5%));
+    --nm-inset-shadow-light: hsl(var(--hue), var(--sat), calc(var(--light) + 5%));
+    --nm-inset-shadow-dark: hsl(var(--hue), var(--sat), calc(var(--light) - 5%));
+}
+
+:root[data-theme="light"] {
+    --text-primary: hsl(var(--hue), var(--sat), calc(var(--light) - 75%));
+    --text-secondary: hsl(var(--hue), var(--sat), calc(var(--light) - 45%));
+    --nm-shadow-light: hsl(var(--hue), var(--sat), calc(var(--light) + 7%));
+    --nm-shadow-dark: hsl(var(--hue), var(--sat), calc(var(--light) - 13%));
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-  /* Prevent scroll chaining on overscroll */
-  overscroll-behavior-y: contain;
+}
+
+
+html {
+  overflow: hidden;
+  height: 100%;
+  height: -webkit-fill-available;
 }
 
 body {
   margin: 0;
+  padding: 0;
+  height: 100%;
   width: 100%;
-  min-height: 100vh;
+  overflow: hidden; /* Only the root terminal should scroll */
   background-color: var(--bg-color);
-  color: var(--text-primary);
+  overscroll-behavior: none;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* High-fidelity momentum scroll */
+  scroll-behavior: smooth;
+  touch-action: pan-y; /* Direct touch-to-scroll resolution */
   padding-top: var(--safe-top);
-  /* Global bottom padding for the mobile BottomNav - disabled by default, enabled via class */
-  padding-bottom: var(--safe-bottom); 
+  padding-bottom: var(--safe-bottom);
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
-  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Global bottom padding for the mobile BottomNav */
+#root.has-nav {
+  padding-bottom: calc(6rem + var(--safe-bottom)); 
+}
+
 
 body.has-nav {
   padding-bottom: calc(6rem + var(--safe-bottom)); 

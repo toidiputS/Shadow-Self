@@ -32,6 +32,20 @@ export default function System() {
   const [isThemeOpen, setIsThemeOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState(null);
   
+  const updateTheme = (name, value) => {
+    document.documentElement.style.setProperty(name, value);
+    if (name === '--light') {
+        const lightValue = parseInt(value);
+        document.documentElement.setAttribute('data-theme', lightValue < 40 ? 'dark' : 'light');
+    }
+  };
+
+  const applyPreset = (p) => {
+    updateTheme('--hue', p.h);
+    updateTheme('--sat', p.s);
+    updateTheme('--light', p.l);
+    alert(`PRESET ACTIVATED: ${p.name.toUpperCase()} protocol deployed.`);
+  };
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
@@ -56,7 +70,8 @@ export default function System() {
   });
 
   return (
-    <div className="min-h-screen bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-12 transition-colors duration-400">
+    <div className="bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-12 transition-colors duration-400">
+
       <div className="max-w-4xl mx-auto pb-24">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-8">
@@ -141,14 +156,14 @@ export default function System() {
                                <div className="space-y-6">
                                   <div className="flex items-center justify-between">
                                      <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Spectral Hue</p>
-                                     <button onClick={() => document.documentElement.style.setProperty('--hue', '210')}><RefreshCw className="w-3 h-3 opacity-20 hover:opacity-100" /></button>
+                                     <button onClick={() => updateTheme('--hue', '210')}><RefreshCw className="w-3 h-3 opacity-20 hover:opacity-100" /></button>
                                   </div>
                                   <div className="nm-inset-sm p-4 rounded-2xl">
                                      <input 
                                        type="range" 
                                        min="0" 
                                        max="360" 
-                                       onChange={(e) => document.documentElement.style.setProperty('--hue', e.target.value)}
+                                       onChange={(e) => updateTheme('--hue', e.target.value)}
                                        className="w-full h-1.5 rounded-full appearance-none bg-linear-to-r from-red-500 via-green-500 to-blue-500 cursor-pointer"
                                      />
                                   </div>
@@ -157,14 +172,14 @@ export default function System() {
                                   <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Base Protocol</p>
                                   <div className="grid grid-cols-2 gap-4">
                                      <button 
-                                       onClick={() => document.documentElement.style.setProperty('--light', '88%')}
+                                       onClick={() => updateTheme('--light', '88%')}
                                        className="p-4 rounded-xl nm-button flex items-center gap-3"
                                      >
                                         <Sun className="w-4 h-4 text-yellow-500" />
                                         <span className="text-[9px] font-black uppercase tracking-widest">Light Core</span>
                                      </button>
                                      <button 
-                                       onClick={() => document.documentElement.style.setProperty('--light', '15%')}
+                                       onClick={() => updateTheme('--light', '15%')}
                                        className="p-4 rounded-xl nm-button flex items-center gap-3"
                                      >
                                         <Moon className="w-4 h-4 text-blue-500" />

@@ -12,7 +12,7 @@ import {
   ShieldAlert
 } from "lucide-react";
 
-export default function GuildPotDetails({ potData }) {
+export default function GuildPotDetails({ potData, onClearDebuff, onWithdraw }) {
   // Mock history of contributions/redemptions
   const history = [
     { id: 1, type: "fine", amount: -50, description: "Protocol Breach: Marcus T.", time: "2h ago", icon: <ShieldAlert className="text-red-500" /> },
@@ -46,10 +46,16 @@ export default function GuildPotDetails({ potData }) {
           </div>
 
           <div className="grid grid-cols-2 gap-4 relative z-10">
-              <button className="flex-1 p-5 rounded-3xl nm-button text-[10px] font-black uppercase tracking-widest text-yellow-500 flex items-center justify-center gap-3 hover:scale-[1.02] transition-all">
+              <button 
+                onClick={onClearDebuff}
+                className="flex-1 p-5 rounded-3xl nm-button text-[10px] font-black uppercase tracking-widest text-yellow-500 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all"
+              >
                 <Zap className="w-4 h-4" /> Clear Debuff
               </button>
-              <button className="flex-1 p-5 rounded-3xl nm-button text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 flex items-center justify-center gap-3 transition-opacity">
+              <button 
+                onClick={onWithdraw}
+                className="flex-1 p-5 rounded-3xl nm-button text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 flex items-center justify-center gap-3 active:scale-95 transition-all"
+              >
                 <ArrowDownLeft className="w-4 h-4" /> Withdraw (N/A)
               </button>
           </div>

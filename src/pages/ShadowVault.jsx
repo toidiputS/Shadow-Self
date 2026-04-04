@@ -125,7 +125,8 @@ export default function ShadowVault() {
   const isLoading = progressLoading || itemsLoading || inventoryLoading;
 
   return (
-    <div className="min-h-screen bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-8 transition-colors duration-400">
+    <div className="bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-8 transition-colors duration-400">
+
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-8">

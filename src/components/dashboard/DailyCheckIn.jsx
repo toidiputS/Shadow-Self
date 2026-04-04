@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion"; // eslint-disable-line no-unused-vars
 import { supabase } from "@/api/supabase";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, Zap, Moon, Flame, Check, X, AlertCircle, Sparkles } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
+
 
 export default function DailyCheckIn({ onComplete }) {
   const { user, profile } = useAuth();
   const userId = user?.id;
-  const guildId = profile?.guild_id; // Usually available in profile for this system
+  const [guildId, setGuildId] = useState(profile?.guild_id);
   const [step, setStep] = useState(1);
   const [data, setData] = useState({
     mood: 3,
@@ -19,10 +20,46 @@ export default function DailyCheckIn({ onComplete }) {
     message: ""
   });
 
+  // Security: Fetch guild identity if not present in profile cache
+  useEffect(() => {
+    if (userId && !guildId) {
+       const fetchGuild = async () => {
+         // Priority 1: Check member identity
+         const { data: memberData } = await supabase
+           .from('guild_members')
+           .select('guild_id')
+           .eq('user_id', userId)
+           .maybeSingle();
+         
+         if (memberData?.guild_id) {
+            setGuildId(memberData.guild_id);
+            return;
+         }
+
+         // Priority 2: Check profile
+         if (profile?.guild_id) {
+            setGuildId(profile.guild_id);
+            return;
+         }
+
+         // Priority 3: Fallback for admins/owners - find first available guild
+         const { data: firstGuild } = await supabase.from('guilds').select('id').limit(1).maybeSingle();
+         if (firstGuild?.id) {
+            setGuildId(firstGuild.id);
+         }
+       };
+       fetchGuild();
+    }
+  }, [profile?.guild_id, userId, guildId]);
+
   const queryClient = useQueryClient();
 
   const checkInMutation = useMutation({
     mutationFn: async (checkInData) => {
+      if (!userId || !guildId) {
+         throw new Error("Missing Identity: Terminal connection unstable.");
+      }
+      
       const { data: result, error } = await supabase
         .from('guild_check_ins')
         .insert([{
@@ -34,7 +71,7 @@ export default function DailyCheckIn({ onComplete }) {
         }])
         .select()
         .single();
-      
+
       if (error) throw error;
       return result;
     },
@@ -117,32 +154,32 @@ export default function DailyCheckIn({ onComplete }) {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="fixed inset-0 z-50 flex items-center justify-center px-6 bg-black/80 backdrop-blur-xl"
+      className="fixed inset-0 z-150 flex items-center justify-center px-6 bg-black/85 backdrop-blur-3xl"
     >
       <div className="w-full max-w-lg nm-flat-lg rounded-[3rem] p-10 relative overflow-hidden ring-1 ring-white/10">
-        {!user && step === steps.length && (
-           <div className="absolute inset-0 z-60 bg-black/90 flex flex-col items-center justify-center p-10 text-center backdrop-blur-md">
-              <AlertCircle className="w-16 h-16 text-orange-500 mb-6 animate-pulse" />
-              <h3 className="text-xl font-black uppercase tracking-widest text-orange-500 mb-4 italic">Institutional Identity Lost</h3>
-              <p className="text-[10px] font-bold opacity-60 leading-relaxed italic uppercase">"Your terminal session is missing identity tokens. Re-stabilize connection by reloading the command hub before attempting uplink."</p>
-              <button 
-                onClick={onComplete}
-                className="mt-10 px-10 py-4 rounded-2xl nm-button font-black text-[10px] uppercase tracking-widest text-orange-400 group flex items-center gap-3"
-              >
-                Clear Node
-              </button>
-           </div>
+        {!guildId && step === steps.length && (
+          <div className="absolute inset-0 z-160 bg-(--bg-color) flex flex-col items-center justify-center p-10 text-center backdrop-blur-md">
+            <AlertCircle className="w-16 h-16 text-red-500 mb-6 animate-pulse" />
+            <h3 className="text-xl font-black uppercase tracking-widest text-red-500 mb-4 italic">Institutional Identity Lost</h3>
+            <p className="text-[10px] font-bold opacity-60 leading-relaxed italic uppercase">"Your terminal session is missing guild affiliation tokens. Assign to a House Node before attempting protocol uplink."</p>
+            <button
+              onClick={onComplete}
+              className="mt-10 px-10 py-5 rounded-2xl nm-button font-black text-[10px] uppercase tracking-widest text-blue-500 active:scale-95"
+            >
+              Back to Command Hub
+            </button>
+          </div>
         )}
         {/* Progress bar */}
         <div className="absolute top-0 left-0 w-full h-1.5 bg-black/10">
-          <motion.div 
+          <motion.div
             className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
             initial={{ width: "0%" }}
             animate={{ width: `${(step / steps.length) * 100}%` }}
           />
         </div>
 
-        <button 
+        <button
           onClick={onComplete}
           className="absolute top-6 right-6 w-10 h-10 rounded-full nm-button flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity"
         >
@@ -161,7 +198,7 @@ export default function DailyCheckIn({ onComplete }) {
               <div className="w-20 h-20 rounded-4xl nm-inset flex items-center justify-center mb-8 ring-1 ring-white/5">
                 {currentStep.icon || <Sparkles className="w-8 h-8 text-blue-500" />}
               </div>
-              
+
               <h2 className="text-2xl font-black uppercase tracking-[0.2em] mb-2 leading-tight">{currentStep.question}</h2>
               <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 mb-10">Daily Status Synchronization</p>
 
@@ -175,18 +212,18 @@ export default function DailyCheckIn({ onComplete }) {
                 />
               ) : currentStep.type === "toggle" ? (
                 <div className="flex flex-col w-full gap-5">
-                   <button 
-                      onClick={() => updateField(currentStep.field, false)}
-                      className={`w-full py-6 rounded-3xl font-black text-center transition-all ${!data[currentStep.field] ? 'nm-inset-sm text-green-500 ring-1 ring-green-500/20' : 'nm-button opacity-60'}`}
-                   >
-                      <span className="uppercase tracking-[0.2em]">{currentStep.labels[0]}</span>
-                   </button>
-                   <button 
-                      onClick={() => updateField(currentStep.field, true)}
-                      className={`w-full py-6 rounded-3xl font-black text-center transition-all ${data[currentStep.field] ? 'nm-inset-sm text-red-500 ring-1 ring-red-500/20' : 'nm-button opacity-40'}`}
-                   >
-                      <span className="uppercase tracking-[0.2em]">{currentStep.labels[1]}</span>
-                   </button>
+                  <button
+                    onClick={() => updateField(currentStep.field, false)}
+                    className={`w-full py-6 rounded-3xl font-black text-center transition-all ${!data[currentStep.field] ? 'nm-inset-sm text-green-500 ring-1 ring-green-500/20' : 'nm-button opacity-60'}`}
+                  >
+                    <span className="uppercase tracking-[0.2em]">{currentStep.labels[0]}</span>
+                  </button>
+                  <button
+                    onClick={() => updateField(currentStep.field, true)}
+                    className={`w-full py-6 rounded-3xl font-black text-center transition-all ${data[currentStep.field] ? 'nm-inset-sm text-red-500 ring-1 ring-red-500/20' : 'nm-button opacity-40'}`}
+                  >
+                    <span className="uppercase tracking-[0.2em]">{currentStep.labels[1]}</span>
+                  </button>
                 </div>
               ) : (
                 <div className="flex flex-col w-full gap-8">
@@ -195,11 +232,10 @@ export default function DailyCheckIn({ onComplete }) {
                       <button
                         key={val}
                         onClick={() => updateField(currentStep.field, val)}
-                        className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
-                          data[currentStep.field] === val 
-                            ? "nm-inset-sm text-blue-500" 
+                        className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${data[currentStep.field] === val
+                            ? "nm-inset-sm text-blue-500"
                             : "nm-button hover:text-blue-400"
-                        }`}
+                          }`}
                       >
                         <span className="text-lg font-black">{val}</span>
                       </button>
@@ -230,12 +266,12 @@ export default function DailyCheckIn({ onComplete }) {
             className="flex-2 py-5 rounded-2xl nm-button font-black text-[10px] uppercase tracking-[0.2rem] text-blue-500 flex items-center justify-center gap-3 relative overflow-visible"
           >
             <span className={checkInMutation.isLoading ? "animate-pulse" : ""}>
-                {checkInMutation.isLoading ? "SYNCHRONIZING..." : step === steps.length ? "Initialize Uplink" : "Next Core Variable"}
+              {checkInMutation.isLoading ? "SYNCHRONIZING..." : step === steps.length ? "Initialize Uplink" : "Next Core Variable"}
             </span>
             {checkInMutation.isError && (
-                <div className="absolute -top-12 left-0 right-0 py-2 px-4 rounded-xl bg-red-500/10 text-red-500 text-[8px] font-black uppercase tracking-widest border border-red-500/20">
-                    ERROR: UPLINK_DENIED (Check ID)
-                </div>
+              <div className="absolute -top-12 left-0 right-0 py-2 px-4 rounded-xl bg-red-500/10 text-red-500 text-[8px] font-black uppercase tracking-widest border border-red-500/20">
+                ERROR: UPLINK_DENIED (Check ID)
+              </div>
             )}
           </button>
         </div>

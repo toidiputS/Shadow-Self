@@ -14,6 +14,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
   const [chainId, setChainId] = useState("");
   const [chainPosition, setChainPosition] = useState(1);
   const [proofRequired, setProofRequired] = useState(false);
+  const [description, setDescription] = useState("");
 
   const MotionDiv = motion.div;
 
@@ -22,6 +23,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
     if (questName.trim()) {
       onSubmit({
         title: questName.trim(),
+        description: description.trim(),
         type: questType,
         xp_reward: xpReward,
         sp_reward: spReward,
@@ -35,8 +37,10 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
         active: true
       });
       setQuestName("");
+      setDescription("");
     }
   };
+
 
   return (
     <MotionDiv
@@ -84,6 +88,26 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
               required
             />
           </div>
+
+          <div className="group">
+            <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
+              Detailed Instruction / Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Provide detailed instructions for this protocol..."
+              rows="3"
+              className="
+                w-full px-7 py-5 rounded-2xl
+                nm-inset text-sm font-bold
+                text-(--text-primary) placeholder-(--text-secondary) placeholder:opacity-30
+                focus:nm-inset-sm focus:outline-none focus:ring-1 focus:ring-blue-500/20
+                transition-all duration-300 resize-none
+              "
+            />
+          </div>
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Category */}
@@ -205,7 +229,8 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                     className="w-full px-5 py-4 rounded-xl nm-inset font-bold text-(--text-primary) focus:outline-none"
                   />
                 </div>
-                <div className="flex-[2]">
+                <div className="flex-2">
+
                    <p className="text-[8px] font-black opacity-30 uppercase mb-2">Chain ID (Optional UUID)</p>
                    <input
                     type="text"

@@ -97,7 +97,8 @@ export default function Guild() {
   const guild = guildMember?.guilds;
 
   return (
-    <div className="min-h-screen bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-12 transition-colors duration-400 overflow-x-hidden">
+    <div className="bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-12 transition-colors duration-400">
+
       <div className="max-w-7xl mx-auto">
         
         {/* Header Sector */}
@@ -124,10 +125,18 @@ export default function Guild() {
           <div className="flex items-center gap-4 w-full md:w-auto">
               {canManageGuild && (
                 <button 
-                  onClick={() => setIsAntiSpiralActive(!isAntiSpiralActive)}
-                  className={`flex-1 md:flex-none py-5 px-10 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 transition-all duration-500 ${
-                    isAntiSpiralActive ? 'nm-inset-sm text-orange-500 shadow-orange-500/20' : 'nm-button text-orange-500/60 hover:text-orange-500'
+                  onClick={() => {
+                    setIsAntiSpiralActive(!isAntiSpiralActive);
+                    if (!isAntiSpiralActive) {
+                      alert("ANTI-SPIRAL MODE INITIATED: High-alert stabilization protocols are now active across all guild nodes. Grace days are suspended and mandatory check-ins are escalated.");
+                    }
+                  }}
+                  className={`flex-1 md:flex-none py-5 px-10 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-4 transition-all duration-500 hover:scale-105 active:scale-95 ${
+                    isAntiSpiralActive 
+                      ? 'nm-inset-sm text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.3)] border border-red-500/30' 
+                      : 'nm-button text-orange-500/60 hover:text-orange-500'
                   }`}
+                  title="Toggle Emergency Stabilization Mode"
                 >
                   <Skull className={`w-5 h-5 ${isAntiSpiralActive ? 'animate-pulse' : ''}`} />
                   {isAntiSpiralActive ? 'Anti-Spiral Active' : 'Anti-Spiral Link'}
@@ -241,7 +250,26 @@ export default function Guild() {
             <GuildRoster guildId={guildMember?.guild_id} />
             
             <div className="w-full">
-                <GuildPotDetails potData={potData} />
+                <GuildPotDetails 
+                  potData={potData} 
+                  onClearDebuff={() => {
+                    if (debuffs.length === 0) {
+                      alert("TERMINAL: System integrity is already at 100%. No active debuffs to clear.");
+                      return;
+                    }
+                    if ((potData?.sp_balance || 0) < 500) {
+                      alert("INSUFFICIENT LIQUIDITY: Clearing a protocol debuff requires 500 SP in the Institutional Reserve.");
+                      return;
+                    }
+                    if (confirm("INITIATE DEBUFF PURGE? This will spend 500 SP from the reserve to clear the most critical systemic interference.")) {
+                      // Implementation would go here - for now mock success
+                      alert("PROTOCOL: Systemic interference purged. Shadow Yield normalized.");
+                    }
+                  }}
+                  onWithdraw={() => {
+                    alert("ACCESS DENIED: Withdrawal protocols are currently locked. Requires Level 4 Institutional Clearance or Owner-tier credentials.");
+                  }}
+                />
             </div>
           </div>
         </div>

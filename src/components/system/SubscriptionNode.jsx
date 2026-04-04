@@ -20,7 +20,11 @@ import {
   Sparkles,
   ChevronRight,
   Settings,
-  MoreHorizontal
+  MoreHorizontal,
+  X,
+  ShieldCheck,
+  Activity,
+  ShieldAlert
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/api/supabase";
@@ -39,6 +43,32 @@ export default function SubscriptionNode() {
   });
   const [rfpSuccess, setRFPSuccess] = React.useState(false);
   const [clearanceCode, setClearanceCode] = React.useState("");
+
+  const [isUpdatingCard, setIsUpdatingCard] = React.useState(false);
+  const [updateProgress, setUpdateProgress] = React.useState(0);
+  const [cardData, setCardData] = React.useState({
+    number: "•••• •••• •••• 4242",
+    expiry: "12/28",
+    cvv: "•••"
+  });
+
+  const handleUpdateCard = () => {
+    setUpdateProgress(10);
+    const interval = setInterval(() => {
+      setUpdateProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setIsUpdatingCard(false);
+            setUpdateProgress(0);
+            alert("MATRIX SUCCESS: Billing method synchronized with secure tactical gateway.");
+          }, 800);
+          return 100;
+        }
+        return prev + 12;
+      });
+    }, 400);
+  };
 
   const rfpMutation = useMutation({
     mutationFn: async (formData) => {
@@ -199,11 +229,129 @@ export default function SubscriptionNode() {
                   </div>
                </div>
             </div>
-            <button className="w-full py-4 mt-6 rounded-3xl nm-button text-[10px] font-black uppercase tracking-widest hover:text-blue-500 transition-colors">
+            <button 
+               onClick={() => setIsUpdatingCard(true)}
+               className="w-full py-4 mt-6 rounded-3xl nm-button text-[10px] font-black uppercase tracking-widest hover:text-blue-500 transition-all active:scale-95 flex items-center justify-center gap-4"
+            >
+               <ShieldCheck className="w-4 h-4" />
                Update Matrix Card
             </button>
          </div>
       </section>
+
+      <AnimatePresence>
+        {isUpdatingCard && (
+          <div className="fixed inset-0 z-200 flex items-center justify-center p-8">
+            <MotionDiv
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => updateProgress === 0 ? setIsUpdatingCard(false) : null}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md cursor-pointer"
+            />
+            <MotionDiv
+              initial={{ scale: 0.9, y: 40, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 40, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-md bg-(--bg-color) nm-flat-lg rounded-[3rem] p-12 border border-white/5 overflow-hidden"
+            >
+              {updateProgress > 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 gap-10">
+                  <div className="relative">
+                     <div className="w-24 h-24 rounded-full border-4 border-blue-500/10 border-t-blue-500 animate-spin" />
+                     <Activity className="absolute inset-0 m-auto w-8 h-8 text-blue-500 animate-pulse" />
+                  </div>
+                  <div className="text-center space-y-4">
+                     <p className="text-[10px] font-black uppercase tracking-[0.5rem] text-blue-500">Uplinking Matrix Key</p>
+                     <div className="w-48 h-1 nm-inset-sm rounded-full overflow-hidden mx-auto">
+                        <div 
+                          className="h-full bg-blue-500 transition-all duration-300" 
+                          style={{ width: `${updateProgress}%` }}
+                        />
+                     </div>
+                     <p className="text-[8px] font-black opacity-30 uppercase tabular-nums">SYNCHRONIZATION: {updateProgress}%</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-5 mb-12">
+                    <div className="w-14 h-14 rounded-2xl nm-inset-sm flex items-center justify-center text-blue-500">
+                      <CreditCard className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black uppercase tracking-widest leading-none">Matrix Update</h3>
+                      <p className="text-[10px] font-black opacity-30 uppercase tracking-widest mt-1 italic">Secure Billing Uplink</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-8">
+                    <div className="p-8 rounded-3xl nm-inset-sm bg-white/2 border border-white/5 space-y-8">
+                      <div className="flex justify-between items-center opacity-40">
+                        <ShieldCheck className="w-5 h-5" />
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em]">Node: SHW-RX-02</span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                         <label className="text-[9px] font-black uppercase tracking-widest opacity-20 ml-1">Card Payload</label>
+                         <input 
+                           type="text" 
+                           placeholder="CARD NUMBER" 
+                           className="w-full bg-transparent border-none text-sm font-black tracking-[0.2em] focus:outline-none placeholder:opacity-10"
+                           defaultValue={cardData.number}
+                         />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                           <label className="text-[9px] font-black uppercase tracking-widest opacity-20 ml-1">Expiry</label>
+                           <input 
+                             type="text" 
+                             placeholder="MM/YY" 
+                             className="w-full bg-transparent border-none text-[11px] font-black tracking-widest focus:outline-none placeholder:opacity-10"
+                             defaultValue={cardData.expiry}
+                           />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[9px] font-black uppercase tracking-widest opacity-20 ml-1">Secure Key</label>
+                           <input 
+                             type="text" 
+                             placeholder="CVV" 
+                             className="w-full bg-transparent border-none text-[11px] font-black tracking-widest focus:outline-none placeholder:opacity-10"
+                             defaultValue={cardData.cvv}
+                           />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 rounded-xl nm-inset-xs bg-orange-500/5 flex gap-4">
+                       <ShieldAlert className="w-4 h-4 text-orange-500/40 shrink-0" />
+                       <p className="text-[9px] opacity-40 italic font-black leading-relaxed uppercase tracking-widest">
+                          Encryption protocol enforced. Payload remains within your tactical local domain.
+                       </p>
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                      <button 
+                        onClick={handleUpdateCard}
+                        className="flex-1 py-5 rounded-2xl nm-button text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 hover:scale-105 transition-all active:scale-95"
+                      >
+                        Uplink Payload
+                      </button>
+                      <button 
+                        onClick={() => setIsUpdatingCard(false)}
+                        className="px-8 py-5 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest opacity-20 hover:opacity-100 hover:text-red-500 transition-all active:scale-95"
+                      >
+                        Abort
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </MotionDiv>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Plan Selection Command */}
       <section className="space-y-6">
@@ -307,6 +455,7 @@ export default function SubscriptionNode() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
               className="w-full max-w-2xl nm-flat bg-(--bg-color) rounded-[3rem] p-10 relative overflow-hidden border border-purple-500/10"
             >
               {rfpSuccess ? (
@@ -331,8 +480,8 @@ export default function SubscriptionNode() {
                       </div>
                       <h3 className="text-xl font-black italic tracking-tighter uppercase">RFP Expansion Request</h3>
                     </div>
-                    <button onClick={() => setIsRFPModalOpen(false)} className="opacity-20 hover:opacity-100 transition-opacity">
-                      <Lock className="w-5 h-5" />
+                    <button onClick={() => setIsRFPModalOpen(false)} className="w-10 h-10 rounded-xl nm-button flex items-center justify-center text-red-500 hover:scale-110 transition-all active:scale-90" title="Abort Request">
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
                   
@@ -343,7 +492,7 @@ export default function SubscriptionNode() {
                         <select 
                           value={rfpForm.facilities}
                           onChange={(e) => setRFPForm({ ...rfpForm, facilities: e.target.value })}
-                          className="w-full p-5 rounded-2xl nm-inset-sm bg-transparent text-[11px] font-black uppercase tracking-widest outline-hidden border-none"
+                          className="w-full p-5 rounded-2xl nm-inset-sm bg-transparent text-[11px] font-black uppercase tracking-widest border-none focus:outline-none"
                         >
                           <option>1-5 Facilities</option>
                           <option>5-15 Facilities</option>
@@ -356,7 +505,7 @@ export default function SubscriptionNode() {
                         <select 
                           value={rfpForm.jurisdiction}
                           onChange={(e) => setRFPForm({ ...rfpForm, jurisdiction: e.target.value })}
-                          className="w-full p-5 rounded-2xl nm-inset-sm bg-transparent text-[11px] font-black uppercase tracking-widest outline-hidden border-none"
+                          className="w-full p-5 rounded-2xl nm-inset-sm bg-transparent text-[11px] font-black uppercase tracking-widest border-none focus:outline-none"
                         >
                           <option>Private Facility</option>
                           <option>State-Run Recovery</option>
@@ -372,7 +521,7 @@ export default function SubscriptionNode() {
                         value={rfpForm.requirements}
                         onChange={(e) => setRFPForm({ ...rfpForm, requirements: e.target.value })}
                         placeholder="Detail specific institutional needs (e.g., custom API, on-prem hosting, white-label UI)..."
-                        className="w-full h-32 p-5 rounded-2xl nm-inset-sm bg-transparent text-[11px] font-black uppercase tracking-wide outline-hidden border-none resize-none"
+                        className="w-full h-32 p-5 rounded-2xl nm-inset-sm bg-transparent text-[11px] font-black uppercase tracking-wide border-none focus:outline-none resize-none"
                       />
                     </div>
                     
@@ -425,7 +574,10 @@ export default function SubscriptionNode() {
                        <CheckCircle2 className="w-4 h-4" />
                        <span className="text-[10px]">VERIFIED</span>
                     </div>
-                    <button className="p-2 opacity-20 hover:opacity-100 transition-opacity">
+                    <button 
+                       onClick={() => alert(`TRANSMISSION AUDIT: ${tx.id}\nStatus: ${tx.status}\nGateway: Secured Stripe Relay`)}
+                       className="p-2 opacity-20 hover:opacity-100 transition-opacity active:scale-90"
+                    >
                        <MoreHorizontal className="w-4 h-4" />
                     </button>
                  </div>
