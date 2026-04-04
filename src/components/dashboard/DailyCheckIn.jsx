@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Heart, Zap, Moon, Flame, Check, X, AlertCircle, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
-
 export default function DailyCheckIn({ onComplete }) {
   const { user, profile } = useAuth();
   const userId = user?.id;

@@ -21,12 +21,26 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
         >
           <Activity className="w-8 h-8" />
         </MotionDiv>
+
       </div>
+
     );
   }
 
+  // Debug: Log auth state
+  console.log("ProtectedRoute:", { 
+    hasSession: !!session, 
+    loading, 
+    isInitialized, 
+    role,
+    profileRole: profile?.role,
+    profileStatus: profile?.status,
+    allowedRoles 
+  });
+
   // 2. Authentication Gate
   if (!session) {
+    console.log("No session - redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -43,24 +57,34 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-md w-full p-10 rounded-[3rem] nm-flat text-center"
+
         >
           <div className="w-20 h-20 rounded-4xl nm-inset-sm mx-auto mb-8 flex items-center justify-center text-red-500">
             <ShieldAlert className="w-10 h-10" />
           </div>
+
           <h2 className="text-2xl font-black uppercase tracking-widest mb-4">Access Restricted</h2>
           <p className="text-xs font-bold opacity-40 uppercase tracking-widest mb-8 leading-relaxed">
             Identity credentials unauthorized for this tactical sector. System oversight required.
+
           </p>
+
           <button 
             onClick={() => window.history.back()}
             className="w-full py-4 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest text-blue-500"
+
           >
             Return to Authorized Sector
+
           </button>
+
         </MotionDiv>
+
       </div>
+
     );
   }
 
   return children;
+
 }

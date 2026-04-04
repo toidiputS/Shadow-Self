@@ -17,18 +17,11 @@ export default function CosmeticItemCard({ item, userSpBalance, isOwned, onPurch
   return (
     <MotionDiv
       layout
-      className={`relative p-8 rounded-4xl transition-all duration-500 text-(--text-primary) group
-        ${isOwned 
-          ? 'nm-inset border border-green-500/10' 
-          : 'nm-flat-lg border border-white/10 hover:nm-flat hover:-translate-y-2'
-        }
-        ${isPressed ? 'nm-inset-sm' : ''}
-      `}
+      className={`relative p-8 rounded-4xl transition-all duration-500 text-(--text-primary) group ${isOwned ? 'nm-inset border border-green-500/10' : 'nm-flat-lg border border-white/10 hover:nm-flat hover:-translate-y-2'} ${isPressed ? 'nm-inset-sm' : ''}`}
       onMouseDown={() => setIsPressed(true)}
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}
     >
-      {/* Item Image with System Overlay */}
       <div className="w-full h-48 rounded-3xl overflow-hidden mb-8 nm-inset flex items-center justify-center relative bg-linear-to-br from-transparent to-(--border-color)/20 group-hover:nm-inset-sm transition-all duration-500">
         {item.image_url ? (
           <img
@@ -56,9 +49,9 @@ export default function CosmeticItemCard({ item, userSpBalance, isOwned, onPurch
         )}
 
         <div className="absolute bottom-4 left-4 flex gap-2">
-           <span className="px-3 py-1 rounded-lg bg-black/20 backdrop-blur-sm text-[8px] font-black uppercase tracking-widest border border-white/5 opacity-60">
-             {item.category || 'Standard'} Tier
-           </span>
+          <span className="px-3 py-1 rounded-lg bg-black/20 backdrop-blur-sm text-[8px] font-black uppercase tracking-widest border border-white/5 opacity-60">
+            {item.category || 'Standard'} Tier
+          </span>
         </div>
       </div>
 
@@ -74,26 +67,17 @@ export default function CosmeticItemCard({ item, userSpBalance, isOwned, onPurch
         
         <div className="flex items-center justify-between mt-4 pt-6 border-t border-(--text-secondary)/5">
           <div className="flex flex-col gap-1">
-             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-(--text-secondary) opacity-40">Authorization Cost</p>
-             <div className="flex items-center gap-2.5">
-                <Coins className={`w-5 h-5 ${canAfford ? 'text-yellow-500' : 'text-red-400 opacity-50'} transition-colors`} />
-                <span className={`text-xl font-black ${!canAfford && !isOwned ? 'text-red-400 opacity-80' : ''}`}>{item.sp_cost} <span className="text-xs opacity-30">SP</span></span>
-             </div>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-(--text-secondary) opacity-40">Authorization Cost</p>
+            <div className="flex items-center gap-2.5">
+              <Coins className={`w-5 h-5 ${canAfford ? 'text-yellow-500' : 'text-red-400 opacity-50'} transition-colors`} />
+              <span className={`text-xl font-black ${!canAfford && !isOwned ? 'text-red-400 opacity-80' : ''}`}>{item.sp_cost} <span className="text-xs opacity-30">SP</span></span>
+            </div>
           </div>
           
           <button
             onClick={handlePurchase}
             disabled={isOwned || !canAfford}
-            className={`
-              px-8 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em]
-              transition-all duration-500 flex items-center gap-3 active:scale-95
-              ${isOwned
-                ? 'nm-inset text-(--text-secondary) cursor-default bg-blue-500/5'
-                : canAfford
-                  ? 'nm-button text-blue-500 hover:text-blue-400 font-bold'
-                  : 'nm-flat opacity-30 text-(--text-secondary) cursor-not-allowed'
-              }
-            `}
+            className={`px-8 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 flex items-center gap-3 active:scale-95 ${isOwned ? 'nm-inset text-(--text-secondary) cursor-default bg-blue-500/5' : canAfford ? 'nm-button text-blue-500 hover:text-blue-400 font-bold' : 'nm-flat opacity-30 text-(--text-secondary) cursor-not-allowed'}`}
           >
             {isOwned ? (
               <>

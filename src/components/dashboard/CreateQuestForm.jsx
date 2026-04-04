@@ -68,7 +68,6 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
-          {/* Protocol Name */}
           <div className="group">
             <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
               Protocol Designation
@@ -78,13 +77,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
               value={questName}
               onChange={(e) => setQuestName(e.target.value)}
               placeholder="E.g., 0600 Insight Meditation"
-              className="
-                w-full px-7 py-5 rounded-2xl
-                nm-inset text-lg font-bold
-                text-(--text-primary) placeholder-(--text-secondary) placeholder:opacity-30
-                focus:nm-inset-sm focus:outline-none focus:ring-1 focus:ring-blue-500/20
-                transition-all duration-300
-              "
+              className="w-full px-7 py-5 rounded-2xl nm-inset text-lg font-bold text-(--text-primary) placeholder-(--text-secondary) placeholder:opacity-30 focus:nm-inset-sm focus:outline-none focus:ring-1 focus:ring-blue-500/20 transition-all duration-300"
               required
             />
           </div>
@@ -110,7 +103,6 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Category */}
             <div>
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
                 Core Domain
@@ -121,14 +113,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                     key={cat}
                     type="button"
                     onClick={() => setCategory(cat)}
-                    className={`
-                      px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest
-                      transition-all duration-300
-                      ${category === cat
-                        ? 'nm-inset text-blue-500'
-                        : 'nm-flat-xs text-(--text-secondary) opacity-60 hover:opacity-100'
-                      }
-                    `}
+                    className={`px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${category === cat ? 'nm-inset text-blue-500' : 'nm-flat-xs text-(--text-secondary) opacity-60 hover:opacity-100'}`}
                   >
                     {cat}
                   </button>
@@ -136,7 +121,6 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
               </div>
             </div>
 
-            {/* Deployment Type */}
             <div>
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
                 Execution Model
@@ -145,14 +129,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                 <button
                   type="button"
                   onClick={() => setQuestType("daily")}
-                  className={`
-                    px-4 py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3
-                    transition-all duration-300
-                    ${questType === "daily"
-                      ? 'nm-inset text-blue-500'
-                      : 'nm-flat-sm text-(--text-secondary) opacity-60 hover:opacity-100'
-                    }
-                  `}
+                  className={`px-4 py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 ${questType === "daily" ? 'nm-inset text-blue-500' : 'nm-flat-sm text-(--text-secondary) opacity-60 hover:opacity-100'}`}
                 >
                   <Repeat className="w-4 h-4" />
                   Habit
@@ -160,14 +137,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                 <button
                   type="button"
                   onClick={() => setQuestType("single")}
-                  className={`
-                    px-4 py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3
-                    transition-all duration-300
-                    ${questType === "single"
-                      ? 'nm-inset text-orange-500'
-                      : 'nm-flat-sm text-(--text-secondary) opacity-60 hover:opacity-100'
-                    }
-                  `}
+                  className={`px-4 py-4 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all duration-300 ${questType === "single" ? 'nm-inset text-orange-500' : 'nm-flat-sm text-(--text-secondary) opacity-60 hover:opacity-100'}`}
                 >
                   <Zap className="w-4 h-4" />
                   Action
@@ -177,8 +147,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-             {/* Estimated Time & Trigger Mapping */}
-             <div className="p-6 rounded-3xl nm-inset-sm border border-blue-500/10 space-y-6">
+            <div className="p-6 rounded-3xl nm-inset-sm border border-blue-500/10 space-y-6">
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-blue-500 mb-3 ml-1">
                   Temporal Requirement
@@ -194,10 +163,9 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                   <Clock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 pointer-events-none" />
                 </div>
               </div>
-
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-blue-500 mb-3 ml-1">
-                  Trigger Mapping (PATTERN TRACKING)
+                  Trigger Mapping
                 </label>
                 <div className="relative">
                   <input
@@ -209,19 +177,17 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                   />
                   <HelpCircle className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 pointer-events-none" />
                 </div>
-                <p className="mt-3 text-[9px] font-bold opacity-40 uppercase tracking-tight">Anchors protocols to real-life situations</p>
               </div>
             </div>
 
-            {/* Quest Chains (New Section Highlight) */}
             <div className="p-6 rounded-3xl nm-inset-sm border border-purple-500/10">
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-purple-500 mb-3 ml-1">
-                Quest Chains (ROUTINE STRUCTURE)
+                Quest Chains
               </label>
               <div className="flex gap-4">
                 <div className="flex-1">
-                   <p className="text-[8px] font-black opacity-30 uppercase mb-2">Protocol Order</p>
-                   <input
+                  <p className="text-[8px] font-black opacity-30 uppercase mb-2">Order</p>
+                  <input
                     type="number"
                     min="1"
                     value={chainPosition}
@@ -230,23 +196,20 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                   />
                 </div>
                 <div className="flex-2">
-
-                   <p className="text-[8px] font-black opacity-30 uppercase mb-2">Chain ID (Optional UUID)</p>
-                   <input
+                  <p className="text-[8px] font-black opacity-30 uppercase mb-2">Chain ID (Optional UUID)</p>
+                  <input
                     type="text"
                     value={chainId}
                     onChange={(e) => setChainId(e.target.value)}
-                    placeholder="Auto-groups protocols"
+                    placeholder="Optional"
                     className="w-full px-5 py-4 rounded-xl nm-inset text-xs font-bold text-(--text-primary) focus:outline-none"
                   />
                 </div>
               </div>
-              <p className="mt-3 text-[9px] font-bold opacity-40 uppercase tracking-tight">Unlocked sequentially in execution queue</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Difficulty Band */}
             <div className="md:col-span-1">
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
                 Resistance Tier
@@ -257,22 +220,13 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
                     key={d}
                     type="button"
                     onClick={() => setDifficulty(d)}
-                    className={`
-                      flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-tighter
-                      transition-all duration-300
-                      ${difficulty === d
-                        ? 'nm-inset text-(--text-primary)'
-                        : 'nm-flat-xs text-(--text-secondary) opacity-50 hover:opacity-100'
-                      }
-                    `}
+                    className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-tighter transition-all duration-300 ${difficulty === d ? 'nm-inset text-(--text-primary)' : 'nm-flat-xs text-(--text-secondary) opacity-50 hover:opacity-100'}`}
                   >
                     {d}
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Yield Estimates */}
             <div className="md:col-span-1">
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
                 Merit Yield (XP)
@@ -304,20 +258,19 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
           </div>
 
           <div className="flex items-center gap-4 px-6 py-4 rounded-3xl nm-inset-sm border border-white/5">
-             <div className="flex-1">
-                <p className="text-[10px] font-black uppercase tracking-widest leading-none">Evidence Requirement</p>
-                <p className="text-[9px] font-bold opacity-30 uppercase mt-1">Force verification via sponsor review</p>
-             </div>
-             <button 
-               type="button"
-               onClick={() => setProofRequired(!proofRequired)}
-               className={`w-14 h-8 rounded-full nm-inset-sm relative p-1 transition-all ${proofRequired ? 'bg-blue-500/20' : ''}`}
-             >
-                <div className={`absolute w-6 h-6 rounded-full nm-flat transition-all ${proofRequired ? 'right-1 bg-blue-500' : 'left-1 bg-gray-500'}`} />
-             </button>
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-widest leading-none">Evidence Requirement</p>
+              <p className="text-[9px] font-bold opacity-30 uppercase mt-1">Force verification via sponsor review</p>
+            </div>
+            <button 
+              type="button"
+              onClick={() => setProofRequired(!proofRequired)}
+              className={`w-14 h-8 rounded-full nm-inset-sm relative p-1 transition-all ${proofRequired ? 'bg-blue-500/20' : ''}`}
+            >
+              <div className={`absolute w-6 h-6 rounded-full nm-flat transition-all ${proofRequired ? 'right-1 bg-blue-500' : 'left-1 bg-gray-500'}`} />
+            </button>
           </div>
 
-          {/* Footer Actions */}
           <div className="flex flex-col md:flex-row gap-4 pt-8 border-t border-white/5">
             <button
               type="submit"

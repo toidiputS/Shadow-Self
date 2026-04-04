@@ -18,14 +18,17 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/api/supabase";
+import { useAuth } from "@/hooks/useAuth";
 import RecoveryHeatmap from "../dashboard/RecoveryHeatmap";
 import { formatDistanceToNow } from "date-fns";
 
 const MotionDiv = motion.div;
 
-export default function MemberIntelligenceModal({ isOpen, onClose, member }) {
+export default function MemberIntelligenceModal({ isOpen, onClose, member, initialAction }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const userId = member?.user_id || member?.id; // Handle different object shapes
+
 
   const { data: profile } = useQuery({
     queryKey: ['memberProfile', userId],
@@ -84,7 +87,7 @@ export default function MemberIntelligenceModal({ isOpen, onClose, member }) {
          metadata: { 
            priority: isBreach ? 'high' : 'medium', 
            action: isBreach ? 'manual_audit' : 'sync_request',
-           sender_id: (await supabase.auth.getUser()).data.user?.id
+           sender_id: user.id
          }
        }]);
        if (error) throw error;
@@ -109,6 +112,30 @@ export default function MemberIntelligenceModal({ isOpen, onClose, member }) {
        alert("Failed to purge protocol entry: " + err.message);
      }
    });
+    const purgeAllMutation = useMutation({
+      mutationFn: async () => {
+        const { error } = await supabase.from('guild_activity_log').delete().eq('user_id', userId);
+        if (error) throw error;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['memberActivity', userId] });
+        alert("All protocol records purged.");
+      },
+      onError: (err) => {
+        alert("Failed to purge records: " + err.message);
+      }
+    });
+
+  React.useEffect(() => {
+    if (isOpen && initialAction === 'signal' && userId) {
+      setTimeout(() => {
+        const message = prompt("Enter Protocol Signal Message:", "PROTOCOL: Institutional request for system sync. Immediate check-in required.");
+        if (message) {
+          breachMutation.mutate({ customMessage: message, type: 'protocol' });
+        }
+      }, 500);
+    }
+  }, [isOpen, initialAction, userId, breachMutation]);
 
    if (!isOpen) return null;
 
@@ -245,10 +272,25 @@ export default function MemberIntelligenceModal({ isOpen, onClose, member }) {
                    </div>
 
                    <div className="space-y-8">
-                      <div className="flex items-center gap-4 mb-4 border-l-2 border-orange-500/30 pl-4">
-                         <ShieldAlert className="w-4 h-4 opacity-30 text-orange-500" />
-                         <h4 className="text-sm font-black uppercase tracking-widest opacity-40">Action Registry</h4>
-                      </div>
+                       <div className="flex items-center justify-between gap-4 mb-4 border-l-2 border-orange-500/30 pl-4">
+                          <div className="flex items-center gap-4">
+                             <ShieldAlert className="w-4 h-4 opacity-30 text-orange-500" />
+                             <h4 className="text-sm font-black uppercase tracking-widest opacity-40">Action Registry</h4>
+                          </div>
+                          {activity.length > 0 && (
+                             <button 
+                               onClick={() => {
+                                 if (window.confirm("PURGE ALL RECORDS: This action is irreversible. Proceed?")) {
+                                   purgeAllMutation.mutate();
+                                 }
+                               }}
+                               disabled={purgeAllMutation.isPending}
+                               className="px-4 py-1.5 rounded-lg nm-button text-[9px] font-black uppercase tracking-widest text-red-500/60 hover:text-red-500 transition-all flex items-center gap-2"
+                             >
+                               <Trash2 className="w-3 h-3" /> Purge All
+                             </button>
+                          )}
+                       </div>
                       {activity.length === 0 ? (
                          <div className="p-12 text-center nm-inset-sm opacity-20 italic uppercase tracking-widest text-xs rounded-3xl">No registered actions recorded.</div>
                       ) : (

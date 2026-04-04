@@ -17,9 +17,11 @@ import MemberIntelligenceModal from "./MemberIntelligenceModal";
 export default function GuildRoster({ guildId }) {
   const [selectedMember, setSelectedMember] = React.useState(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [initialAction, setInitialAction] = React.useState(null);
 
-  const handleViewIntelligence = (member) => {
+  const handleAction = (member, action) => {
     setSelectedMember(member);
+    setInitialAction(action);
     setIsModalOpen(true);
   };
 
@@ -77,7 +79,7 @@ export default function GuildRoster({ guildId }) {
                 {roster.map((member) => (
                    <tr key={member.id} className="group hover:bg-blue-500/5 transition-colors border-b border-white/5 last:border-none">
                       <td className="p-6">
-                         <div className="flex items-center gap-4 cursor-pointer" onClick={() => handleViewIntelligence(member)}>
+                         <div className="flex items-center gap-4 cursor-pointer" onClick={() => handleAction(member, 'view')}>
                             <div className="w-12 h-12 rounded-2xl nm-inset-sm flex items-center justify-center text-blue-300 font-bold">
                                {member.profiles?.display_name?.charAt(0) || 'U'}
                             </div>
@@ -115,14 +117,14 @@ export default function GuildRoster({ guildId }) {
                       <td className="p-6 text-right">
                          <div className="flex items-center justify-end gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
                             <button 
-                                onClick={() => handleViewIntelligence(member)}
+                                onClick={() => handleAction(member, 'signal')}
                                 title="Signal Member" 
                                 className="p-2.5 rounded-xl nm-button hover:text-orange-500 transition-all active:scale-90"
                              >
                                <MessageSquare className="w-4 h-4" />
                             </button>
                             <button 
-                               onClick={() => handleViewIntelligence(member)}
+                               onClick={() => handleAction(member, 'view')}
                                title="View Intelligence" 
                                className="p-2.5 rounded-xl nm-button hover:text-blue-500 transition-all active:scale-90"
                             >
@@ -130,7 +132,7 @@ export default function GuildRoster({ guildId }) {
                             </button>
                             {member.role !== 'leader' && (
                                <button 
-                                  onClick={() => handleViewIntelligence(member)}
+                                  onClick={() => handleAction(member, 'manage')}
                                   title="Manage Protocol" 
                                   className="p-2.5 rounded-xl nm-button hover:text-red-500 transition-all active:scale-90"
                                 >
@@ -147,8 +149,12 @@ export default function GuildRoster({ guildId }) {
 
        <MemberIntelligenceModal 
           isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
+          onClose={() => {
+            setIsModalOpen(false);
+            setInitialAction(null);
+          }} 
           member={selectedMember} 
+          initialAction={initialAction}
        />
     </div>
   );
