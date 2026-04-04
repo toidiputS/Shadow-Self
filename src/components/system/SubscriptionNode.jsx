@@ -61,6 +61,8 @@ export default function SubscriptionNode() {
           setTimeout(() => {
             setIsUpdatingCard(false);
             setUpdateProgress(0);
+            // Simulate platform record update
+            setCardData(prevData => ({ ...prevData })); 
             alert("MATRIX SUCCESS: Billing method synchronized with secure tactical gateway.");
           }, 800);
           return 100;
@@ -298,7 +300,8 @@ export default function SubscriptionNode() {
                            type="text" 
                            placeholder="CARD NUMBER" 
                            className="w-full bg-transparent border-none text-sm font-black tracking-[0.2em] focus:outline-none placeholder:opacity-10"
-                           defaultValue={cardData.number}
+                           value={cardData.number}
+                           onChange={(e) => setCardData({ ...cardData, number: e.target.value })}
                          />
                       </div>
 
@@ -309,7 +312,8 @@ export default function SubscriptionNode() {
                              type="text" 
                              placeholder="MM/YY" 
                              className="w-full bg-transparent border-none text-[11px] font-black tracking-widest focus:outline-none placeholder:opacity-10"
-                             defaultValue={cardData.expiry}
+                             value={cardData.expiry}
+                             onChange={(e) => setCardData({ ...cardData, expiry: e.target.value })}
                            />
                         </div>
                         <div className="space-y-2">
@@ -318,7 +322,8 @@ export default function SubscriptionNode() {
                              type="text" 
                              placeholder="CVV" 
                              className="w-full bg-transparent border-none text-[11px] font-black tracking-widest focus:outline-none placeholder:opacity-10"
-                             defaultValue={cardData.cvv}
+                             value={cardData.cvv}
+                             onChange={(e) => setCardData({ ...cardData, cvv: e.target.value })}
                            />
                         </div>
                       </div>
@@ -577,7 +582,7 @@ export default function SubscriptionNode() {
                     <button 
                        onClick={() => alert(`TRANSMISSION AUDIT: ${tx.id}\nStatus: ${tx.status}\nGateway: Secured Stripe Relay`)}
                        className="p-2 opacity-20 hover:opacity-100 transition-opacity active:scale-90"
-                    >
+                     >
                        <MoreHorizontal className="w-4 h-4" />
                     </button>
                  </div>
