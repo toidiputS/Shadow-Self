@@ -57,7 +57,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
             <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center text-blue-500">
               <Target className="w-5 h-5" />
             </div>
-            <h2 className="text-xl font-black uppercase tracking-widest leading-none">Initiate New Protocol</h2>
+            <h2 className="text-xl font-black uppercase tracking-widest leading-none">Add a New Habit</h2>
           </div>
           <button 
             onClick={onCancel}
@@ -70,7 +70,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
         <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
           <div className="group">
             <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
-              Protocol Designation
+              Habit Name
             </label>
             <input
               type="text"
@@ -84,12 +84,12 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
 
           <div className="group">
             <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
-              Detailed Instruction / Description
+              How to complete this
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Provide detailed instructions for this protocol..."
+              placeholder="Describe how to complete this habit..."
               rows="3"
               className="
                 w-full px-7 py-5 rounded-2xl
@@ -123,8 +123,8 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
 
             <div>
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
-                Execution Model
-              </label>
+              When to do it
+            </label>
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
@@ -150,7 +150,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
             <div className="p-6 rounded-3xl nm-inset-sm border border-blue-500/10 space-y-6">
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-blue-500 mb-3 ml-1">
-                  Temporal Requirement
+                  How long it takes
                 </label>
                 <div className="relative">
                   <input
@@ -165,7 +165,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
               </div>
               <div>
                 <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-blue-500 mb-3 ml-1">
-                  Trigger Mapping
+                  Starting Point
                 </label>
                 <div className="relative">
                   <input
@@ -212,7 +212,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-1">
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
-                Resistance Tier
+                Difficulty Level
               </label>
               <div className="flex gap-2">
                 {['small', 'medium', 'large'].map((d) => (
@@ -229,7 +229,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
             </div>
             <div className="md:col-span-1">
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
-                Merit Yield (XP)
+                Progress Points (XP)
               </label>
               <div className="relative">
                 <input
@@ -243,7 +243,7 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
             </div>
             <div className="md:col-span-1">
               <label className="block text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) mb-3 ml-2 opacity-60">
-                Resource Yield (SP)
+                House Points (Points)
               </label>
               <div className="relative">
                 <input
@@ -277,14 +277,14 @@ export default function CreateQuestForm({ onSubmit, onCancel }) {
               className="flex-2 py-5 px-8 rounded-2xl nm-button font-black text-sm uppercase tracking-[0.3rem] flex items-center justify-center gap-4 group text-blue-500"
             >
               <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform" />
-              Establish Protocol
+              Save Habit
             </button>
             <button
               type="button"
               onClick={onCancel}
               className="flex-1 py-5 px-8 rounded-2xl text-(--text-secondary) font-black text-[10px] uppercase tracking-[0.3rem] flex items-center justify-center gap-3 nm-flat hover:nm-inset transition-all"
             >
-              Abort
+              Cancel
             </button>
           </div>
         </form>

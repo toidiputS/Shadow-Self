@@ -5,7 +5,6 @@ import {
   Settings, 
   User, 
   ArrowLeft, 
-  Palette, 
   ShieldCheck, 
   Bell, 
   CreditCard,
@@ -15,25 +14,23 @@ import {
   RefreshCw,
   Sun,
   Moon,
-  ShieldAlert
+  ShieldAlert,
+  Palette
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import ThemeSidebar from "../components/dashboard/ThemeSidebar";
 import NotificationsHub from "../components/system/NotificationsHub";
 import SubscriptionNode from "../components/system/SubscriptionNode";
-import { themeKernel } from "@/utils";
+import ThemeSidebar from "../components/dashboard/ThemeSidebar";
 
 const MotionDiv = motion.div;
 
 export default function System() {
-  const [isThemeOpen, setIsThemeOpen] = React.useState(false);
   const [activeSection, setActiveSection] = React.useState(null);
+  const [isThemeOpen, setIsThemeOpen] = React.useState(false);
+  const navigate = useNavigate();
   const [isPurging, setIsPurging] = React.useState(null); // 'logs' or 'notifications'
-  
-  // Spectral State Initialization (Managed via ThemeSidebar)
-  const { hue: savedHue } = themeKernel.load();
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -59,7 +56,7 @@ export default function System() {
   });
 
   const handlePurgeLogs = async () => {
-    if (!window.confirm("CRITICAL ACTION: Execute full guild activity ledger and quest audit purge? This cannot be undone.")) return;
+    if (!window.confirm("ARE YOU SURE? This will clear all house activity and check-in history. It cannot be undone.")) return;
     setIsPurging('logs');
     try {
       // Execute multi-table purge using independent delete operations for safety
@@ -71,17 +68,17 @@ export default function System() {
       const errors = results.filter(r => r.error);
       if (errors.length > 0) throw errors[0].error;
       
-      alert("MATRIX SUCCESS: All institutional archives purged.");
+      alert("SUCCESS: House history has been cleared.");
     } catch (err) {
       console.error(err);
-      alert("UPLINK ERROR: Purge ritual failed at root node.");
+      alert("ERROR: Could not clear history. Please try again.");
     } finally {
       setIsPurging(null);
     }
   };
 
   const handlePurgeNotifications = async () => {
-    if (!window.confirm("CRITICAL ACTION: Execute full notification signal purge? This cannot be undone.")) return;
+    if (!window.confirm("ARE YOU SURE? This will clear all your notifications. It cannot be undone.")) return;
     setIsPurging('notifications');
     try {
       const { error } = await supabase
@@ -89,17 +86,17 @@ export default function System() {
         .delete()
         .eq('user_id', user.id);
       if (error) throw error;
-      alert("MATRIX SUCCESS: Signal archive cleared.");
+      alert("SUCCESS: Notifications cleared.");
     } catch (err) {
       console.error(err);
-      alert("UPLINK ERROR: Signal purge failed.");
+      alert("ERROR: Could not clear notifications.");
     } finally {
       setIsPurging(null);
     }
   };
 
   return (
-    <div className="bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-12 transition-colors duration-400">
+    <div id="admin-setup-wizard" className="bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-12 transition-colors duration-400">
 
       <div className="max-w-4xl mx-auto pb-24">
         {/* Header */}
@@ -109,10 +106,10 @@ export default function System() {
               <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center nm-flat">
                 <Settings className="w-6 h-6 md:w-8 md:h-8 text-blue-500" />
               </div>
-              System Config
+              App Settings
             </h1>
             <div className="flex items-center justify-center md:justify-start gap-3 mt-4 md:ml-18">
-              <span className="text-(--text-secondary) font-black uppercase tracking-[0.3em] text-[10px] opacity-40">Administrative Environment</span>
+              <span className="text-(--text-secondary) font-black uppercase tracking-[0.3em] text-[10px] opacity-40">House Admin Area</span>
             </div>
           </div>
           
@@ -121,7 +118,7 @@ export default function System() {
             className="flex-1 md:flex-none py-4 px-8 rounded-2xl nm-button font-black text-xs uppercase tracking-[0.2rem] flex items-center justify-center gap-3 group transition-all"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Standard Mode
+            Dashboard
           </Link>
         </div>
 
@@ -138,67 +135,39 @@ export default function System() {
               <h4 className="text-2xl font-black uppercase tracking-widest mb-1 group-hover:text-blue-500 transition-colors">
                 {profile?.display_name || user?.email?.split('@')[0] || "Auth User"}
               </h4>
-              <p className="text-[10px] font-black uppercase tracking-[0.25rem] opacity-40 mb-3 leading-none">Vested Member ID: {user?.id?.substring(0, 12)}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.25rem] opacity-40 mb-3 leading-none">User ID: {user?.id?.substring(0, 12)}</p>
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full nm-inset-sm text-[9px] font-black uppercase tracking-tighter opacity-80 w-fit">
                  <ShieldCheck className="w-3 h-3 text-green-500" />
-                 <span>High-Compliance Profile Verified</span>
+                 <span>Verified Account</span>
               </div>
            </div>
         </div>
 
-        {/* Tactical Command Grid (Bento Style) */}
+        {/* Quick Links */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-12">
            
-           {/* 1. Visual Orchestration Node (Small Card) */}
-           <div className="md:col-span-4 group h-full">
-              <div 
-                onClick={() => setIsThemeOpen(true)}
-                className="h-full p-8 rounded-4xl nm-button flex flex-col justify-between border border-transparent hover:border-blue-500/20 hover:scale-[1.02] transition-all cursor-pointer group"
-              >
-                 <div className="space-y-6">
-                    <div className="w-14 h-14 rounded-2xl nm-inset-sm flex items-center justify-center text-blue-500 group-hover:nm-inset transition-all">
-                       <Palette className="w-7 h-7" />
-                    </div>
-                    <div>
-                       <h3 className="text-lg font-black uppercase tracking-widest mb-2">Spectral Kernel</h3>
-                       <p className="text-[10px] font-bold opacity-40 uppercase tracking-tighter leading-relaxed italic">
-                          Orchestrate institutional aesthetics through HSL-based dynamic variables. 
-                       </p>
-                    </div>
-                 </div>
-                 <div className="flex items-center justify-between mt-8">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-blue-500/60 font-mono">HUE: {savedHue}°</span>
-                    <div className="flex -space-x-2">
-                       <div className="w-4 h-4 rounded-full bg-blue-500 shadow-lg"></div>
-                       <div className="w-4 h-4 rounded-full bg-green-500 shadow-lg"></div>
-                       <div className="w-4 h-4 rounded-full bg-red-500 shadow-lg"></div>
-                    </div>
-                 </div>
-              </div>
-           </div>
-
-           {/* 2. Notifications Intelligence (Large Header Card) */}
-           <div className="md:col-span-8 group h-full">
+           {/* Notification Hub (Expanded) */}
+           <div className="md:col-span-12 group h-full">
               <div 
                 onClick={() => setActiveSection(activeSection === 'notifications' ? null : 'notifications')}
-                className={`h-full p-8 rounded-4xl flex flex-col justify-between transition-all cursor-pointer ${activeSection === 'notifications' ? 'nm-inset border border-blue-500/30' : 'nm-button border border-transparent hover:border-blue-500/20 hover:scale-[1.01]'}`}
+                className={`h-full p-10 rounded-5xl flex flex-col justify-between transition-all cursor-pointer ${activeSection === 'notifications' ? 'nm-inset border border-blue-500/30' : 'nm-button border border-transparent hover:border-blue-500/20 hover:scale-[1.01]'}`}
               >
-                 <div className="flex flex-col md:flex-row gap-8 items-start">
-                    <div className={`w-14 h-14 rounded-2xl nm-inset-sm flex items-center justify-center transition-colors shrink-0 ${activeSection === 'notifications' ? 'text-blue-500 nm-inset' : 'text-blue-500/60'}`}>
-                       <Bell className="w-7 h-7" />
+                 <div className="flex flex-col md:flex-row gap-10 items-start">
+                    <div className={`w-16 h-16 rounded-3xl nm-inset-sm flex items-center justify-center transition-colors shrink-0 ${activeSection === 'notifications' ? 'text-blue-500 nm-inset' : 'text-blue-500/60'}`}>
+                       <Bell className="w-8 h-8" />
                     </div>
                     <div className="flex-1">
                        <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-black uppercase tracking-widest mb-2">Signal Intelligence Hub</h3>
-                          <ChevronRight className={`w-6 h-6 opacity-20 transition-transform duration-500 ${activeSection === 'notifications' ? 'rotate-90 opacity-100' : 'group-hover:opacity-100 group-hover:translate-x-1'}`} />
+                          <h3 className="text-xl font-black uppercase tracking-widest mb-3 group-hover:text-blue-500 transition-colors">Guidance Hub</h3>
+                          <ChevronRight className={`w-8 h-8 opacity-20 transition-transform duration-500 ${activeSection === 'notifications' ? 'rotate-90 opacity-100' : 'group-hover:opacity-100 group-hover:translate-x-1'}`} />
                        </div>
-                       <p className="text-[10px] font-bold opacity-40 uppercase tracking-tighter leading-relaxed italic mb-6">
-                          Configure multi-channel escalation logic and ritual triggers for recovery compliance monitoring.
+                       <p className="text-[11px] font-bold opacity-40 uppercase tracking-widest leading-relaxed italic mb-8">
+                          Centrally manage community-wide guidance protocols and support signals.
                        </p>
-                       <div className="flex gap-3">
-                          <span className="px-3 py-1 rounded-lg nm-inset-sm text-[8px] font-black uppercase text-green-500/80">Active</span>
-                          <span className="px-3 py-1 rounded-lg nm-inset-sm text-[8px] font-black uppercase text-blue-500/80">4 Nodes</span>
-                          <span className="px-3 py-1 rounded-lg nm-inset-sm text-[8px] font-black uppercase opacity-20">Uplink Nominal</span>
+                       <div className="flex gap-4">
+                          <span className="px-4 py-2 rounded-xl nm-inset-sm text-[9px] font-black uppercase text-green-500/80 tracking-widest">Active Status</span>
+                          <span className="px-4 py-2 rounded-xl nm-inset-sm text-[9px] font-black uppercase text-blue-500/80 tracking-widest">Global Relay</span>
+                          <span className="px-4 py-2 rounded-xl nm-inset-sm text-[9px] font-black uppercase opacity-20 tracking-widest italic">Core Engine Running</span>
                        </div>
                     </div>
                  </div>
@@ -209,7 +178,7 @@ export default function System() {
                          initial={{ height: 0, opacity: 0 }}
                          animate={{ height: "auto", opacity: 1 }}
                          exit={{ height: 0, opacity: 0 }}
-                         className="overflow-hidden mt-8 pt-8 border-t border-white/5"
+                         className="overflow-hidden mt-12 pt-12 border-t border-white/5"
                          onClick={(e) => e.stopPropagation()}
                        >
                           <NotificationsHub />
@@ -219,7 +188,7 @@ export default function System() {
               </div>
            </div>
 
-           {/* 3. Resource & Subscription Node (Wide Bottom Card) */}
+           {/* 3. House Plan */}
            <div className="md:col-span-12 group">
               <div 
                 onClick={() => setActiveSection(activeSection === 'subscription' ? null : 'subscription')}
@@ -231,11 +200,11 @@ export default function System() {
                     </div>
                     <div className="flex-1 text-center md:text-left">
                        <div className="flex items-center justify-between">
-                          <h3 className="text-xl font-black uppercase tracking-widest">Resource Allocation Node</h3>
+                          <h3 className="text-xl font-black uppercase tracking-widest">House Plan</h3>
                           <ChevronRight className={`w-6 h-6 opacity-20 transition-transform duration-500 hidden md:block ${activeSection === 'subscription' ? 'rotate-90 opacity-100' : 'group-hover:opacity-100 group-hover:translate-x-1'}`} />
                        </div>
                        <p className="text-[11px] font-bold opacity-40 uppercase tracking-widest mt-1 italic">
-                          Institutional Tier Management — {profile?.tier || 'Legacy Protocol'} Active
+                          House Plan Management — {profile?.tier || 'Free'} Plan Active
                        </p>
                     </div>
                     <div className="px-8 py-3 rounded-2xl nm-inset-sm text-[10px] font-black uppercase text-green-500 tracking-[0.2em]">
@@ -260,11 +229,11 @@ export default function System() {
            </div>
         </div>
 
-        {/* Institutional Integrity & Purge Protocols */}
+        {/* Dangerous Actions */}
         <section className="mb-12">
            <div className="flex items-center gap-3 mb-8 ml-2 text-red-500/60">
               <ShieldAlert className="w-5 h-5 animate-pulse" />
-              <h3 className="text-xs font-black uppercase tracking-[0.4rem] opacity-80">Final Integrity Protocols</h3>
+              <h3 className="text-xs font-black uppercase tracking-[0.4rem] opacity-80">Integrity Reset Actions</h3>
            </div>
            
            <div className="p-12 rounded-[3.5rem] nm-inset border border-red-500/5 bg-red-500/1 relative overflow-hidden group">
@@ -273,10 +242,10 @@ export default function System() {
               </div>
               
               <div className="relative z-10 max-w-2xl">
-                 <h4 className="text-xl font-black uppercase tracking-[0.3em] text-red-500 mb-6 italic">Institutional Reset Ritual</h4>
+                 <h4 className="text-xl font-black uppercase tracking-[0.3em] text-red-500 mb-6 italic">Clear All House Data</h4>
                  <p className="text-xs opacity-50 font-medium leading-relaxed mb-10">
-                    Executing these protocols will permanently strip all non-contractual signals, logs, and notification archives from the instance. 
-                    <span className="block mt-2 font-black uppercase tracking-tighter text-red-500/40">WARNING: This action is irreversible and recorded in the audit log.</span>
+                    These actions will permanently delete all activity history, check-ins, and notifications. 
+                    <span className="block mt-2 font-black uppercase tracking-tighter text-red-500/40">WARNING: This cannot be undone.</span>
                  </p>
                  
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -285,7 +254,7 @@ export default function System() {
                       disabled={isPurging === 'logs'}
                       className="group relative overflow-hidden py-6 rounded-3xl nm-button text-[11px] font-black uppercase tracking-widest text-red-500 hover:nm-flat transition-all active:scale-95 disabled:opacity-20"
                     >
-                       <span className="relative z-10">{isPurging === 'logs' ? 'Purging Activity...' : 'Execute Ritual: Purge Logs'}</span>
+                       <span className="relative z-10">{isPurging === 'logs' ? 'Clearing History...' : 'Delete All History'}</span>
                        <div className="absolute inset-0 bg-red-500/5 translate-y-full group-hover:translate-y-0 transition-transform"></div>
                     </button>
                     <button 
@@ -293,7 +262,7 @@ export default function System() {
                        disabled={isPurging === 'notifications'}
                        className="group relative overflow-hidden py-6 rounded-3xl nm-button text-[11px] font-black uppercase tracking-widest text-orange-500 hover:nm-flat transition-all active:scale-95 disabled:opacity-20"
                     >
-                       <span className="relative z-10">{isPurging === 'notifications' ? 'Clearing Signals...' : 'Execute Ritual: Clear Signals'}</span>
+                       <span className="relative z-10">{isPurging === 'notifications' ? 'Clearing Alerts...' : 'Delete All Alerts'}</span>
                        <div className="absolute inset-0 bg-orange-500/5 translate-y-full group-hover:translate-y-0 transition-transform"></div>
                     </button>
                  </div>
@@ -307,12 +276,12 @@ export default function System() {
               <button 
                 onClick={async () => {
                   await supabase.auth.signOut();
-                  window.location.href = '/';
+                  navigate('/');
                 }}
                 className="flex-1 py-6 rounded-3xl nm-button text-red-500/60 hover:text-red-500 font-black text-xs uppercase tracking-[0.5rem] flex items-center justify-center gap-4 transition-all hover:nm-flat"
               >
                   <LogOut className="w-5 h-5" />
-                  Terminate Connection
+                  Log Out
               </button>
               
               <Link 
@@ -320,7 +289,7 @@ export default function System() {
                 className="flex-1 py-6 rounded-3xl nm-button text-blue-500/60 hover:text-blue-500 font-black text-xs uppercase tracking-[0.3rem] flex items-center justify-center gap-4 transition-all hover:nm-flat"
               >
                   <ShieldCheck className="w-5 h-5" />
-                  Administrative Portal
+                  Admin Portal
               </Link>
            </div>
            
@@ -334,13 +303,27 @@ export default function System() {
                 <span className="w-1 h-1 rounded-full bg-blue-500"></span>
                 <span>Branch: PROD-v4.2.0</span>
                 <span className="w-1 h-1 rounded-full bg-blue-500"></span>
-                <span className="text-blue-500">All Systems Nominal</span>
+                <span className="text-blue-500">System Ready</span>
               </div>
            </div>
         </div>
-
-        <ThemeSidebar isOpen={isThemeOpen} onClose={() => setIsThemeOpen(false)} />
       </div>
+
+      <ThemeSidebar 
+        isOpen={isThemeOpen} 
+        onClose={() => setIsThemeOpen(false)} 
+      />
+
+      {/* Persistent Theme Trigger */}
+      <button 
+        onClick={() => setIsThemeOpen(true)}
+        className="fixed bottom-32 right-8 w-16 h-16 rounded-full nm-button flex items-center justify-center text-blue-500 z-50 group hover:scale-110 transition-all border border-blue-500/10"
+        title="App Appearance"
+      >
+        <Palette className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+        <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
+      </button>
+
     </div>
   );
 }

@@ -5,67 +5,72 @@ import { themeKernel } from "@/utils";
 
 const MotionDiv = motion.div;
 
-const PROTOCOL_PRESETS = [
+const THEME_PRESETS = [
   { 
     id: 'alpha-core', 
-    name: 'Alpha Core', 
+    name: 'Daylight', 
     hue: 210, 
     sat: '15%', 
     light: '88%', 
-    icon: <HardDrive className="w-4 h-4" />,
-    description: 'The standard institutional baseline. Clean, balanced, and authoritative.'
+    icon: <Sun className="w-4 h-4" />,
+    description: 'A clean, balanced look for everyday use.'
   },
   { 
     id: 'veracity', 
-    name: 'Veracity', 
+    name: 'Serenity', 
     hue: 155, 
     sat: '20%', 
     light: '88%', 
     icon: <Check className="w-4 h-4" />,
-    description: 'High-compliance clinical environment. Focused on clarity and health.'
+    description: 'A calming theme focused on wellness and clarity.'
   },
   { 
     id: 'blood-moon', 
-    name: 'Blood Moon', 
+    name: 'Focus', 
     hue: 355, 
     sat: '25%', 
     light: '15%', 
     icon: <Sparkles className="w-4 h-4" />,
-    description: 'High-stakes shadow work mode. Deep contrast and focused intensity.'
+    description: 'A high-contrast dark mode for deep reflection.'
   },
   { 
     id: 'stealth', 
-    name: 'Stealth', 
+    name: 'Night Watch', 
     hue: 220, 
     sat: '10%', 
     light: '12%', 
     icon: <Moon className="w-4 h-4" />,
-    description: 'Minimum visual footprint. Designed for long-term monitoring cycles.'
+    description: 'Easy on the eyes for late-night check-ins.'
   },
   { 
     id: 'neon-flux', 
-    name: 'Neon Flux', 
+    name: 'Energy', 
     hue: 280, 
     sat: '40%', 
     light: '88%', 
     icon: <Droplets className="w-4 h-4" />,
-    description: 'Vibrant resource-heavy interface. High engagement protocol.'
+    description: 'A vibrant, high-energy interface to stay motivated.'
   },
 ];
 
 export default function ThemeSidebar({ isOpen, onClose }) {
   const { hue: savedHue } = themeKernel.load();
   const [activePreset, setActivePreset] = useState(null);
+  const [localHue, setLocalHue] = useState(savedHue);
 
   const updateVar = (name, value) => {
     const theme = themeKernel.load();
-    if (name === '--hue') themeKernel.apply(value, theme.sat, theme.light);
+    if (name === '--hue') {
+      setLocalHue(value);
+      themeKernel.apply(value, theme.sat, theme.light);
+    }
     if (name === '--light') themeKernel.apply(theme.hue, theme.sat, value);
     setActivePreset(null); // Reset preset selection on manual override
   };
 
   const applyPreset = (preset) => {
     setActivePreset(preset.id);
+    setLocalHue(preset.hue.toString());
     themeKernel.apply(preset.hue, preset.sat, preset.light);
   };
 
@@ -95,10 +100,10 @@ export default function ThemeSidebar({ isOpen, onClose }) {
                 <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center">
                    <Layout className="w-5 h-5 text-blue-500" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-black uppercase tracking-widest leading-none">System Style</h2>
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mt-1">Orchestration Module</p>
-                </div>
+                 <div>
+                   <h2 className="text-xl font-black uppercase tracking-widest leading-none">App Appearance</h2>
+                   <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mt-1">Personalize your view</p>
+                 </div>
               </div>
               <button 
                 onClick={onClose}
@@ -111,35 +116,35 @@ export default function ThemeSidebar({ isOpen, onClose }) {
             <div className="space-y-12">
               {/* Appearance Mode */}
               <section>
-                <div className="flex items-center gap-3 mb-6">
-                  <Contrast className="w-4 h-4 opacity-40" />
-                  <h3 className="text-xs font-black uppercase tracking-widest">Base Luminance Protocol</h3>
-                </div>
+                 <div className="flex items-center gap-3 mb-6">
+                   <Contrast className="w-4 h-4 opacity-40" />
+                   <h3 className="text-xs font-black uppercase tracking-widest">Background Brightness</h3>
+                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <button 
-                    onClick={() => updateVar('--light', '88%')}
-                    className="p-5 rounded-2xl nm-button flex flex-col items-center gap-3 group"
-                  >
-                    <Sun className="w-6 h-6 text-yellow-500/60 group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Light Core</span>
-                  </button>
-                  <button 
-                    onClick={() => updateVar('--light', '15%')}
-                    className="p-5 rounded-2xl nm-button flex flex-col items-center gap-3 group"
-                  >
-                    <Moon className="w-6 h-6 text-blue-400/60 group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Stealth Node</span>
-                  </button>
+                   <button 
+                     onClick={() => updateVar('--light', '88%')}
+                     className="p-5 rounded-2xl nm-button flex flex-col items-center gap-3 group"
+                   >
+                     <Sun className="w-6 h-6 text-yellow-500/60 group-hover:scale-110 transition-transform" />
+                     <span className="text-[10px] font-black uppercase tracking-widest">Light Mode</span>
+                   </button>
+                   <button 
+                     onClick={() => updateVar('--light', '15%')}
+                     className="p-5 rounded-2xl nm-button flex flex-col items-center gap-3 group"
+                   >
+                     <Moon className="w-6 h-6 text-blue-400/60 group-hover:scale-110 transition-transform" />
+                     <span className="text-[10px] font-black uppercase tracking-widest">Dark Mode</span>
+                   </button>
                 </div>
               </section>
 
               {/* Hue Orchestration */}
               <section>
                 <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <Palette className="w-4 h-4 opacity-40" />
-                    <h3 className="text-xs font-black uppercase tracking-widest">Hue Orchestration</h3>
-                  </div>
+                   <div className="flex items-center gap-3">
+                     <Palette className="w-4 h-4 opacity-40" />
+                     <h3 className="text-xs font-black uppercase tracking-widest">Color Theme</h3>
+                   </div>
                   <RefreshCw className="w-3.5 h-3.5 opacity-20 hover:opacity-50 transition-opacity cursor-pointer" onClick={() => updateVar('--hue', '210')} />
                 </div>
                 <div className="nm-inset-sm p-6 rounded-3xl">
@@ -147,7 +152,7 @@ export default function ThemeSidebar({ isOpen, onClose }) {
                     type="range" 
                     min="0" 
                     max="360" 
-                    defaultValue={savedHue}
+                    value={localHue}
                     onChange={(e) => updateVar('--hue', e.target.value)}
                     className="w-full h-2 rounded-full appearance-none bg-linear-to-r from-red-500 via-green-500 to-blue-500 cursor-pointer"
                   />
@@ -160,13 +165,13 @@ export default function ThemeSidebar({ isOpen, onClose }) {
               </section>
 
               {/* Protocol Presets */}
-              <section>
-                <div className="flex items-center gap-3 mb-6">
-                  <Sparkles className="w-4 h-4 opacity-40" />
-                  <h3 className="text-xs font-black uppercase tracking-widest">Protocol Presets</h3>
-                </div>
-                <div className="space-y-4">
-                  {PROTOCOL_PRESETS.map((preset) => (
+               <section>
+                 <div className="flex items-center gap-3 mb-6">
+                   <Sparkles className="w-4 h-4 opacity-40" />
+                   <h3 className="text-xs font-black uppercase tracking-widest">Theme Presets</h3>
+                 </div>
+                 <div id="system-preset-grid" className="space-y-4">
+                   {THEME_PRESETS.map((preset) => (
                     <button
                       key={preset.id}
                       onClick={() => applyPreset(preset)}
@@ -192,9 +197,9 @@ export default function ThemeSidebar({ isOpen, onClose }) {
               </section>
             </div>
 
-            <div className="mt-16 pt-8 border-t border-white/5 opacity-20 text-center">
-               <p className="text-[9px] font-black uppercase tracking-[0.4rem]">Shadow Self — Styling Kernel v1.2</p>
-            </div>
+             <div className="mt-16 pt-8 border-t border-white/5 opacity-20 text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.4rem]">Shadow Self — Appearance Settings</p>
+             </div>
           </MotionDiv>
         </>
       )}

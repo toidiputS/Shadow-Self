@@ -73,7 +73,7 @@ export default function QuestCard({ quest, onComplete, isCompleted, isOverdue, s
               </h3>
               <div className="flex items-center gap-3 mt-1.5 ">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
-                  {isDailyHabit ? 'Shadow Habit' : 'Instant Action'}
+                  {isDailyHabit ? 'Daily Habit' : 'One-Time Task'}
                 </p>
                 {quest.category && (
                   <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${getCategoryColor(quest.category)}`}>
@@ -99,18 +99,18 @@ export default function QuestCard({ quest, onComplete, isCompleted, isOverdue, s
               <div className="flex flex-col gap-1 opacity-50 group-hover:opacity-100 transition-opacity col-span-2">
                 <div className="flex items-center gap-2">
                   <Target className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
-                  <span className="text-[8px] font-black uppercase tracking-[0.2rem]">Initiation Command</span>
+                  <span className="text-[8px] font-black uppercase tracking-[0.2rem]">When this happens...</span>
                 </div>
-                <span className="text-[10px] font-black uppercase leading-tight italic">"WHEN {quest.trigger_text}, EXECUTE {quest.title}"</span>
+                <span className="text-[10px] font-black uppercase leading-tight italic">"When {quest.trigger_text}, I will {quest.title}"</span>
               </div>
             )}
             {quest.chain_id && (
               <div className="flex flex-col gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
                  <div className="flex items-center gap-2 text-blue-400">
                   <Zap className="w-3 h-3" />
-                  <span className="text-[8px] font-black uppercase tracking-[0.2rem]">Chain</span>
+                  <span className="text-[8px] font-black uppercase tracking-[0.2rem]">Habit Chain</span>
                 </div>
-                <span className="text-[10px] font-black uppercase">PROTOCOL {quest.chain_position || 1}</span>
+                <span className="text-[10px] font-black uppercase">STEP {quest.chain_position || 1}</span>
               </div>
             )}
             {quest.estimated_time && (
@@ -138,11 +138,11 @@ export default function QuestCard({ quest, onComplete, isCompleted, isOverdue, s
         <div className="flex flex-wrap items-center gap-3 mb-8">
           <div className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 nm-inset-sm opacity-80 border border-white/5 group-hover:nm-inset transition-all">
             <Award className="w-3.5 h-3.5 text-purple-400" />
-            <span>+{quest.xp_reward} Merit</span>
+            <span>+{quest.xp_reward} Progress</span>
           </div>
           <div className="px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 nm-inset-sm opacity-80 border border-white/5 group-hover:nm-inset transition-all text-yellow-400/80">
             <Coins className="w-3.5 h-3.5 text-yellow-400" />
-            <span>+{quest.sp_reward} SP</span>
+            <span>+{quest.sp_reward} Points</span>
           </div>
           {quest.reward_description && (
             <div className={`px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-2 border ${isCompleted ? 'nm-inset-sm opacity-40 border-white/5' : 'nm-flat-sm text-green-400 border-green-500/20 animate-pulse'}`}>
@@ -184,7 +184,7 @@ export default function QuestCard({ quest, onComplete, isCompleted, isOverdue, s
                       rows={1}
                       value={reflectionNote}
                       onChange={(e) => setReflectionNote(e.target.value)}
-                      placeholder="Document protocol execution nuances..."
+                      placeholder="Add a note about how this went..."
                       className="w-full bg-transparent nm-inset rounded-2xl px-6 py-4.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all placeholder:opacity-20 border border-white/5 leading-relaxed pr-16"
                     />
                     <button 
@@ -210,12 +210,12 @@ export default function QuestCard({ quest, onComplete, isCompleted, isOverdue, s
             className={`w-full py-5 px-8 rounded-3xl nm-button font-black text-[11px] uppercase tracking-[0.3em] flex items-center justify-center gap-4 transition-all active:scale-[0.98] group-hover:text-blue-500 ${isOverdue ? 'text-red-500' : ''}`}
           >
             {isOverdue ? <AlertCircle className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5 transition-transform group-hover:scale-110" />}
-            {isOverdue ? 'Settle Shadow Debt' : quest.review_status === 'pending' ? 'Verification Pending' : 'Commit Protocol Output'}
+            {isOverdue ? 'Complete This Habit' : quest.review_status === 'pending' ? 'Review Pending' : 'Check Off This Habit'}
           </button>
         ) : (
           <div className="w-full py-5 px-8 rounded-3xl nm-inset text-(--text-secondary) font-black text-[11px] uppercase tracking-[0.3em] text-center flex items-center justify-center gap-4 opacity-50 border border-white/5 grayscale">
             <CheckCircle className="w-5 h-5 text-green-500" />
-            Archive Validated
+            Check-In Complete
           </div>
         )}
       </div>

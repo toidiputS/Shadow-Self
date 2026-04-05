@@ -71,10 +71,10 @@ export default function GuildPotDetails({ guildId }) {
     enabled: !!guildId
   });
 
-  // Clear debuff mutation
-  const clearDebuffMutation = useMutation({
+  // Clear penalty mutation
+  const clearPenaltyMutation = useMutation({
     mutationFn: async () => {
-      // Clear the active debuff
+      // Clear the active penalty
       const { error } = await supabase
         .from('guild_debuffs')
         .update({ 
@@ -86,7 +86,7 @@ export default function GuildPotDetails({ guildId }) {
 
       if (error) throw error;
 
-      // Clear debuff from guild_pot
+      // Clear penalty from guild_pot
       await supabase
         .from('guild_pot')
         .update({ 
@@ -102,7 +102,7 @@ export default function GuildPotDetails({ guildId }) {
           guild_id: guildId,
           user_id: user.id,
           action_type: 'debuff_cleared',
-          description: 'Cleared active guild debuff',
+          description: 'Cleared active house penalty',
           sp_amount: -potData?.sp_balance * 0.1 || -50 // 10% of pot as cost
         }]);
     },
@@ -144,9 +144,9 @@ export default function GuildPotDetails({ guildId }) {
     }
   });
 
-  const handleClearDebuff = () => {
-    if (window.confirm('Clear debuff? This will cost 10% of the guild pot.')) {
-      clearDebuffMutation.mutate();
+  const handleClearPenalty = () => {
+    if (window.confirm('Clear house penalty? This will cost 10% of the house fund.')) {
+      clearPenaltyMutation.mutate();
     }
   };
 
@@ -155,15 +155,15 @@ export default function GuildPotDetails({ guildId }) {
   };
 
   const spBalance = potData?.sp_balance || 0;
-  const debuff = activeDebuff;
+  const penalty = activeDebuff;
 
   // Mock history if no real data
   const history = activityLog.length > 0 ? activityLog : [
-    { id: 1, type: "fine", amount: -50, description: "Protocol Breach: Marcus T.", time: "2h ago" },
+    { id: 1, type: "fine", amount: -50, description: "Deviation Alert: Marcus T.", time: "2h ago" },
     { id: 2, type: "contribution", amount: 100, description: "AM Milestone: Elena V.", time: "4h ago" },
-    { id: 3, type: "debuff_cleared", amount: -500, description: "Cleared 'SP Yield' Debuff", time: "1d ago" },
+    { id: 3, type: "debuff_cleared", amount: -500, description: "Resolved House Alert", time: "1d ago" },
     { id: 4, type: "fine", amount: -25, description: "Missed Reflection: Julian R.", time: "1d ago" },
-    { id: 5, type: "contribution", amount: 200, description: "Weekly Chain Clear: Sarah C.", time: "2d ago" },
+    { id: 5, type: "contribution", amount: 200, description: "Weekly Consistency Clear: Sarah C.", time: "2d ago" },
   ];
 
   const getActivityIcon = (actionType) => {
@@ -178,16 +178,16 @@ export default function GuildPotDetails({ guildId }) {
 
   return (
     <div className="space-y-10">
-       <div className="p-8 rounded-[2.5rem] nm-flat-lg border border-white/5 relative overflow-hidden">
+       <div id="pot-fund-card" className="p-8 rounded-[2.5rem] nm-flat-lg border border-white/5 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
           
-          {/* Active Debuff Warning */}
-          {debuff && (
+          {/* Active Penalty Warning */}
+          {penalty && (
             <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center gap-4">
               <ShieldAlert className="w-6 h-6 text-red-500" />
               <div className="flex-1">
-                <p className="text-sm font-black uppercase text-red-500">Active Debuff: {debuff.debuff_type}</p>
-                <p className="text-[10px] opacity-60">{debuff.consequence_type} - Expires {debuff.duration_days} days</p>
+                <p className="text-sm font-black uppercase text-red-500">Active House Penalty: {penalty.debuff_type}</p>
+                <p className="text-[10px] opacity-60">Expires in {penalty.duration_days} days</p>
               </div>
             </div>
           )}
@@ -199,12 +199,12 @@ export default function GuildPotDetails({ guildId }) {
                 </div>
 
                 <div>
-                   <h3 className="text-xl font-black uppercase tracking-widest leading-none">Institutional Reserve</h3>
-                   <p className="text-[10px] font-black uppercase opacity-30 tracking-widest mt-1 italic">Collective SP Liquidity</p>
+                   <h3 className="text-xl font-black uppercase tracking-widest leading-none">House Fund</h3>
+                   <p className="text-[10px] font-black uppercase opacity-30 tracking-widest mt-1 italic">Shared Support Funds</p>
                 </div>
              </div>
              <div className="text-right">
-                <p className="text-2xl font-black">{spBalance} <span className="text-[10px] opacity-40 font-bold uppercase tracking-widest">SP</span></p>
+                <p className="text-2xl font-black">{spBalance} <span className="text-[10px] opacity-40 font-bold uppercase tracking-widest">Points</span></p>
                 <div className="flex items-center justify-end gap-1.5 mt-1 text-[9px] font-black uppercase tracking-widest text-green-500">
                    <TrendingUp className="w-3 h-3" /> +12% Growth
                 </div>
@@ -214,15 +214,15 @@ export default function GuildPotDetails({ guildId }) {
 
           <div className="grid grid-cols-2 gap-4 relative z-10">
               <button 
-                onClick={handleClearDebuff}
-                disabled={!debuff || clearDebuffMutation.isPending || !isOwnerOrAdmin}
+                onClick={handleClearPenalty}
+                disabled={!penalty || clearPenaltyMutation.isPending || !isOwnerOrAdmin}
                 className="flex-1 p-5 rounded-3xl nm-button text-[10px] font-black uppercase tracking-widest text-yellow-500 flex items-center justify-center gap-3 hover:scale-[1.02] transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                {clearDebuffMutation.isPending ? (
+                {clearPenaltyMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Zap className="w-4 h-4" />
-                )} Clear Debuff
+                )} Resolve Penalty
               </button>
               
               <button 
@@ -280,7 +280,7 @@ export default function GuildPotDetails({ guildId }) {
                    <History className="w-5 h-5" />
                 </div>
 
-                <h3 className="text-lg font-black uppercase tracking-widest">Ledger History</h3>
+                <h3 className="text-lg font-black uppercase tracking-widest">Activity History</h3>
              </div>
 
              <div className="px-5 py-2 rounded-xl nm-inset-sm text-[9px] font-black uppercase tracking-widest opacity-30">Last 25 Entries</div>

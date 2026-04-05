@@ -10,7 +10,18 @@ export default function RecoveryHeatmap({ completionLogs = [] }) {
   });
 
   const getIntensity = (date) => {
-    const count = completionLogs.filter(log => isSameDay(new Date(log.completed_at), date)).length;
+    if (!Array.isArray(completionLogs)) return "bg-white/5";
+    
+    // Safety check filter for valid log entries
+    const count = completionLogs.filter(log => {
+      if (!log?.completed_at) return false;
+      try {
+        return isSameDay(new Date(log.completed_at), date);
+      } catch (e) {
+        return false;
+      }
+    }).length;
+
     if (count === 0) return "bg-white/5";
     if (count < 2) return "bg-blue-500/20";
     if (count < 4) return "bg-blue-500/50";

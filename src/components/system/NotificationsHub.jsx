@@ -31,7 +31,10 @@ import {
   ArrowRight,
   Skull,
   Wifi,
-  Lock
+  Lock,
+  Plus,
+  Compass,
+  Palette
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/api/supabase";
@@ -47,6 +50,17 @@ export default function NotificationsHub() {
    const [syncProgress, setSyncProgress] = useState(0);
    
    const queryClient = useQueryClient();
+ 
+   React.useEffect(() => {
+     const handleThemeUpdate = () => {
+       // Force re-render to pick up new CSS variables if needed, 
+       // though typically CSS variables update automatically in the DOM.
+       // This ensures any JS-driven styles tied to the theme are refreshed.
+       setActiveTab(prev => prev); 
+     };
+     window.addEventListener('shadow_theme_update', handleThemeUpdate);
+     return () => window.removeEventListener('shadow_theme_update', handleThemeUpdate);
+   }, []);
  
    const { data: recentSignals = [], isLoading: isLoadingSignals } = useQuery({
      queryKey: ['system-notifications'],
@@ -70,7 +84,7 @@ export default function NotificationsHub() {
      'leader': 'restricted'
    });
 
-   const [channelHealth] = useState({
+   const [channelHealth, setChannelHealth] = useState({
      'in-app': 99,
      'email': 96,
      'sms': 0,
@@ -78,23 +92,23 @@ export default function NotificationsHub() {
      'leader': 45
    });
 
-   const [escalationRules, setEscalationRules] = useState([
-      { id: 1, title: 'Protocol Deviation', trigger: 'Immediate', action: 'Institutional Redact', icon: 'Skull', color: 'text-red-500' },
-      { id: 2, title: 'Resource Exhaustion', trigger: '80% Threshold', action: 'Auto-Scaling RFP', icon: 'Zap', color: 'text-yellow-500' },
-      { id: 3, title: 'Node Interaction Lack', trigger: '48h Inactive', action: 'Signal Ping', icon: 'Wifi', color: 'text-blue-500' },
-      { id: 4, title: 'Billing Discontinuity', trigger: 'Grace Expiry', action: 'Service Hibernation', icon: 'Lock', color: 'text-orange-500' }
+   const [guidanceProtocols, setGuidanceProtocols] = useState([
+      { id: 1, title: 'Missed Habit', trigger: 'Immediate', action: 'Notify Recovery Team', icon: 'Compass', color: 'text-red-500' },
+      { id: 2, title: 'Low Activity', trigger: '80% Threshold', action: 'Send Wellness Nudge', icon: 'Zap', color: 'text-yellow-500' },
+      { id: 3, title: 'Inactive User', trigger: '48h Inactive', action: 'Wellness Check-in', icon: 'Wifi', color: 'text-blue-500' },
+      { id: 4, title: 'House Fee Issue', trigger: 'Grace Expiry', action: 'Guidance Required', icon: 'Lock', color: 'text-orange-500' }
    ]);
 
-   const handlePurgeRule = (id) => {
-      if (confirm("PURGE RITUAL: Are you sure you want to absolute-delete this escalation protocol?")) {
-         setEscalationRules(prev => prev.filter(r => r.id !== id));
+   const handlePurgeProtocol = (id) => {
+      if (confirm("Delete Protocol: Are you sure you want to remove this guidance rule?")) {
+         setGuidanceProtocols(prev => prev.filter(r => r.id !== id));
       }
    };
 
-   const handleEditRule = (rule) => {
-      const newAction = prompt(`Override Action Protocol for [${rule.title.toUpperCase()}]:`, rule.action);
+   const handleEditProtocol = (rule) => {
+      const newAction = prompt(`Action for [${rule.title.toUpperCase()}]:`, rule.action);
       if (newAction) {
-         setEscalationRules(prev => prev.map(r => r.id === rule.id ? { ...r, action: newAction } : r));
+         setGuidanceProtocols(prev => prev.map(r => r.id === rule.id ? { ...r, action: newAction } : r));
       }
    };
 
@@ -102,7 +116,8 @@ export default function NotificationsHub() {
       Skull: <Skull className="w-5 h-5 text-red-500" />,
       Zap: <Zap className="w-5 h-5 text-yellow-500" />,
       Wifi: <Wifi className="w-5 h-5 text-blue-500" />,
-      Lock: <Lock className="w-5 h-5 text-orange-500" />
+      Lock: <Lock className="w-5 h-5 text-orange-500" />,
+      Compass: <Compass className="w-5 h-5 text-red-500" />
    };
 
    const triggerMutation = useMutation({
@@ -129,7 +144,7 @@ export default function NotificationsHub() {
   const toggleChannel = (id) => {
     setChannelTogglingId(id);
     
-    // Simulate tactical uplink
+    // Simulate update
     setTimeout(() => {
       setChannelStates(prev => {
         const current = prev[id];
@@ -137,6 +152,14 @@ export default function NotificationsHub() {
         if (current === 'active') next = 'restricted';
         else if (current === 'restricted') next = 'locked';
         else next = 'active';
+        
+        // Dynamically update health based on the new status
+        setChannelHealth(h => ({
+          ...h,
+          [id]: next === 'active' ? (90 + Math.floor(Math.random() * 10)) : 
+                next === 'restricted' ? (30 + Math.floor(Math.random() * 20)) : 0
+        }));
+
         return { ...prev, [id]: next };
       });
       setChannelTogglingId(null);
@@ -162,11 +185,11 @@ export default function NotificationsHub() {
   };
 
   const channelsList = [
-    { id: 'in-app', name: 'In-App Engine', icon: Bell },
-    { id: 'email', name: 'Secure Email Relay', icon: Mail },
-    { id: 'sms', name: 'Direct SMS Priority', icon: Smartphone },
-    { id: 'sponsor', name: 'Sponsor Direct Ping', icon: Users },
-    { id: 'leader', name: 'Leader Escalation', icon: ShieldAlert },
+    { id: 'in-app', name: 'In-App Alerts', icon: Bell },
+    { id: 'email', name: 'Email Notifications', icon: Mail },
+    { id: 'sms', name: 'SMS Alerts', icon: Smartphone },
+    { id: 'sponsor', name: 'Sponsor Dashboard', icon: Users },
+    { id: 'leader', name: 'Manager Alerts', icon: ShieldAlert },
   ].map(c => ({ 
     ...c, 
     status: channelStates[c.id], 
@@ -174,18 +197,18 @@ export default function NotificationsHub() {
   }));
 
   const triggers = [
-    { event: "Missed Protocol Quest", urgency: "High", channel: "Member + Sponsor", escalation: "Leader T+4h", type: 'assignment' },
-    { event: "Missed Protocol Chain", urgency: "Critical", channel: "Sponsor + Leader", escalation: "Admin T+2h", type: 'breach' },
-    { event: "Sponsor Review Needed", urgency: "Medium", channel: "Sponsor Direct", escalation: "Leader T+12h", type: 'message' },
-    { event: "Protocol Breach Flagged", urgency: "Critical", channel: "All Channels", escalation: "Immediate Admin", type: 'breach' },
-    { event: "Grace Day Activation", urgency: "Warning", channel: "In-App + Log", escalation: "Sponsor Summary", type: 'alert' },
+    { event: "Missed Check-in", urgency: "High", channel: "Member + Sponsor", followUp: "Support T+4h", type: 'assignment' },
+    { event: "Habit Streak Broken", urgency: "Critical", channel: "Sponsor + Recovery Team", followUp: "Guidance T+2h", type: 'breach' },
+    { event: "Sponsor Review Needed", urgency: "Medium", channel: "Support Portal", followUp: "Team T+12h", type: 'message' },
+    { event: "Wellness Concern", urgency: "Critical", channel: "All Channels", followUp: "Immediate Support", type: 'breach' },
+    { event: "Grace Period Active", urgency: "Warning", channel: "In-App + Log", followUp: "Sponsor Summary", type: 'alert' },
   ];
 
   const tabs = [
     { id: "alerts", name: "Triggers", icon: Zap },
-    { id: "escalation", name: "Rules", icon: ShieldAlert },
-    { id: "health", name: "Health", icon: Activity },
-    { id: "log", name: "Signal Log", icon: FileText },
+    { id: "protocols", name: "Protocols", icon: ShieldAlert },
+    { id: "health", name: "Status", icon: Activity },
+    { id: "log", name: "History", icon: FileText },
   ];
 
   return (
@@ -193,10 +216,10 @@ export default function NotificationsHub() {
       {/* Metrics Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
          {[
-           { label: 'Signal Output', value: recentSignals.length, sub: 'Total Logged', color: 'text-blue-500' },
-           { label: 'Actionable Delta', value: recentSignals.filter(s => !s.read).length, sub: 'Pending Review', color: 'text-orange-500' },
-           { label: 'Uptime Matrix', value: '99.9%', sub: 'Decentralized Live', color: 'text-green-500' },
-           { label: 'Pulse Channels', value: `${channelsList.filter(c => c.status === 'active').length}/5`, sub: 'Routing Active', color: 'text-purple-500' },
+           { label: 'Total Sent', value: recentSignals.length, sub: 'All Notifications', color: 'text-blue-500' },
+           { label: 'Unread', value: recentSignals.filter(s => !s.read).length, sub: 'Pending Review', color: 'text-orange-500' },
+           { label: 'System Uptime', value: '99.9%', sub: 'Healthy', color: 'text-green-500' },
+           { label: 'Active Channels', value: `${channelsList.filter(c => c.status === 'active').length}/5`, sub: 'Routing Alerts', color: 'text-purple-500' },
          ].map((stat, i) => (
            <div key={i} className="p-8 rounded-4xl nm-inset-sm border border-white/5 bg-white/1">
               <p className="text-[10px] font-black uppercase tracking-widest opacity-30 mb-2">{stat.label}</p>
@@ -208,10 +231,10 @@ export default function NotificationsHub() {
          ))}
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col gap-8">
         {/* Navigation Sidebar */}
-        <div className="w-full lg:w-72 shrink-0 space-y-3">
-           <div className="p-2 rounded-[2.5rem] nm-inset-sm space-y-2 border border-white/5">
+        <div className="w-full shrink-0 flex flex-col md:flex-row gap-6 items-stretch">
+           <div className="flex-1 p-2 rounded-[2.5rem] nm-inset-sm flex flex-col sm:flex-row gap-2 border border-white/5">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -219,28 +242,28 @@ export default function NotificationsHub() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center justify-between px-6 py-5 rounded-4xl transition-all duration-300 ${isActive ? 'nm-button text-blue-500 scale-[1.02]' : 'text-(--text-secondary) opacity-30 hover:opacity-100'}`}
+                    className={`flex-1 flex items-center justify-center sm:justify-between px-6 py-5 rounded-4xl transition-all duration-300 ${isActive ? 'nm-button text-blue-500 scale-[1.02]' : 'text-(--text-secondary) opacity-30 hover:opacity-100'}`}
                   >
                     <div className="flex items-center gap-4">
                        <Icon className={`w-5 h-5 ${isActive ? 'animate-pulse' : ''}`} />
                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">{tab.name}</span>
                     </div>
-                    {isActive && <ChevronRight className="w-4 h-4" />}
+                    {isActive && <ChevronRight className="w-4 h-4 hidden sm:block" />}
                   </button>
                 );
               })}
            </div>
 
-           <div className="p-8 rounded-[2.5rem] nm-flat border border-white/5 bg-white/1">
-              <p className="text-[9px] font-black uppercase tracking-widest opacity-20 mb-4">Instance Security</p>
+           <div className="w-full md:w-72 p-8 rounded-[2.5rem] nm-flat border border-white/5 bg-white/1 flex flex-col justify-center">
+              <p className="text-[9px] font-black uppercase tracking-widest opacity-20 mb-4">Admin Status</p>
               <div className="space-y-4">
                  <div className="flex items-center justify-between">
                     <span className="text-[10px] font-black uppercase opacity-60">Status</span>
-                    <span className="text-[10px) font-black uppercase text-green-500">Normal</span>
+                    <span className="text-[10px] font-black uppercase text-green-500">All Good</span>
                  </div>
                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase opacity-60">Auth Level</span>
-                    <span className="text-[10px) font-black uppercase text-blue-500">Root Node</span>
+                    <span className="text-[10px] font-black uppercase opacity-60">Access</span>
+                    <span className="text-[10px] font-black uppercase text-blue-500">Full Admin</span>
                  </div>
               </div>
            </div>
@@ -258,21 +281,21 @@ export default function NotificationsHub() {
               className="h-full flex flex-col"
             >
               {activeTab === "alerts" && (
-                <div className="space-y-12 h-full flex flex-col">
-                  <div>
-                     <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Protocol Triggers</h3>
-                     <p className="text-[10px] font-black uppercase opacity-30 tracking-[0.3em] italic">Tactical Signal Escalation Architect</p>
-                  </div>
+                 <div className="space-y-12 h-full flex flex-col">
+                   <div>
+                      <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Automatic Alerts</h3>
+                      <p className="text-[10px] font-black uppercase opacity-30 tracking-[0.3em] italic">Manage automatic message rules for the house</p>
+                   </div>
 
                   <div className="flex-1 rounded-[2.5rem] nm-inset border border-white/5 overflow-hidden flex flex-col">
                      <div className="overflow-x-auto pb-4 custom-scrollbar">
                         <table className="w-full text-left border-collapse">
                            <thead>
-                              <tr className="border-b border-white/5 bg-black/10">
-                                 <th className="p-8 text-[10px] font-black uppercase tracking-widest opacity-40">Tactical Event Node</th>
-                                 <th className="p-8 text-[10px] font-black uppercase tracking-widest opacity-40">Matrix Priority</th>
-                                 <th className="p-8 text-[10px] font-black uppercase tracking-widest opacity-40">Escalation Delta</th>
-                                 <th className="p-8 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Command</th>
+                               <tr className="border-b border-white/5 bg-black/10">
+                                 <th className="p-8 text-[10px] font-black uppercase tracking-widest opacity-40">Event Name</th>
+                                 <th className="p-8 text-[10px] font-black uppercase tracking-widest opacity-40">Priority</th>
+                                 <th className="p-8 text-[10px] font-black uppercase tracking-widest opacity-40">Follow-up</th>
+                                 <th className="p-8 text-[10px] font-black uppercase tracking-widest opacity-40 text-right">Action</th>
                               </tr>
                            </thead>
                            <tbody className="divide-y divide-white/5 font-black uppercase tracking-tighter text-[11px] opacity-80">
@@ -289,18 +312,18 @@ export default function NotificationsHub() {
                                         {trigger.urgency}
                                       </span>
                                    </td>
-                                   <td className="p-8 text-[10px] opacity-20 italic">{trigger.escalation}</td>
+                                   <td className="p-8 text-[10px] opacity-20 italic">{trigger.followUp}</td>
                                    <td className="p-8 text-right">
                                       <button 
                                         onClick={() => triggerMutation.mutate({ 
                                           type: trigger.type, 
                                           title: trigger.event, 
-                                          message: `Manual protocol signal fired for investigation.` 
+                                          message: `Manual test notification sent.` 
                                         })}
-                                        disabled={triggerMutation.isPending}
+                                        disabled={triggerMutation.isLoading}
                                         className="px-5 py-3 rounded-2xl nm-button text-[10px] hover:text-blue-500 transition-all active:nm-inset-sm disabled:opacity-20"
                                       >
-                                         {triggerMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin mx-auto" /> : 'Fire Signal'}
+                                         {triggerMutation.isLoading ? <RefreshCw className="w-4 h-4 animate-spin mx-auto" /> : 'Send Test'}
                                       </button>
                                    </td>
                                  </tr>
@@ -313,11 +336,11 @@ export default function NotificationsHub() {
               )}
 
               {activeTab === "health" && (
-                <div className="space-y-12 flex-1">
-                  <div>
-                     <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Matrix Health</h3>
-                     <p className="text-[10px] font-black uppercase opacity-30 tracking-[0.3em] italic">Real-time Node Pulse Audit</p>
-                  </div>
+                 <div className="space-y-12 flex-1">
+                   <div>
+                      <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Message Channels</h3>
+                      <p className="text-[10px] font-black uppercase opacity-30 tracking-[0.3em] italic">Check if house alerts are functional</p>
+                   </div>
 
                   <div className="grid gap-6">
                      {channelsList.map((channel) => (
@@ -327,13 +350,13 @@ export default function NotificationsHub() {
                                  <div className={`w-16 h-16 rounded-4xl nm-inset-sm flex items-center justify-center transition-all ${channel.status === 'locked' ? 'grayscale opacity-20' : 'text-blue-500'}`}>
                                     <channel.icon className="w-8 h-8" />
                                  </div>
-                                 <div>
-                                    <h4 className="text-lg font-black uppercase tracking-widest">{channel.name}</h4>
-                                    <div className="flex items-center gap-3 mt-1">
-                                       <span className={`w-2 h-2 rounded-full ${channel.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-                                       <span className="text-[9px] font-black uppercase tracking-widest opacity-40">PROTOCOL: {channel.status}</span>
-                                    </div>
-                                 </div>
+                                  <div>
+                                     <h4 className="text-lg font-black uppercase tracking-widest">{channel.name}</h4>
+                                     <div className="flex items-center gap-3 mt-1">
+                                        <span className={`w-2 h-2 rounded-full ${channel.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-40">STATUS: {channel.status}</span>
+                                     </div>
+                                  </div>
                               </div>
                               
                               <button 
@@ -344,9 +367,9 @@ export default function NotificationsHub() {
                                  {channelTogglingId === channel.id ? (
                                     <RefreshCw className="w-4 h-4 animate-spin text-blue-500" />
                                  ) : channel.status === 'active' ? (
-                                    'Restrict Node'
+                                    'Disable Channel'
                                  ) : (
-                                    'Uplink Node'
+                                    'Enable Channel'
                                  )}
                               </button>
                            </div>
@@ -354,7 +377,7 @@ export default function NotificationsHub() {
                            <div className="flex items-center gap-10">
                               <div className="flex-1">
                                  <div className="flex justify-between items-center mb-3 text-[9px] font-black uppercase tracking-widest opacity-30">
-                                    <span>Signal Integrity</span>
+                                    <span>Signal Reliability</span>
                                     <span className="tabular-nums">{channel.health}%</span>
                                  </div>
                                  <div className="h-2 w-full nm-inset-sm rounded-full overflow-hidden">
@@ -367,7 +390,7 @@ export default function NotificationsHub() {
                               </div>
                               <div className="w-32 text-right">
                                  <p className="text-4xl font-black italic tracking-tighter text-(--text-primary) opacity-90">{channel.health}%</p>
-                                 <p className="text-[8px] font-black uppercase tracking-widest opacity-20">Stability Pulse</p>
+                                 <p className="text-[8px] font-black uppercase tracking-widest opacity-20">Channel Health</p>
                               </div>
                            </div>
                         </div>
@@ -380,15 +403,15 @@ export default function NotificationsHub() {
                 <div className="space-y-10 flex-1 flex flex-col">
                   <div className="flex items-center justify-between">
                      <div>
-                        <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Signal Ledger</h3>
-                        <p className="text-[10px] font-black uppercase opacity-30 tracking-[0.3em] italic">Historical Transaction Log</p>
+                        <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Message History</h3>
+                        <p className="text-[10px] font-black uppercase opacity-30 tracking-[0.3em] italic">Log of all house alerts and messages</p>
                      </div>
                      <div className="flex items-center gap-4">
                         <div className="relative">
                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20" />
                            <input 
                              type="text" 
-                             placeholder="PROBE LEDGER..." 
+                             placeholder="Search history..." 
                              className="pl-12 pr-6 py-4 rounded-2xl nm-inset-sm bg-transparent text-[10px] font-black uppercase tracking-widest outline-none border-none placeholder:opacity-10 w-64"
                            />
                         </div>
@@ -397,7 +420,7 @@ export default function NotificationsHub() {
 
                   <div className="flex-1 space-y-3 overflow-y-auto pr-4 custom-scrollbar">
                      {isLoadingSignals ? (
-                        <div className="py-40 text-center opacity-20 animate-pulse uppercase tracking-[0.4rem] font-black text-xs italic">Decrypting Transmission Ledger...</div>
+                        <div className="py-40 text-center opacity-20 animate-pulse uppercase tracking-[0.4rem] font-black text-xs italic">Loading notification history...</div>
                      ) : (
                         recentSignals.map((sig) => (
                            <MotionDiv
@@ -419,9 +442,9 @@ export default function NotificationsHub() {
                                     <p className="text-[8px] font-black opacity-10 tracking-widest uppercase">RX Node: {sig.id.substring(0, 4)}</p>
                                  </div>
                                  <button 
-                                   onClick={() => alert("TACTICAL DEBRIEF: This channel is currently synchronized with the Shadow Self core. All outgoing transmission pulses are logged and audited in real-time.")}
+                                   onClick={() => alert("Notification History: All alerts sent to users are logged here for review. This helps ensure everyone is getting the support they need.")}
                                    className="w-10 h-10 rounded-xl nm-button flex items-center justify-center opacity-40 hover:opacity-100 transition-all text-blue-500 active:scale-90"
-                                   title="Tactical Info"
+                                   title="Information"
                                  >
                                     <ShieldQuestion className="w-4 h-4" />
                                  </button>
@@ -440,48 +463,48 @@ export default function NotificationsHub() {
                         {isSyncingArchive ? (
                            <>
                               <RefreshCw className="w-4 h-4 animate-spin" />
-                              Synchronizing Decrypted Data... {syncProgress}%
+                              Loading old messages... {syncProgress}%
                            </>
                         ) : (
                            <>
                               <Download className="w-4 h-4" />
-                              Fetch Archival Intelligence (90D+)
+                              Load Older History
                            </>
                         )}
                      </button>
                      <div className="text-right flex items-center gap-4 opacity-10">
                         <Lock className="w-3 h-3" />
-                        <p className="text-[9px] font-black uppercase tracking-[0.5rem]">Decryption Path Locked</p>
+                        <p className="text-[9px] font-black uppercase tracking-[0.5rem]">Encrypted</p>
                      </div>
                   </div>
                 </div>
               )}
               
-              {activeTab === 'escalation' && (
+               {activeTab === 'protocols' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col">
                    <div className="flex items-center justify-between mb-2">
                        <div>
-                          <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Escalation Protocols</h3>
-                          <p className="text-[10px] font-black uppercase opacity-30 tracking-[0.3em] italic">Automated Incident Response Matrix</p>
+                          <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2">Guidance Protocols</h3>
+                          <p className="text-[10px] font-black uppercase opacity-30 tracking-[0.3em] italic">Support responses for missed check-ins or habits</p>
                        </div>
                        <button 
-                         onClick={() => alert("UPLINK REQUIRED: Institutional rule creation is currently restricted to Root Core synchronization cycles. Please contact system architects for custom protocol deployment.")}
+                         onClick={() => alert("Notice: New protocols must be approved by the recovery team. Please contact technical support for custom deployment.")}
                          className="px-6 py-4 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest text-blue-500 flex items-center gap-3 hover:scale-105 active:scale-95 transition-all"
                        >
-                          <Plus className="w-4 h-4" /> Deploy Rule
+                          <Plus className="w-4 h-4 text-blue-500" /> New Protocol
                        </button>
                    </div>
                    
-                   {escalationRules.length === 0 ? (
+                   {guidanceProtocols.length === 0 ? (
                       <div className="flex-1 flex flex-col items-center justify-center py-20 opacity-20">
                          <ShieldCheck className="w-16 h-16 mb-8 text-green-500" />
                          <p className="text-xl font-black uppercase tracking-[0.4em] text-center max-w-sm leading-relaxed">
-                            All Protcols Purged. System in Blind-Faith High Compliance.
+                            All protocols are currently disabled.
                          </p>
                       </div>
                    ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-2 custom-scrollbar">
-                         {escalationRules.map((rule) => (
+                         {guidanceProtocols.map((rule) => (
                             <div key={rule.id} className="p-6 rounded-4xl nm-inset-sm border border-white/5 space-y-4 group">
                                <div className="flex items-center justify-between">
                                   <div className="w-10 h-10 rounded-2xl nm-button flex items-center justify-center">
@@ -499,33 +522,33 @@ export default function NotificationsHub() {
                                      <span className="text-[10px] font-bold opacity-30 uppercase">Action:</span>
                                      <span className="text-[10px] font-black text-orange-500">{rule.action}</span>
                                   </div>
-                               </div>
-                               <div className="pt-4 border-t border-white/5 flex gap-2">
-                                  <button 
-                                    onClick={() => handlePurgeRule(rule.id)}
-                                    className="flex-1 py-3 rounded-2xl nm-button text-[9px] font-black uppercase hover:text-red-500 transition-all active:scale-95"
-                                  >
-                                    Purge
-                                  </button>
-                                  <button 
-                                    onClick={() => handleEditRule(rule)}
-                                    className="flex-1 py-3 rounded-2xl nm-button text-[9px] font-black uppercase hover:text-blue-500 transition-all active:scale-95"
-                                  >
-                                    Edit
-                                  </button>
-                               </div>
-                            </div>
-                         ))}
-                      </div>
-                   )}
-                </div>
-              )}
+                                </div>
+                                <div className="pt-4 border-t border-white/5 flex gap-2">
+                                   <button 
+                                     onClick={() => handlePurgeProtocol(rule.id)}
+                                     className="flex-1 py-3 rounded-2xl nm-button text-[9px] font-black uppercase hover:text-red-500 transition-all active:scale-95"
+                                   >
+                                     Remove
+                                   </button>
+                                   <button 
+                                     onClick={() => handleEditProtocol(rule)}
+                                     className="flex-1 py-3 rounded-2xl nm-button text-[9px] font-black uppercase hover:text-blue-500 transition-all active:scale-95"
+                                   >
+                                     Modify
+                                   </button>
+                                </div>
+                             </div>
+                          ))}
+                       </div>
+                    )}
+                 </div>
+               )}
 
-              {!['alerts', 'health', 'log', 'escalation'].includes(activeTab) && (
+               {!['alerts', 'health', 'log', 'protocols'].includes(activeTab) && (
                 <div className="flex-1 flex flex-col items-center justify-center py-20 opacity-20">
                    <ShieldAlert className="w-16 h-16 mb-8" />
                    <p className="text-xl font-black uppercase tracking-[0.4em] text-center max-w-sm leading-relaxed">
-                      Protocol Section Under Construction.
+                      This section is coming soon.
                    </p>
                 </div>
               )}

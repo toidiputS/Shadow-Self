@@ -58,8 +58,8 @@ export default function AuditLog() {
           
         return (completions || []).map(c => ({
           ...c,
-          type: 'COMPLIANCE',
-          message: `PROTOCOL: ${c.quests?.title || "System Sync"} validated.`,
+          type: 'HABIT',
+          message: `${c.quests?.title || "Habit"} completed.`,
           created_at: c.completed_at
         }));
       }
@@ -70,8 +70,8 @@ export default function AuditLog() {
 
   const getLogIcon = (type) => {
     switch (type) {
-      case 'COMPLIANCE': return <ShieldCheck className="w-4 h-4 text-green-500" />;
-      case 'VIOLATION': return <AlertTriangle className="w-4 h-4 text-red-500" />;
+      case 'HABIT': return <ShieldCheck className="w-4 h-4 text-green-500" />;
+      case 'ISSUE': return <AlertTriangle className="w-4 h-4 text-red-500" />;
       case 'SYSTEM': return <Activity className="w-4 h-4 text-blue-500" />;
       default: return <Activity className="w-4 h-4 text-slate-400" />;
     }
@@ -90,9 +90,9 @@ export default function AuditLog() {
             <Activity className="w-7 h-7" />
           </div>
           <div>
-            <h2 className="text-xl font-black uppercase tracking-[0.2em] leading-none mb-1">Intelligence Registry</h2>
+            <h2 className="text-xl font-black uppercase tracking-[0.2em] leading-none mb-1">Activity Log</h2>
             <p className="text-[9px] font-black uppercase opacity-30 tracking-widest italic flex items-center gap-2">
-               <Lock className="w-2 h-2" /> Encrypted Audit Pathway
+               <Lock className="w-2 h-2" /> Recent House Activity
             </p>
           </div>
         </div>
@@ -102,7 +102,7 @@ export default function AuditLog() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-20 group-focus-within:opacity-100 transition-opacity text-blue-500" />
               <input 
                 type="text" 
-                placeholder="PROBE LOGS..." 
+                placeholder="SEARCH ACTIVITY..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 rounded-2xl nm-inset-sm bg-transparent text-[10px] font-black uppercase tracking-widest outline-none border-none placeholder:opacity-20"
@@ -119,7 +119,7 @@ export default function AuditLog() {
       </div>
 
       <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar pb-2">
-          {["ALL", "COMPLIANCE", "VIOLATION", "SYSTEM"].map(filter => (
+          {["ALL", "HABIT", "ISSUE", "SYSTEM"].map(filter => (
             <button
                key={filter}
                onClick={() => setActiveFilter(filter)}
@@ -139,7 +139,7 @@ export default function AuditLog() {
         ) : filteredLogs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 opacity-30 italic text-center px-12">
              <ShieldAlert className="w-12 h-12 mb-4 opacity-10" />
-             <p className="text-xs font-black uppercase tracking-widest leading-relaxed">No protocols matched your tactical probe parameters.</p>
+             <p className="text-xs font-black uppercase tracking-widest leading-relaxed">No activity matched your search parameters.</p>
           </div>
         ) : (
           <AnimatePresence initial={false}>
@@ -151,19 +151,19 @@ export default function AuditLog() {
                 exit={{ opacity: 0, x: 10 }}
                 className="p-5 rounded-3xl nm-inset-sm flex items-center gap-6 group hover:nm-flat transition-all border border-white/5 relative overflow-hidden"
               >
-                <div className={`w-10 h-10 rounded-xl nm-inset-xs flex items-center justify-center shrink-0 border border-white/5 ${log.type === 'VIOLATION' ? 'text-red-500' : log.type === 'COMPLIANCE' ? 'text-green-500' : 'text-blue-500'}`}>
+                <div className={`w-10 h-10 rounded-xl nm-inset-xs flex items-center justify-center shrink-0 border border-white/5 ${log.type === 'ISSUE' ? 'text-red-500' : log.type === 'HABIT' ? 'text-green-500' : 'text-blue-500'}`}>
                    {getLogIcon(log.type)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
-                     <span className={`text-[8px] font-black uppercase tracking-widest italic opacity-40 px-2 py-0.5 rounded-lg nm-flat-xs ${log.type === 'VIOLATION' ? 'text-red-500/60' : 'text-blue-400/60'}`}>{log.type || 'EVENT'}</span>
+                     <span className={`text-[8px] font-black uppercase tracking-widest italic opacity-40 px-2 py-0.5 rounded-lg nm-flat-xs ${log.type === 'ISSUE' ? 'text-red-500/60' : 'text-blue-400/60'}`}>{log.type || 'EVENT'}</span>
                      <span className="text-[9px] font-black uppercase opacity-20 tabular-nums">{formatDistanceToNow(new Date(log.created_at || log.completed_at), { addSuffix: true })}</span>
                   </div>
                   <p className="text-xs font-black uppercase tracking-tight opacity-80 group-hover:opacity-100 transition-opacity leading-tight">
                     {log.message}
                   </p>
                 </div>
-                <button title="View Log Trace" className="p-3 rounded-2xl nm-button opacity-0 group-hover:opacity-100 transition-all text-blue-500 active:scale-95 ml-4">
+                <button title="View Details" className="p-3 rounded-2xl nm-button opacity-0 group-hover:opacity-100 transition-all text-blue-500 active:scale-95 ml-4">
                    <ChevronRight className="w-4 h-4" />
                 </button>
               </MotionDiv>
@@ -174,8 +174,8 @@ export default function AuditLog() {
 
       <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-between">
         <div className="flex flex-col gap-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">Pulse: {logs.length} Signals Decrypted</p>
-          <p className="text-[7px] font-black uppercase tracking-widest opacity-10">Last Institutional Sync: {new Date().toLocaleTimeString()}</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30">{logs.length} Total Activity Logs</p>
+          <p className="text-[7px] font-black uppercase tracking-widest opacity-10">Last Update: {new Date().toLocaleTimeString()}</p>
         </div>
         <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)] animate-pulse" />
       </div>
@@ -203,8 +203,8 @@ export default function AuditLog() {
                            <FileText className="w-8 h-8" />
                         </div>
                         <div>
-                           <h3 className="text-3xl font-black italic tracking-tighter uppercase leading-none">Institutional Archives</h3>
-                           <p className="text-[10px] font-black uppercase opacity-30 tracking-[0.4rem] mt-2 italic">Historical Intelligence Log</p>
+                           <h3 className="text-3xl font-black italic tracking-tighter uppercase leading-none">House Archives</h3>
+                           <p className="text-[10px] font-black uppercase opacity-30 tracking-[0.4rem] mt-2 italic">Historical Activity Log</p>
                         </div>
                      </div>
                      <button 
@@ -226,7 +226,7 @@ export default function AuditLog() {
                               <div className="flex items-center gap-3 mb-2">
                                  <span className="text-[9px] font-black uppercase tracking-widest opacity-40 tabular-nums">{new Date(log.created_at || log.completed_at).toLocaleString()}</span>
                                  <span className="text-[14px] opacity-10">/</span>
-                                 <span className="text-[9px] font-black uppercase tracking-widest text-blue-500/60 italic">{log.type || 'COMPLIANCE'}</span>
+                                 <span className="text-[9px] font-black uppercase tracking-widest text-blue-500/60 italic">{log.type || 'HABIT'}</span>
                               </div>
                               <p className="text-sm font-black uppercase tracking-tight opacity-80 leading-relaxed italic">{log.message}</p>
                            </div>
@@ -241,8 +241,8 @@ export default function AuditLog() {
                   </div>
 
                   <div className="mt-12 flex justify-between items-center px-6">
-                     <p className="text-[10px] font-black uppercase tracking-[0.5rem] opacity-10">Shadow Self Encryption Protocol V2.1</p>
-                     <p className="text-[10px] font-black uppercase tracking-[0.2rem] text-blue-500/40 italic">Unauthorized access is a protocol violation.</p>
+                     <p className="text-[10px] font-black uppercase tracking-[0.5rem] opacity-10">Shadow Self Systems v2.1</p>
+                     <p className="text-[10px] font-black uppercase tracking-[0.2rem] text-blue-500/40 italic">Unauthorized access is prohibited.</p>
                   </div>
                </MotionDiv>
             </div>

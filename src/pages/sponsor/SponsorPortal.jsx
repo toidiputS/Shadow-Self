@@ -16,9 +16,8 @@ import {
   AlertCircle,
   Eye,
   History,
-  Lock,
-  ArrowUpRight,
-  Loader2
+  Loader2,
+  ClipboardList
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/api/supabase";
@@ -28,16 +27,16 @@ import { useAuth } from "@/hooks/useAuth";
 const MotionDiv = motion.div;
 
 const SP_TABS = [
-  { id: "members", name: "My Members", icon: Users },
-  { id: "reviews", name: "Review Queue", icon: ClipboardCheck },
-  { id: "assignments", name: "Quest Assignments", icon: Plus },
+  { id: "roster", name: "Supported Members", icon: Users },
+  { id: "proof", name: "Activity Proof", icon: Search },
+  { id: "quests", name: "Habit Assignments", icon: ClipboardList },
   { id: "logs", name: "Activity Logs", icon: History },
 ];
 
 export default function SponsorPortal() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("members");
+  const [activeTab, setActiveTab] = useState("roster");
   const [selectedReview, setSelectedReview] = useState(null);
 
   // Fetch sponsor's members
@@ -94,7 +93,7 @@ export default function SponsorPortal() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id && activeTab === 'reviews'
+    enabled: !!user?.id && activeTab === 'proof'
   });
 
   // Fetch activity logs
@@ -131,7 +130,7 @@ export default function SponsorPortal() {
 
       if (error) throw error;
     },
-    onSuccess: (_, { action }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['review-queue'] });
       setSelectedReview(null);
     }
@@ -145,9 +144,9 @@ export default function SponsorPortal() {
   const getMemberStatus = (memberStatus) => {
     switch (memberStatus) {
       case 'active': return { label: 'Active', color: 'text-green-500' };
-      case 'warning': return { label: 'Warning', color: 'text-orange-500' };
-      case 'breach': return { label: 'Breach', color: 'text-red-500' };
-      default: return { label: 'Pending', color: 'text-blue-500' };
+      case 'warning': return { label: 'Needs Support', color: 'text-orange-500' };
+      case 'breach': return { label: 'Crisis', color: 'text-red-500' };
+      default: return { label: 'New Resident', color: 'text-blue-500' };
     }
   };
 
@@ -167,7 +166,7 @@ export default function SponsorPortal() {
               <h1 className="text-4xl font-black uppercase tracking-[0.5rem] leading-none mb-4 italic text-orange-500">Sponsor Portal</h1>
               <div className="flex items-center gap-2 opacity-40">
                   <Activity className="w-3 h-3" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em]">Direct Intervention Bridge Active</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em]">Sponsor Connection Active</p>
               </div>
 
             </div>
@@ -177,7 +176,7 @@ export default function SponsorPortal() {
 
           <div className="flex gap-4">
              <button className="px-8 py-4 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest text-orange-500 hover:scale-105 transition-all flex items-center gap-3">
-                <Plus className="w-4 h-4" /> Custom Alignment Task
+                <Plus className="w-4 h-4" /> Assign Custom Task
              </button>
 
              <div className="px-6 py-4 rounded-2xl nm-inset-sm flex items-center gap-3 text-orange-500/60 font-black text-[9px] uppercase tracking-widest">
@@ -201,7 +200,7 @@ export default function SponsorPortal() {
             >
               <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'animate-pulse' : ''}`} />
               <span className={activeTab === tab.id ? '' : 'text-[10px]'}>{tab.name}</span>
-              {tab.id === 'reviews' && reviewQueue.length > 0 && (
+              {tab.id === 'proof' && reviewQueue.length > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-orange-500 nm-flat flex items-center justify-center border-2 border-(--bg-color) animate-pulse scale-75">
                   <span className="text-[8px] font-black text-white">{reviewQueue.length}</span>
                 </span>
@@ -220,7 +219,7 @@ export default function SponsorPortal() {
             exit={{ opacity: 0, y: -20 }}
             className="min-h-[500px]"
           >
-            {activeTab === "members" && (
+            {activeTab === "roster" && (
                 <div className="space-y-6">
                   {isLoadingMembers ? (
                     <div className="flex items-center justify-center py-20">
@@ -230,14 +229,13 @@ export default function SponsorPortal() {
                     <div className="flex flex-col items-center justify-center py-32 opacity-40 text-center">
                       <Users className="w-16 h-16 mb-8" />
                       <h2 className="text-2xl font-black uppercase tracking-[0.5rem]">No Members Linked</h2>
-                      <p className="text-[10px] font-black text-center mt-4">Accept sponsorship requests to begin oversight.</p>
+                      <p className="text-sm font-black uppercase tracking-widest opacity-20 italic">Accept sponsorship requests to begin supporting members.</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                        {myMembers.map((sponsorship) => {
-                         const member = sponsorship.profiles;
-                         const status = getMemberStatus(member?.status);
-                         return (
+                          const member = sponsorship.profiles;
+                          return (
                          <div key={sponsorship.id} className="p-8 rounded-[3rem] nm-flat group hover:nm-flat-lg transition-all relative overflow-hidden">
                             
                             <div className="flex items-center gap-6 mb-8 mt-2">
@@ -245,8 +243,15 @@ export default function SponsorPortal() {
                                   {member?.display_name?.charAt(0) || '?'}
                                </div>
                                <div>
-                                  <h3 className="text-xl font-black uppercase tracking-widest">{member?.display_name || 'Unknown'}</h3>
-                                  <p className={`text-[10px] font-black uppercase underline decoration-2 ${status.color}`}>{status.label}</p>
+                                  <h3 className="text-sm font-black uppercase tracking-wider">{member.display_name || "New Member"}</h3>
+                                  <div className="flex items-center gap-3 mt-1">
+                                    <p className="text-[10px] font-bold opacity-30 italic">ID: {member.user_id?.substring(0, 8)}</p>
+                                    <span className="w-1 h-1 rounded-full bg-white/10" />
+                                    <div className={`flex items-center gap-1.5 ${getMemberStatus(member.status).color}`}>
+                                      <Zap className="w-2.5 h-2.5" />
+                                      <span className="text-[8px] font-black uppercase tracking-widest">{getMemberStatus(member.status).label}</span>
+                                    </div>
+                                  </div>
                                </div>
                             </div>
 
@@ -274,7 +279,7 @@ export default function SponsorPortal() {
             )}
 
 
-            {activeTab === "reviews" && (
+            {activeTab === "proof" && (
                 <div className="space-y-6">
                    {isLoadingReviews ? (
                      <div className="flex items-center justify-center py-20">
@@ -329,19 +334,21 @@ export default function SponsorPortal() {
                    )) : (
                       <div className="flex flex-col items-center justify-center py-32 opacity-20 text-center">
                          <CheckCircle2 className="w-16 h-16 mb-8 text-green-500" />
-                         <h2 className="text-2xl font-black uppercase tracking-[0.5rem]">Queue Expired</h2>
-                         <p className="text-[10px] font-black text-center mt-4">No pending identity proofs currently awaiting validation.</p>
+                         <h3 className="text-xl font-black uppercase tracking-widest mb-2">Pending Reviews</h3>
+                         <p className="text-[10px] font-black uppercase opacity-30 tracking-widest italic">Review habit checks from your members.</p>
+                         <div className="py-24 text-center nm-inset-sm rounded-[3rem] opacity-20">
+                            <p className="text-xs font-black uppercase tracking-widest">No pending habit proofs currently awaiting review.</p>
+                         </div>
                       </div>
                    )}
                 </div>
             )}
 
 
-            {activeTab === "assignments" && (
-              <div className="flex flex-col items-center justify-center py-32 text-center opacity-40">
-                <Plus className="w-16 h-16 mb-8" />
-                <h2 className="text-2xl font-black uppercase tracking-[0.5rem] italic text-orange-500/60">Assignment Module</h2>
-                <p className="text-[10px] font-black uppercase tracking-widest mt-4">Custom quest assignments coming soon.</p>
+            {activeTab === "quests" && (
+              <div className="py-12 text-center nm-inset-sm rounded-[4rem] opacity-20">
+                 <h3 className="text-xl font-black uppercase tracking-widest mb-4">Assignment Tool</h3>
+                 <p className="text-xs font-black uppercase tracking-widest italic">Custom habit assignments coming soon.</p>
               </div>
             )}
 

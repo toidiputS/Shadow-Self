@@ -89,35 +89,35 @@ export default function WeeklyReview({ onClose, completionLogs, quests }) {
              <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center text-blue-500">
                <Calendar className="w-5 h-5" />
              </div>
-             <h2 className="text-2xl font-black uppercase tracking-widest">7-Day Meta Analysis</h2>
+             <h2 className="text-2xl font-black uppercase tracking-widest">Weekly Progress Report</h2>
           </div>
-          <p className="text-(--text-secondary) font-bold uppercase tracking-[0.3em] text-[10px] opacity-40 ml-14">Temporal Performance Audit</p>
+          <p className="text-(--text-secondary) font-bold uppercase tracking-[0.3em] text-[10px] opacity-40 ml-14">Your Weekly Review</p>
         </div>
 
         {/* Global Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
           <div className="p-8 rounded-3xl nm-inset-sm flex flex-col justify-between border-t border-white/5">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-(--text-secondary) opacity-50 mb-4">Integrity Coefficient</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-(--text-secondary) opacity-50 mb-4">Completion Rate</p>
               <h3 className="text-5xl font-black text-blue-500">{stats.rate}<span className="text-xl">%</span></h3>
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) opacity-40 mt-6 italic">Compliance Score</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) opacity-40 mt-6 italic">Consistency Score</p>
           </div>
 
           <div className="p-8 rounded-3xl nm-inset-sm flex flex-col justify-between border-t border-white/5">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-(--text-secondary) opacity-50 mb-4">Anchor Protocol</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-(--text-secondary) opacity-50 mb-4">Strongest Habit</p>
               <h3 className="text-xl font-black leading-tight uppercase line-clamp-2">{stats.reliable}</h3>
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) opacity-40 mt-6 italic">Most Consistent Yield</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) opacity-40 mt-6 italic">Most Consistent Habit</p>
           </div>
 
           <div className="p-8 rounded-3xl nm-inset-sm flex flex-col justify-between border-t border-white/5">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-(--text-secondary) opacity-50 mb-4">Peak Activity Window</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-(--text-secondary) opacity-50 mb-4">Best Time of Day</p>
               <h3 className="text-xl font-black uppercase">{stats.strongestTime}</h3>
             </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) opacity-40 mt-6 italic">Tactical Efficiency Peak</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-(--text-secondary) opacity-40 mt-6 italic">Peak Habit Window</p>
           </div>
         </div>
 
@@ -125,7 +125,7 @@ export default function WeeklyReview({ onClose, completionLogs, quests }) {
         <div className="mb-16">
           <h3 className="text-xs font-black uppercase tracking-[0.2em] mb-8 text-(--text-secondary) opacity-40 flex items-center gap-3">
             <TrendingUp className="w-4 h-4" />
-            7-Day Velocity Variance
+            Daily Progress
           </h3>
           <div className="flex items-end justify-between gap-2 md:gap-4 h-48 px-4">
              {dailyData.map((data, idx) => {
@@ -156,9 +156,9 @@ export default function WeeklyReview({ onClose, completionLogs, quests }) {
            <div className="flex items-start gap-4">
              <AlertCircle className="w-6 h-6 text-blue-500 shrink-0" />
              <div>
-               <p className="text-xs font-black uppercase tracking-widest text-blue-500 mb-2">Systems Post-Action Review</p>
+               <p className="text-xs font-black uppercase tracking-widest text-blue-500 mb-2">Weekly Insights</p>
                <p className="text-sm font-medium leading-relaxed opacity-80">
-                 System integrity is maintaining an operational rate of {stats.rate}%. Your anchoring behavior is currently centered on <span className="text-blue-400 font-bold">"{stats.reliable}"</span>. Tactical observation suggests maximum focus during the {stats.strongestTime} window. Maintain discipline to close shadow debt loops.
+                 You've maintained a completion rate of {stats.rate}%. You're most consistent with <span className="text-blue-400 font-bold">"{stats.reliable}"</span>, and you tend to get the most done during the {stats.strongestTime} window. Keep up the good work!
                </p>
              </div>
            </div>
@@ -168,7 +168,7 @@ export default function WeeklyReview({ onClose, completionLogs, quests }) {
           onClick={onClose}
           className="w-full py-6 rounded-2xl nm-button font-black text-xs uppercase tracking-[0.5rem] text-(--text-secondary) hover:text-blue-500 transition-all"
         >
-          Acknowledge Log
+          Finish Review
         </button>
       </MotionDiv>
     </div>

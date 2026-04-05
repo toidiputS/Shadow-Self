@@ -50,7 +50,7 @@ export default function ImportTools({ guildId }) {
     if (!file) return;
     
     if (!file.type === "text/csv" && !file.name.endsWith('.csv')) {
-      setUploadError("Invalid Payload Detection: Only CSV format authorized.");
+      setUploadError("Invalid File: Only CSV files are allowed.");
       setTimeout(() => setUploadError(null), 4000);
       return;
     }
@@ -121,7 +121,7 @@ export default function ImportTools({ guildId }) {
       }
 
       if (importedCount > 0) {
-        setUploadSuccess(`Tactical Import Complete: ${importedCount} residents established.${errors.length > 0 ? ` (${errors.length} skipped)` : ''}`);
+        setUploadSuccess(`Import Complete: ${importedCount} members added.${errors.length > 0 ? ` (${errors.length} skipped)` : ''}`);
       } else {
         setUploadError(`Import completed but no users added. ${errors.join('; ')}`);
       }
@@ -133,7 +133,7 @@ export default function ImportTools({ guildId }) {
       }, 8000);
 
     } catch (err) {
-      setUploadError(`Invalid Payload Detection: ${err.message}`);
+      setUploadError(`File Error: ${err.message}`);
       setTimeout(() => setUploadError(null), 4000);
     } finally {
       setIsUploading(false);
@@ -142,7 +142,7 @@ export default function ImportTools({ guildId }) {
   };
 
   const downloadTemplate = () => {
-    const template = "name,email,phone,clearance\nJohn Doe,john@example.com,555-0123,member\nJane Smith,jane@example.com,555-0456,member";
+    const template = "name,email,phone,role\nJohn Doe,john@example.com,555-0123,member\nJane Smith,jane@example.com,555-0456,member";
     const blob = new Blob([template], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -192,7 +192,7 @@ export default function ImportTools({ guildId }) {
           sp_amount: 0
         }]);
 
-      setUploadSuccess(`Cross-Guild Clone Complete: ${newQuests.length} protocols synchronized.`);
+      setUploadSuccess(`House Clone Complete: ${newQuests.length} habits copied.`);
 
     } catch (err) {
       setUploadError(`Clone failed: ${err.message}`);
@@ -209,8 +209,8 @@ export default function ImportTools({ guildId }) {
         </div>
 
         <div>
-          <h2 className="text-3xl font-black uppercase tracking-widest italic text-blue-500">Data Import Nodes</h2>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mt-2">Initialize Roster from External Payloads</p>
+          <h2 className="text-3xl font-black uppercase tracking-widest italic text-blue-500">Member Import</h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mt-2">Import Member List</p>
         </div>
 
       </div>
@@ -229,7 +229,7 @@ export default function ImportTools({ guildId }) {
                </div>
 
                <div>
-                  <h3 className={`text-xl font-black uppercase tracking-widest ${uploadError ? 'text-red-500' : 'text-green-500'}`}>{uploadError ? 'Security Protocol Triggered' : 'Identity Hub Synchronized'}</h3>
+                  <h3 className={`text-xl font-black uppercase tracking-widest ${uploadError ? 'text-red-500' : 'text-green-500'}`}>{uploadError ? 'File Error' : 'Member List Updated'}</h3>
                   <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mt-2 line-clamp-1">{uploadError || uploadSuccess}</p>
                </div>
             </motion.div>
@@ -247,8 +247,8 @@ export default function ImportTools({ guildId }) {
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-black uppercase tracking-widest">Resident Roster</h3>
-                    <p className="text-[9px] font-bold opacity-30 mt-1 uppercase tracking-widest">Bulk identity establishment</p>
+                    <h3 className="text-xl font-black uppercase tracking-widest">Member List</h3>
+                    <p className="text-[9px] font-bold opacity-30 mt-1 uppercase tracking-widest">Add multiple members at once</p>
                   </div>
                </div>
 
@@ -286,8 +286,8 @@ export default function ImportTools({ guildId }) {
                ) : (
                   <div className="space-y-6">
                      <FileUp className="w-16 h-16 mx-auto text-blue-500/10 group-hover:text-blue-500/40 transition-colors" />
-                     <p className="text-[11px] font-black uppercase tracking-[0.4rem] opacity-20">Drop CSV Identity Node Here</p>
-                     <p className="text-[8px] font-black uppercase tracking-widest opacity-10">Headers: name, email, phone, clearance</p>
+                     <p className="text-[11px] font-black uppercase tracking-[0.4rem] opacity-20">Drop Member CSV Here</p>
+                     <p className="text-[8px] font-black uppercase tracking-widest opacity-10">Headers: name, email, phone, role</p>
                   </div>
                )}
             </div>
@@ -310,16 +310,16 @@ export default function ImportTools({ guildId }) {
                </div>
 
                <div>
-                 <h3 className="text-xl font-black uppercase tracking-widest">Cross-Guild Cloning</h3>
-                 <p className="text-[9px] font-bold opacity-30 mt-1 uppercase tracking-widest">Clone protocol logic between houses</p>
+                 <h3 className="text-xl font-black uppercase tracking-widest">House Template Copy</h3>
+                 <p className="text-[9px] font-bold opacity-30 mt-1 uppercase tracking-widest">Copy habits and settings from another house</p>
                </div>
             </div>
 
 
             <div className="space-y-6">
-               <p className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">Authorized House Source Nodes:</p>
+               <p className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-4">Available Houses to Copy From:</p>
                <div className="space-y-4">
-                  {['East Wing Institutional', 'West Recovery Guild', 'South Harbor Wellness'].map((h, i) => (
+                  {['East Wing House', 'West Recovery House', 'South Harbor Wellness'].map((h, i) => (
                     <div key={h} className="p-8 rounded-4xl nm-inset-sm flex items-center justify-between group cursor-pointer hover:bg-white/2 transition-colors">
                        <span className="text-[11px] font-black uppercase tracking-widest opacity-60">{h}</span>
                        <button 
@@ -340,7 +340,7 @@ export default function ImportTools({ guildId }) {
               disabled={isUploading}
               className="w-full py-6 rounded-4xl nm-button text-[10px] font-black uppercase tracking-[0.2em] opacity-40 hover:opacity-100 hover:text-orange-500 transition-all flex items-center justify-center gap-4 disabled:opacity-20"
             >
-               Initialize Logic Clone <ArrowRight className="w-4 h-4" />
+               Start Copying Settings <ArrowRight className="w-4 h-4" />
             </button>
          </div>
       </div>

@@ -18,15 +18,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
 const CONSEQUENCES = [
-  { id: "sp_yield_reduction", name: "SP Yield Reduction", icon: TrendingDown, color: "text-red-400", description: "All members lose 20% of SP generation until cleared." },
-  { id: "xp_debuff", name: "XP Gain Penalty", icon: Zap, color: "text-blue-400", description: "XP rewards globally reduced by 15%." },
-  { id: "stabilization_mandate", name: "Stabilization Mandate", icon: Skull, color: "text-purple-400", description: "Requires 10 perfect days from all members to clear." },
+  { id: "sp_yield_reduction", name: "Point Growth Dip", icon: TrendingDown, color: "text-red-400", description: "All members see a 20% point reduction until resolved." },
+  { id: "xp_debuff", name: "Progress Penalty", icon: Zap, color: "text-blue-400", description: "Progress rewards globally reduced by 15%." },
+  { id: "stabilization_mandate", name: "House Stability Focus", icon: Skull, color: "text-purple-400", description: "Requires 10 perfect days from everyone to clear." },
 ];
 
 const TEMPLATES = [
-  { id: "zero_breach", name: "Zero Breach Protocol", threshold: 95, consequence: "sp_yield_reduction", duration: 7, description: "High-integrity baseline." },
-  { id: "iron_discipline", name: "Iron Discipline", threshold: 100, consequence: "stabilization_mandate", duration: 14, description: "Maximum collective focus." },
-  { id: "growth_sprint", name: "Growth Sprint", threshold: 85, consequence: "xp_debuff", duration: 14, description: "Rapid progress mandate." },
+  { id: "zero_breach", name: "Consistent Support", threshold: 95, consequence: "sp_yield_reduction", duration: 7, description: "Focus on staying on track." },
+  { id: "iron_discipline", name: "High Stability", threshold: 100, consequence: "stabilization_mandate", duration: 14, description: "Maximum house connection." },
+  { id: "growth_sprint", name: "Quick Progress", threshold: 85, consequence: "xp_debuff", duration: 14, description: "Rapid growth focus." },
 ];
 
 export default function ContractBuilder({ isOpen, onClose, guildId }) {
@@ -72,7 +72,7 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
           guild_id: guildId,
           user_id: user.id,
           action_type: 'contract_created',
-          description: `Created contract: ${contractData.name}`,
+          description: `Created agreement: ${contractData.name}`,
           sp_amount: 0
         }]);
 
@@ -96,7 +96,7 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
 
   const handleSubmit = () => {
     if (!formData.name.trim()) {
-      setError("Contract designation required");
+      setError("Agreement name required");
       return;
     }
     if (!guildId) {
@@ -130,8 +130,8 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
                      <ShieldCheck className="w-8 h-8" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black uppercase tracking-[0.4em] leading-none mb-3 italic">Contract Architect</h2>
-                    <p className="text-[10px] font-black uppercase opacity-30 tracking-widest leading-none">Drafting Collective Accountability Binding</p>
+                    <h2 className="text-2xl font-black uppercase tracking-[0.4em] leading-none mb-3 italic">House Agreement</h2>
+                    <p className="text-[10px] font-black uppercase opacity-30 tracking-widest leading-none">Adding a new house support agreement</p>
                   </div>
                </div>
                <button 
@@ -145,7 +145,7 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
             {/* Success Message */}
             <AnimatePresence>
               {success && (
-                <motion.div
+                <Motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
@@ -153,17 +153,17 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
                 >
                   <ShieldCheck className="w-8 h-8 text-green-500" />
                   <div>
-                    <p className="text-lg font-black uppercase text-green-500">Contract Established</p>
-                    <p className="text-[10px] font-black opacity-60">All nodes bound by new accountability protocol</p>
+                    <p className="text-lg font-black uppercase text-green-500">Agreement Set</p>
+                    <p className="text-[10px] font-black opacity-60">Success! The house agreement is now active.</p>
                   </div>
-                </motion.div>
+                </Motion.div>
               )}
             </AnimatePresence>
 
             {/* Error Message */}
             <AnimatePresence>
               {error && (
-                <motion.div
+                <Motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0 }}
@@ -171,10 +171,10 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
                 >
                   <ShieldAlert className="w-8 h-8 text-red-500" />
                   <div>
-                    <p className="text-lg font-black uppercase text-red-500">Protocol Error</p>
+                    <p className="text-lg font-black uppercase text-red-500">Notice</p>
                     <p className="text-[10px] font-black opacity-60">{error}</p>
                   </div>
-                </motion.div>
+                </Motion.div>
               )}
             </AnimatePresence>
 
@@ -183,8 +183,8 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
               <div className="mb-8 p-6 rounded-3xl bg-orange-500/10 border border-orange-500/20 flex items-center gap-4">
                 <ShieldAlert className="w-8 h-8 text-orange-500" />
                 <div>
-                  <p className="text-lg font-black uppercase text-orange-500">Restricted Access</p>
-                  <p className="text-[10px] font-black opacity-60">Only guild administrators can establish contracts</p>
+                  <p className="text-lg font-black uppercase text-orange-500">Staff Only</p>
+                  <p className="text-[10px] font-black opacity-60">Only house staff can set up agreements.</p>
                 </div>
               </div>
             )}
@@ -215,10 +215,10 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
             <div className="space-y-12">
                {/* Contract Identity */}
                <div className="space-y-6">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ml-4">Protocol Identity</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ml-4">Agreement Name</label>
                   <input 
                     type="text" 
-                    placeholder="Enter Contract Title (e.g. Zero Breach Week)"
+                    placeholder="Enter Agreement Title (e.g. Clean Week)"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     disabled={createContractMutation.isPending || !isOwnerOrAdmin}
@@ -230,7 +230,7 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
                {/* Threshold Slider */}
                <div className="space-y-6">
                   <div className="flex justify-between items-center px-4">
-                     <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Compliance Threshold</label>
+                     <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Agreement Threshold</label>
                      <span className="text-xl font-black text-blue-500">{formData.threshold}%</span>
                   </div>
                   <div className="relative h-4 rounded-full nm-inset-sm p-1 group">
@@ -252,13 +252,13 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
                       style={{ width: `${(formData.threshold - 50) / 0.5}%` }}
                     />
                   </div>
-                  <p className="text-[9px] font-bold opacity-30 italic px-4">"Collective failure below this threshold will trigger systemic penalties."</p>
+                  <p className="text-[9px] font-bold opacity-30 italic px-4">"If the house average falls below this, a penalty will be triggered."</p>
                </div>
 
 
                {/* Consequence Selection */}
                <div className="space-y-6">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ml-4">Systemic Consequence</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ml-4">House Penalty</label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      {CONSEQUENCES.map((c) => (
                        <button
@@ -296,8 +296,8 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
                      </div>
 
                      <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-1">Duration Protocol</p>
-                        <h4 className="text-xl font-black">{formData.durationDays} DAYS <span className="text-[10px] opacity-30 font-bold uppercase tracking-widest font-mono">(168h)</span></h4>
+                        <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-1">Time Length</p>
+                        <h4 className="text-xl font-black">{formData.durationDays} DAYS</h4>
                      </div>
 
                   </div>
@@ -327,16 +327,16 @@ export default function ContractBuilder({ isOpen, onClose, guildId }) {
                     {createContractMutation.isPending ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        Establishing Binding...
+                        Saving Agreement...
                       </>
                     ) : (
                       <>
-                        Finalize Accountability Binding <ArrowRight className="w-5 h-5" />
+                        Finish Agreement <ArrowRight className="w-5 h-5" />
                       </>
                     )}
                   </button>
 
-                  <p className="text-center text-[9px] font-bold opacity-30 uppercase tracking-[0.2em] mt-8 italic">"All collective nodes will be bound by these terms upon execution."</p>
+                  <p className="text-center text-[9px] font-bold opacity-30 uppercase tracking-[0.2em] mt-8 italic">"Thank you for showing up for each other."</p>
 
                </div>
             </div>

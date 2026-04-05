@@ -16,9 +16,15 @@ import {
   ShieldCheck,
   Bell,
   Heart,
-  HeartHandshake
+  HeartHandshake,
+  Wind,
+  Droplets,
+  Eye,
+  Store
 } from "lucide-react";
 import { AnimatePresence, motion, LayoutGroup } from "framer-motion";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { startOfDay, isSameDay, formatDistanceToNow } from "date-fns";
 
 import MetricsDisplay from "../components/dashboard/MetricsDisplay";
@@ -34,18 +40,21 @@ import RecoveryHeatmap from "../components/dashboard/RecoveryHeatmap";
 import NotificationInbox from "../components/dashboard/NotificationInbox";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useEngagement } from "@/hooks/useEngagement";
+import { useBounceBack } from "@/hooks/useBounceBack";
 
 export default function Dashboard() {
   const { profile: authProfile, user: authUser } = useAuth();
   const profile = authProfile;
   const user = authUser;
+  const disclosure = useEngagement(profile);
+  const bounceBack = useBounceBack(user?.id, profile);
   
   const MotionDiv = motion.div;
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [showWeeklyReview, setShowWeeklyReview] = useState(false);
-  const [bounceBackMessage, setBounceBackMessage] = useState(null);
   
-  // Tactical Member State
+  // Dashboard Controls
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
   const [focusedInboxId, setFocusedInboxId] = useState(null);
@@ -83,7 +92,7 @@ export default function Dashboard() {
       if (!user?.id) return null;
       const { data, error } = await supabase.from('progress').select('*').eq('user_id', user.id).maybeSingle();
       if (error) {
-        console.error("❌ Resource Pool Retrieval Error:", error.message);
+        console.error("❌ Error loading your progress:", error.message);
         return null;
       }
       return data;
@@ -151,24 +160,6 @@ export default function Dashboard() {
     staleTime: 5000
   });
 
-  // System Intelligence Logic
-  const isAntiSpiralMode = useMemo(() => {
-    if (!profile) return false;
-    const lastRelapse = profile.last_relapse_at ? new Date(profile.last_relapse_at) : null;
-    if (!lastRelapse) return false;
-    const hoursSinceRelapse = (new Date() - lastRelapse) / (1000 * 60 * 60);
-    return hoursSinceRelapse < 48 && profile.current_streak === 0;
-  }, [profile]);
-
-  useEffect(() => {
-    if (isAntiSpiralMode && !bounceBackMessage) {
-        const timer = setTimeout(() => {
-            setBounceBackMessage("ANTI-SPIRAL PROTOCOL ACTIVE. System integrity compromised. Execute minimum viable recovery protocols immediately to restabilize baseline.");
-        }, 0);
-        return () => clearTimeout(timer);
-    }
-  }, [isAntiSpiralMode, bounceBackMessage]);
-
   const completeQuestMutation = useMutation({
     mutationFn: async ({ quest, reflectionNote }) => {
       await supabase.from('quest_completions').insert([{
@@ -212,11 +203,11 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="bg-(--bg-color) text-(--text-primary) px-4 py-8 md:p-12 transition-colors duration-400">
+    <div className="bg-(--bg-color) text-(--text-primary) p-4 md:p-12 min-h-screen transition-colors duration-400">
 
       <div className="max-w-7xl mx-auto">
         
-        {/* Command Suite Header */}
+        {/* Dashboard Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-10 mb-20 relative px-2">
             <div className="flex flex-col gap-6 w-full md:w-auto">
                 <div className="flex items-center gap-6">
@@ -228,7 +219,7 @@ export default function Dashboard() {
                         <h1 className="text-3xl md:text-4xl font-black uppercase tracking-[0.3rem] md:tracking-[0.5rem] leading-none mb-3 italic">Shadow Self</h1>
                         <div className="flex items-center gap-3 opacity-30">
                             <Sparkles className="w-4 h-4" />
-                            <p className="text-[10px] font-black uppercase tracking-[0.2rem] md:tracking-[0.4rem]">Member Command Hub Active</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2rem] md:tracking-[0.4rem]">Your House Dashboard</p>
                         </div>
                     </div>
                 </div>
@@ -237,14 +228,16 @@ export default function Dashboard() {
             <div className="flex items-center gap-6">
                 {!dailyStatus && (
                   <button 
+                    id="dashboard-checkin-btn"
                     onClick={() => setShowCheckIn(true)}
                     className="flex items-center gap-3 px-8 py-5 rounded-4xl nm-button text-[10px] font-black uppercase tracking-widest text-orange-500 group animate-bounce"
                   >
                     <Heart className="w-4 h-4 group-hover:scale-125 transition-transform" />
-                    Required Check-in
+                    Today's Check-in
                   </button>
                 )}
                 <button 
+                  id="dashboard-notifications-btn"
                   onClick={() => setIsInboxOpen(true)}
                   className="w-16 h-16 rounded-4xl nm-button flex items-center justify-center text-blue-500 relative group"
                 >
@@ -256,11 +249,19 @@ export default function Dashboard() {
                   )}
                 </button>
                 <button 
+                  id="dashboard-theme-btn"
                   onClick={() => setIsThemeOpen(true)}
                   className="w-16 h-16 rounded-4xl nm-button flex items-center justify-center opacity-40 hover:opacity-100 hover:text-blue-400 transition-all"
                 >
                   <Palette className="w-6 h-6" />
                 </button>
+                <Link
+                  to={createPageUrl('ShadowVault')}
+                  className="w-16 h-16 rounded-4xl nm-button flex items-center justify-center text-yellow-500 hover:scale-105 transition-all"
+                  title="House Store"
+                >
+                  <Store className="w-6 h-6" />
+                </Link>
                 {showInstallBtn && (
                   <button 
                     onClick={handleInstall}
@@ -273,29 +274,126 @@ export default function Dashboard() {
             </div>
         </div>
 
-        {/* Anti-Spiral Mode */}
-        {bounceBackMessage && (
+        {/* Support Mode */}
+        {bounceBack.isActive && (
           <MotionDiv
             layout
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="mb-12 p-10 rounded-[3rem] nm-flat border border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden"
+            className="mb-16 p-10 rounded-[3rem] nm-flat border border-blue-500/20 relative overflow-hidden"
           >
-             <div className="absolute inset-0 bg-blue-500/5 animate-pulse"></div>
-             <div className="flex items-center gap-8 relative z-10">
-                <div className="w-16 h-16 rounded-3xl nm-flat-sm flex items-center justify-center text-blue-500">
-                   <AlertCircle className="w-8 h-8" />
+            <div className="absolute inset-0 bg-blue-500/5 animate-pulse"></div>
+            
+            {/* Header */}
+            <div className="flex flex-col md:flex-row items-start gap-8 relative z-10 mb-10">
+              <div className="w-16 h-16 rounded-3xl nm-inset-sm flex items-center justify-center text-blue-500 shrink-0">
+                <Heart className="w-8 h-8" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-4 mb-2">
+                  <h3 className="text-lg font-black uppercase tracking-widest text-blue-500">Support Mode Active</h3>
+                  <span className={`px-3 py-1 rounded-lg nm-inset-sm text-[8px] font-black uppercase tracking-widest ${
+                    bounceBack.severity === 'critical' ? 'text-red-500' : 'text-orange-500'
+                  }`}>
+                    {bounceBack.severity}
+                  </span>
                 </div>
-                <div>
-                  <h3 className="text-xl font-black uppercase tracking-widest text-blue-500">System Intelligence Bulletin</h3>
-                  <p className="text-[11px] font-bold opacity-60 mt-2 max-w-2xl leading-relaxed italic">"{bounceBackMessage}"</p>
-                </div>
-             </div>
-             <button onClick={() => setBounceBackMessage(null)} className="px-10 py-5 rounded-2xl nm-button font-black text-[10px] uppercase tracking-widest text-blue-400 hover:text-blue-300 relative z-10"> Acknowledge Protocol </button>
+                <p className="text-[11px] font-bold opacity-60 leading-relaxed italic max-w-2xl">
+                  {bounceBack.triggerReason} Your habits have been simplified for now. Focus on the basics.
+                </p>
+              </div>
+              <div className="px-5 py-2 rounded-xl nm-inset-sm text-[8px] font-black uppercase tracking-widest text-green-500/60 border border-green-500/10 shrink-0">
+                Status: {bounceBack.complianceTag}
+              </div>
+            </div>
+
+            {/* Restorative Tasks */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10 mb-8">
+              {bounceBack.restorativeTasks.map((task) => {
+                const iconMap = { breathe: Wind, hydrate: Droplets, ground: Eye };
+                const TaskIcon = iconMap[task.id] || Heart;
+                return (
+                  <div key={task.id} className="p-6 rounded-3xl nm-inset-sm border border-blue-500/10 hover:border-blue-500/30 transition-all group cursor-pointer">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-10 h-10 rounded-xl nm-flat flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                        <TaskIcon className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black uppercase tracking-widest">{task.label}</h4>
+                        <span className="text-[8px] font-black uppercase tracking-widest opacity-30">{task.duration}</span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] font-bold opacity-50 leading-relaxed italic">{task.description}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Exit Progress */}
+            <div className="flex items-center gap-6 relative z-10">
+              <div className="flex-1 h-2 rounded-full nm-inset p-0.5">
+                <div 
+                  className="h-full rounded-full bg-blue-500/50 transition-all duration-1000" 
+                  style={{ width: `${((3 - bounceBack.daysUntilExit) / 3) * 100}%` }} 
+                />
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-widest opacity-40">
+                {bounceBack.daysUntilExit > 0 
+                  ? `${bounceBack.daysUntilExit} day${bounceBack.daysUntilExit !== 1 ? 's' : ''} until back to normal`
+                  : 'Suppport Finished'
+                }
+              </span>
+            </div>
           </MotionDiv>
         )}
 
-        {/* Sponsor Interaction Bridge */}
+        {/* Watch Mode — Subtle Indicator */}
+        {bounceBack.severity === 'watch' && !bounceBack.isActive && (
+          <MotionDiv
+            layout
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-12 p-6 rounded-2xl nm-inset-sm border border-orange-500/10 flex items-center gap-6"
+          >
+            <AlertCircle className="w-5 h-5 text-orange-500/60 shrink-0" />
+            <p className="text-[10px] font-bold opacity-50 italic flex-1">
+              {bounceBack.triggerReason} If things get harder, the app will turn on Support Mode to help out.
+            </p>
+            <span className="text-[8px] font-black uppercase tracking-widest text-orange-500/40">Watch Mode</span>
+          </MotionDiv>
+        )}
+
+        {/* Progressive Disclosure: Welcome Card for Foundation Tier */}
+        {!disclosure.isFullAccess && (
+          <MotionDiv
+            layout
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-16 p-10 rounded-[3rem] nm-flat border border-green-500/20 relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-green-500/5"></div>
+            <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+              <div className="w-16 h-16 rounded-3xl nm-inset-sm flex items-center justify-center text-green-500">
+                <Shield className="w-8 h-8" />
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-lg font-black uppercase tracking-widest text-green-500 mb-2">Welcome to Shadow Self</h3>
+                <p className="text-[11px] font-bold opacity-60 leading-relaxed italic max-w-2xl">
+                  Focus on the basics. Complete your daily check-in and habits to build a streak. 
+                  {disclosure.daysUntilNextTier > 0 && (
+                    <span className="text-green-500"> New features unlock in {disclosure.daysUntilNextTier} day{disclosure.daysUntilNextTier !== 1 ? 's' : ''}.</span>
+                  )}
+                </p>
+              </div>
+              <div className="px-6 py-3 rounded-2xl nm-inset-sm text-[9px] font-black uppercase tracking-widest text-green-500/60">
+                Tier: {disclosure.tierLabel}
+              </div>
+            </div>
+          </MotionDiv>
+        )}
+
+        {/* Sponsor Interaction Bridge — Unlocks at Full Access (Day 8+) */}
+        {disclosure.showSponsorBridge && (
         <div className="mb-24 relative z-10">
            <div className="flex flex-col md:flex-row items-center gap-12 p-12 rounded-[3.5rem] nm-flat border border-orange-500/10 hover:border-orange-500/20 transition-all group overflow-hidden relative">
               <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-orange-500/10 transition-colors"></div>
@@ -304,15 +402,15 @@ export default function Dashboard() {
                   <div className="absolute inset-0 bg-orange-500/10 rounded-4xl animate-pulse"></div>
               </div>
               <div className="flex-1 space-y-4 relative z-10 text-center md:text-left">
-                  <h3 className="text-xl font-black uppercase tracking-widest text-orange-500 italic">Institutional Alignment Feedback</h3>
+                  <h3 className="text-xl font-black uppercase tracking-widest text-orange-500 italic">Sponsor Feedback</h3>
                   <p className="text-[11px] font-bold opacity-60 leading-relaxed italic max-w-2xl">
-                    {notifications?.[0]?.message || "Establish your connection node. Start by completing the morning reset protocol to signal synchronization."}
+                    {notifications?.[0]?.message || "Welcome to the house! Start by completing your morning check-in and habits to get settled in."}
                   </p>
                   <div className="flex items-center justify-center md:justify-start gap-4">
-                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30 text-orange-500">— Sponsor: {notifications?.[0]?.metadata?.sender_name || "Protocol Core"}</span>
+                     <span className="text-[9px] font-black uppercase tracking-widest opacity-30 text-orange-500">— Manager: {notifications?.[0]?.metadata?.sender_name || "House Team"}</span>
                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500/40"></span>
                      <span className="text-[9px] font-black uppercase tracking-widest opacity-30 italic">
-                        {notifications?.[0]?.created_at ? formatDistanceToNow(new Date(notifications[0].created_at)) + " ago" : "SYSTEM STABLE"}
+                        {notifications?.[0]?.created_at ? formatDistanceToNow(new Date(notifications[0].created_at)) + " ago" : "SYSTEM READY"}
                      </span>
                   </div>
               </div>
@@ -328,36 +426,42 @@ export default function Dashboard() {
                 disabled={!notifications?.length}
                 className="px-10 py-5 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest text-orange-500 hover:scale-105 transition-all relative z-10 group-hover:nm-flat-sm disabled:opacity-20 active:scale-95"
               >
-                  {notifications?.length > 0 ? 'Respond via Intel' : 'No Active Signals'}
+                  {notifications?.length > 0 ? 'Respond to Sponsor' : 'No New Messages'}
               </button>
            </div>
         </div>
+        )}
 
-        <div className="mb-24 relative z-0">
+        {/* Guild Status & Heatmap — Unlocks at Anchor Tier (Day 5+) */}
+        {disclosure.showGuildStatus && (
+        <div id="dashboard-streak-stats" className="mb-24 relative z-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
                <GuildStatus user_id={profile?.user_id} />
+               {disclosure.showHeatmap && (
                <div className="lg:col-span-2">
                  <RecoveryHeatmap completionLogs={completionLogs} />
                </div>
+               )}
             </div>
         </div>
+        )}
 
-        <div className="mb-24 relative z-10 pt-10">
+        <div id="dashboard-today-queue" className="mb-24 relative z-10 pt-10">
           <div className="flex items-center justify-between mb-16 border-l-4 border-blue-500/30 pl-8">
             <div className="flex items-center gap-6">
               <div className="w-14 h-14 rounded-2xl nm-inset-sm flex items-center justify-center border border-blue-500/10">
                 <Activity className="w-7 h-7 text-blue-500 opacity-60" />
               </div>
               <div>
-                <h2 className="text-4xl font-black tracking-widest uppercase text-(--text-primary)">Daily Execution Queue</h2>
-                <p className="text-[11px] font-black uppercase tracking-[0.5rem] opacity-40 mt-2 text-blue-500 italic">Today's Tactical Assignment</p>
+                <h2 className="text-4xl font-black tracking-widest uppercase text-(--text-primary)">Today's Habits</h2>
+                <p className="text-[11px] font-black uppercase tracking-[0.5rem] opacity-40 mt-2 text-blue-500 italic">Your Plan for Today</p>
               </div>
             </div>
             {(groupedQuests?.due?.length || 0) > 0 && (
               <button 
                 className="hidden lg:flex items-center gap-4 px-10 py-4 rounded-2xl nm-button text-[11px] font-black uppercase tracking-[0.25rem] text-blue-500 hover:scale-105 transition-all"
               >
-                <span>Process Next Protocol</span>
+                <span>Start Next Habit</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
             )}
@@ -370,7 +474,7 @@ export default function Dashboard() {
                 <div>
                   <div className="flex items-center gap-4 mb-10 ml-2">
                     <AlertCircle className="w-5 h-5 text-red-500" />
-                    <h3 className="text-xl font-black uppercase tracking-widest text-red-500/60 italic">Shadow Debt (Protocol Deviation)</h3>
+                    <h3 className="text-xl font-black uppercase tracking-widest text-red-500/60 italic">Catching Up (Overdue Habits)</h3>
                     <div className="flex-1 h-px bg-red-500/10"></div>
                   </div>
                   <div className="grid gap-10 md:grid-cols-2">
@@ -388,15 +492,15 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* Due Protocols */}
+              {/* Active Habits */}
               <div>
                 <div className="flex items-center gap-4 mb-10 ml-2">
                   <Clock className="w-5 h-5 opacity-30" />
-                  <h3 className="text-xl font-black uppercase tracking-widest opacity-40">Active Assignments</h3>
+                  <h3 className="text-xl font-black uppercase tracking-widest opacity-40">Your Active Habits</h3>
                   <div className="flex-1 h-px bg-white/5"></div>
                 </div>
                 {questsLoading ? (
-                  <div className="text-center py-24 text-(--text-secondary) font-black uppercase tracking-[0.6rem] opacity-10 animate-pulse italic">Connecting to institutional node...</div>
+                  <div className="text-center py-24 text-(--text-secondary) font-black uppercase tracking-[0.6rem] opacity-10 animate-pulse italic">Connecting to the house...</div>
                 ) : (
                   <div className="grid gap-10 md:grid-cols-2">
                       {groupedQuests.due.map((quest) => (
@@ -412,20 +516,20 @@ export default function Dashboard() {
                       {groupedQuests.due.length === 0 && groupedQuests.overdue.length === 0 && (
                         <div className="col-span-full py-20 text-center rounded-[3rem] nm-inset opacity-20 flex flex-col items-center">
                             <CheckCircle2 className="w-16 h-16 mb-8 text-green-500" />
-                            <h3 className="text-2xl font-black uppercase tracking-[0.5rem]">Assignment Cleared</h3>
-                            <p className="text-[10px] font-black mt-4 uppercase">All daily stabilization protocols have been successfully executed.</p>
+                            <h3 className="text-2xl font-black uppercase tracking-[0.5rem]">All Done For Today!</h3>
+                            <p className="text-[10px] font-black mt-4 uppercase">You've finished all your daily habits.</p>
                         </div>
                       )}
                   </div>
                 )}
               </div>
 
-              {/* Cleared Protocols */}
+              {/* Finished Habits */}
               {groupedQuests.completed.length > 0 && (
                 <div>
                   <div className="flex items-center gap-4 mb-10 ml-2">
                     <CheckCircle2 className="w-5 h-5 text-green-500/40" />
-                    <h3 className="text-xl font-black uppercase tracking-widest opacity-30 italic">Validated Clears</h3>
+                    <h3 className="text-xl font-black uppercase tracking-widest opacity-30 italic">Finished for Today</h3>
                     <div className="flex-1 h-px bg-green-500/5"></div>
                   </div>
                   <div className="grid gap-10 md:grid-cols-2 opacity-50 grayscale hover:grayscale-0 transition-all duration-700">

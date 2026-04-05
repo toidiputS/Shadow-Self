@@ -12,15 +12,17 @@ import AdminPanel from './pages/admin/AdminPanel';
 import SponsorPortal from './pages/sponsor/SponsorPortal';
 import BottomNav from './components/BottomNav';
 import DesktopNav from './components/DesktopNav';
+import SystemTour from './components/SystemTour';
 import { themeKernel } from './utils';
-
+ 
 const queryClient = new QueryClient();
-
+ 
 const MasterLayout = ({ children }) => {
   const { session } = useAuth();
   return (
     <div className={`min-h-screen bg-(--bg-color) transition-colors duration-400 ${session ? 'pb-32 md:pb-0' : ''}`}>
       {children}
+      <SystemTour />
       {session && (
         <>
           <BottomNav />

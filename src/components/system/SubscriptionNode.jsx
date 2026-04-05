@@ -63,7 +63,7 @@ export default function SubscriptionNode() {
             setUpdateProgress(0);
             // Simulate platform record update
             setCardData(prevData => ({ ...prevData })); 
-            alert("MATRIX SUCCESS: Billing method synchronized with secure tactical gateway.");
+            alert("Success: Your payment method has been updated securely.");
           }, 800);
           return 100;
         }
@@ -113,7 +113,7 @@ export default function SubscriptionNode() {
   const plans = [
     {
       id: "legacy",
-      name: "Legacy Protocol",
+      name: "Starter",
       price: "127",
       interval: "/mo",
       stripeId: "prod_U0jZKUpVIaJtES",
@@ -122,51 +122,51 @@ export default function SubscriptionNode() {
       description: "Baseline recovery command for small facilities.",
       features: [
         "Up to 25 Resident Slots",
-        "Standard Encryption Node",
-        "Sponsor Dashboard Access",
-        "Basic Audit Logs (30D)",
-        "In-App Notification Engine"
+        "Secure Account",
+        "Staff Dashboard Access",
+        "Activity History (30 Days)",
+        "Automatic Alerts"
       ],
       utilization: 18,
       limit: 25
     },
     {
       id: "squad",
-      name: "Tactical Squad",
+      name: "Professional",
       price: "297",
       interval: "/mo",
       stripeId: "prod_U0jcGJ7XqXqNS0",
       tier: "Professional",
       color: "text-orange-500",
       highlight: true,
-      description: "Enhanced monitoring for growing recovery guilds.",
+      description: "More power for larger houses.",
       features: [
         "Up to 100 Resident Slots",
-        "Advanced Heuristic Tracking",
-        "Leader & Admin Permission Tiers",
-        "Extended Audit Logs (90D)",
-        "Priority SMS/Push Relay",
-        "Custom Quest Architect"
+        "Advanced Reporting",
+        "Custom Staff Roles",
+        "Activity History (90 Days)",
+        "Priority Alerts & SMS",
+        "Custom Habit Templates"
       ],
       utilization: 42,
       limit: 100
     },
     {
       id: "platoon",
-      name: "Institutional Platoon",
+      name: "Enterprise",
       price: "1997",
       interval: "/yr",
       stripeId: "prod_U0je0430MWI4Vz",
       tier: "Enterprise",
       color: "text-purple-500",
-      description: "Full-scale governance for multi-facility ops.",
+      description: "Custom solutions for large organizations.",
       features: [
         "Unlimited Resident Capacity",
-        "Dedicated Matrix Instance",
-        "White-Label Governance UI",
-        "Full Data Sovereignty",
-        "SLA Guarantee (99.9%)",
-        "API Command Access"
+        "Private Server",
+        "Custom Branding",
+        "Advanced Data Security",
+        "Priority Support",
+        "API Access"
       ],
       utilization: 0,
       limit: "∞"
@@ -186,13 +186,13 @@ export default function SubscriptionNode() {
                      <Shield className="w-6 h-6" />
                   </div>
                   <div>
-                     <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-40">Active Authorization</h3>
-                     <p className="text-xl font-black italic tracking-tighter uppercase text-(--text-primary)">Legacy Protocol Node</p>
+                     <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-40">Current Plan</h3>
+                     <p className="text-xl font-black italic tracking-tighter uppercase text-(--text-primary)">Starter Plan</p>
                   </div>
                </div>
                <div className="flex items-center gap-8">
                   <div>
-                     <p className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-2">Renews In</p>
+                     <p className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-2">Next Payment</p>
                      <div className="flex items-center gap-2 text-sm font-black italic tracking-tight">
                         <Clock className="w-4 h-4 text-orange-400" />
                         <span>14 DAYS</span>
@@ -200,14 +200,14 @@ export default function SubscriptionNode() {
                   </div>
                   <div className="w-px h-10 bg-(--border-color) opacity-10" />
                   <div>
-                     <p className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-2">Instance ID</p>
+                     <p className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-2">Account ID</p>
                      <p className="text-sm font-black tabular-nums tracking-tighter opacity-80">SHW-RX-00921</p>
                   </div>
                </div>
                <div className="pt-2">
                   <div className="flex justify-between items-center mb-3">
-                     <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Capacity Utilization</span>
-                     <span className="text-[10px] font-black italic tracking-tighter text-blue-500">18 / 25 RESIDENTS</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Resident Capacity</span>
+                     <span className="text-[10px] font-black italic tracking-tighter text-blue-500">18 / 25 residents</span>
                   </div>
                   <div className="h-2 w-full bg-black/10 rounded-full nm-inset-sm overflow-hidden">
                      <MotionDiv 
@@ -236,7 +236,7 @@ export default function SubscriptionNode() {
                className="w-full py-4 mt-6 rounded-3xl nm-button text-[10px] font-black uppercase tracking-widest hover:text-blue-500 transition-all active:scale-95 flex items-center justify-center gap-4"
             >
                <ShieldCheck className="w-4 h-4" />
-               Update Matrix Card
+               Update Credit Card
             </button>
          </div>
       </section>
@@ -265,14 +265,14 @@ export default function SubscriptionNode() {
                      <Activity className="absolute inset-0 m-auto w-8 h-8 text-blue-500 animate-pulse" />
                   </div>
                   <div className="text-center space-y-4">
-                     <p className="text-[10px] font-black uppercase tracking-[0.5rem] text-blue-500">Uplinking Matrix Key</p>
+                     <p className="text-[10px] font-black uppercase tracking-[0.5rem] text-blue-500">Updating card info...</p>
                      <div className="w-48 h-1 nm-inset-sm rounded-full overflow-hidden mx-auto">
                         <div 
                           className="h-full bg-blue-500 transition-all duration-300" 
                           style={{ width: `${updateProgress}%` }}
                         />
                      </div>
-                     <p className="text-[8px] font-black opacity-30 uppercase tabular-nums">SYNCHRONIZATION: {updateProgress}%</p>
+                     <p className="text-[8px] font-black opacity-30 uppercase tabular-nums">LOADING: {updateProgress}%</p>
                   </div>
                 </div>
               ) : (
@@ -282,8 +282,8 @@ export default function SubscriptionNode() {
                       <CreditCard className="w-7 h-7" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black uppercase tracking-widest leading-none">Matrix Update</h3>
-                      <p className="text-[10px] font-black opacity-30 uppercase tracking-widest mt-1 italic">Secure Billing Uplink</p>
+                      <h3 className="text-xl font-black uppercase tracking-widest leading-none">Update Card</h3>
+                      <p className="text-[10px] font-black opacity-30 uppercase tracking-widest mt-1 italic">Securely update your payment info</p>
                     </div>
                   </div>
 
@@ -291,11 +291,11 @@ export default function SubscriptionNode() {
                     <div className="p-8 rounded-3xl nm-inset-sm bg-white/2 border border-white/5 space-y-8">
                       <div className="flex justify-between items-center opacity-40">
                         <ShieldCheck className="w-5 h-5" />
-                        <span className="text-[8px] font-black uppercase tracking-[0.2em]">Node: SHW-RX-02</span>
+                        <span className="text-[8px] font-black uppercase tracking-[0.2em]">Account ID: SHW-RX-02</span>
                       </div>
                       
                       <div className="space-y-2">
-                         <label className="text-[9px] font-black uppercase tracking-widest opacity-20 ml-1">Card Payload</label>
+                         <label className="text-[9px] font-black uppercase tracking-widest opacity-20 ml-1">Card Number</label>
                          <input 
                            type="text" 
                            placeholder="CARD NUMBER" 
@@ -317,7 +317,7 @@ export default function SubscriptionNode() {
                            />
                         </div>
                         <div className="space-y-2">
-                           <label className="text-[9px] font-black uppercase tracking-widest opacity-20 ml-1">Secure Key</label>
+                           <label className="text-[9px] font-black uppercase tracking-widest opacity-20 ml-1">CVV</label>
                            <input 
                              type="text" 
                              placeholder="CVV" 
@@ -332,7 +332,7 @@ export default function SubscriptionNode() {
                     <div className="p-4 rounded-xl nm-inset-xs bg-orange-500/5 flex gap-4">
                        <ShieldAlert className="w-4 h-4 text-orange-500/40 shrink-0" />
                        <p className="text-[9px] opacity-40 italic font-black leading-relaxed uppercase tracking-widest">
-                          Encryption protocol enforced. Payload remains within your tactical local domain.
+                          Your information is securely encrypted and never stored on our servers.
                        </p>
                     </div>
 
@@ -341,13 +341,13 @@ export default function SubscriptionNode() {
                         onClick={handleUpdateCard}
                         className="flex-1 py-5 rounded-2xl nm-button text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 hover:scale-105 transition-all active:scale-95"
                       >
-                        Uplink Payload
+                        Update Card
                       </button>
                       <button 
                         onClick={() => setIsUpdatingCard(false)}
                         className="px-8 py-5 rounded-2xl nm-button text-[10px] font-black uppercase tracking-widest opacity-20 hover:opacity-100 hover:text-red-500 transition-all active:scale-95"
                       >
-                        Abort
+                        Cancel
                       </button>
                     </div>
                   </div>
@@ -358,11 +358,10 @@ export default function SubscriptionNode() {
         )}
       </AnimatePresence>
 
-      {/* Plan Selection Command */}
-      <section className="space-y-6">
+      <section id="plan-upgrade-grid" className="space-y-6">
          <div className="flex items-center gap-3 ml-2">
             <Sparkles className="w-4 h-4 text-orange-400" />
-            <h3 className="text-xs font-black uppercase tracking-widest leading-none">Infrastructure Expansion</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest leading-none">Upgrade Your Plan</h3>
          </div>
          
          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -400,7 +399,7 @@ export default function SubscriptionNode() {
                 <div className="flex items-baseline gap-1">
                    <span className="text-xl font-black italic tracking-tighter">$</span>
                    <span className="text-4xl font-black tracking-tighter tabular-nums">{plan.price}</span>
-                   <span className="text-sm font-black italic opacity-20">{plan.interval}</span>
+                    <span className="text-sm font-black italic opacity-20">{plan.interval}</span>
                 </div>
 
                 <ul className="space-y-3 flex-1">
@@ -411,18 +410,34 @@ export default function SubscriptionNode() {
                      </li>
                    ))}
                 </ul>
-
-                <div className={`w-full py-5 rounded-3xl text-[10px] font-black uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 ${activePlan === plan.id ? 'bg-blue-500 text-white shadow-xl translate-y-2' : 'nm-inset-sm opacity-40'}`}>
+                <div className="mt-auto">
                    {activePlan === plan.id ? (
-                     <>
-                        <span>Active Configuration</span>
-                        <CheckCircle2 className="w-4 h-4" />
-                     </>
+                      <div className="w-full py-5 rounded-3xl text-[10px] font-black uppercase tracking-[0.3em] bg-blue-500 text-white shadow-xl translate-y-2 flex items-center justify-center gap-3">
+                         <span>Your Current Plan</span>
+                         <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                   ) : plan.id === 'legacy' ? (
+                      <div className="w-full py-5 rounded-3xl nm-inset-sm opacity-40 text-[10px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3">
+                         <span>Base Tier Active</span>
+                         <Lock className="w-3 h-3" />
+                      </div>
                    ) : (
-                     <>
-                        <span>Select Node</span>
-                        <ChevronRight className="w-3 h-3" />
-                     </>
+                      <div className="group/btn relative">
+                         <div className="absolute inset-0 opacity-0 group-hover/btn:opacity-100 transition-opacity">
+                            <stripe-buy-button
+                               buy-button-id={
+                                 plan.id === 'squad' ? "buy_btn_1TIlhMFw95IT0E6u2FF50Eg1" : 
+                                 plan.id === 'platoon' ? "buy_btn_1TIln4Fw95IT0E6urEyf3Pid" : 
+                                 "buy_btn_1TIlenFw95IT0E6ucRLN0Lqm"
+                               }
+                               publishable-key="pk_live_51Oc0jEFw95IT0E6u2fwb5V2qpIikLIBunRFGxNvHrtrtLODytRod8VCT4EhsnSPwXXlCYXdeNg8otdbrgjUVY6VH005DQlFHk9"
+                            ></stripe-buy-button>
+                         </div>
+                         <div className="w-full py-5 rounded-3xl nm-button text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 flex items-center justify-center gap-3 group-hover/btn:opacity-0 transition-opacity pointer-events-none">
+                            <span>Upgrade to {plan.name}</span>
+                            <Zap className="w-3 h-3" />
+                         </div>
+                      </div>
                    )}
                 </div>
               </button>
@@ -438,16 +453,16 @@ export default function SubscriptionNode() {
                <Globe className="w-12 h-12" />
             </div>
             <div className="flex-1 space-y-3">
-               <h3 className="text-2xl font-black italic tracking-tighter uppercase leading-none">Institutional Scaling</h3>
+               <h3 className="text-2xl font-black italic tracking-tighter uppercase leading-none">Custom Organization Plan</h3>
                <p className="text-xs font-black uppercase tracking-tighter opacity-40 leading-relaxed italic max-w-xl">
-                  Deploying Shadow Self across multiple facilities or government jurisdictions requires a custom-architected instance. Request an expansion RFP for bulk tier pricing and dedicated matrix support.
+                  Need to manage multiple houses or a large organization? Contact us for a custom solution tailored to your needs.
                </p>
             </div>
             <button 
               onClick={() => setIsRFPModalOpen(true)}
               className="px-12 py-6 rounded-4xl nm-button text-xs font-black uppercase tracking-[0.4em] text-purple-400 hover:text-purple-300 transition-all hover:scale-105 active:scale-95"
             >
-               REQUEST EXPANSION RFP
+               CONTACT US FOR CUSTOM PLAN
             </button>
          </div>
       </section>
@@ -468,12 +483,12 @@ export default function SubscriptionNode() {
                   <div className="w-20 h-20 rounded-full nm-inset-sm flex items-center justify-center text-green-500 mb-8">
                     <CheckCircle2 className="w-10 h-10 animate-bounce" />
                   </div>
-                  <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-4">Request Authorized</h3>
+                  <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-4">Request Received</h3>
                   <div className="px-6 py-3 rounded-xl nm-inset-sm text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-8">
-                    Clearance Code: {clearanceCode}
+                    Reference Code: {clearanceCode}
                   </div>
                   <p className="text-xs font-black uppercase tracking-widest opacity-40 leading-relaxed italic max-w-xs">
-                    Institutional evaluation in progress. A system architect will contact your node within 24 hours.
+                    Thank you! We've received your request. A team member will get back to you within 24 hours.
                   </p>
                 </div>
               ) : (
@@ -483,9 +498,9 @@ export default function SubscriptionNode() {
                       <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center text-purple-500">
                         <Globe className="w-5 h-5" />
                       </div>
-                      <h3 className="text-xl font-black italic tracking-tighter uppercase">RFP Expansion Request</h3>
+                      <h3 className="text-xl font-black italic tracking-tighter uppercase">Custom Plan Request</h3>
                     </div>
-                    <button onClick={() => setIsRFPModalOpen(false)} className="w-10 h-10 rounded-xl nm-button flex items-center justify-center text-red-500 hover:scale-110 transition-all active:scale-90" title="Abort Request">
+                    <button onClick={() => setIsRFPModalOpen(false)} className="w-10 h-10 rounded-xl nm-button flex items-center justify-center text-red-500 hover:scale-110 transition-all active:scale-90" title="Cancel Request">
                       <X className="w-5 h-5" />
                     </button>
                   </div>
@@ -506,26 +521,26 @@ export default function SubscriptionNode() {
                         </select>
                       </div>
                       <div className="space-y-3">
-                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 italic">Jurisdictional Scope</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 italic">Organization Scope</label>
                         <select 
                           value={rfpForm.jurisdiction}
                           onChange={(e) => setRFPForm({ ...rfpForm, jurisdiction: e.target.value })}
                           className="w-full p-5 rounded-2xl nm-inset-sm bg-transparent text-[11px] font-black uppercase tracking-widest border-none focus:outline-none"
                         >
                           <option>Private Facility</option>
-                          <option>State-Run Recovery</option>
-                          <option>Federal Contract</option>
-                          <option>Academic Research</option>
+                          <option>Organization/Non-Profit</option>
+                          <option>Government/Multi-State</option>
+                          <option>Research/Academic</option>
                         </select>
                       </div>
                     </div>
                     
                     <div className="space-y-3">
-                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 italic">Strategic Requirements</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 italic">Additional Details</label>
                       <textarea 
                         value={rfpForm.requirements}
                         onChange={(e) => setRFPForm({ ...rfpForm, requirements: e.target.value })}
-                        placeholder="Detail specific institutional needs (e.g., custom API, on-prem hosting, white-label UI)..."
+                        placeholder="Please tell us more about your organization and what you're looking for..."
                         className="w-full h-32 p-5 rounded-2xl nm-inset-sm bg-transparent text-[11px] font-black uppercase tracking-wide border-none focus:outline-none resize-none"
                       />
                     </div>
@@ -535,11 +550,11 @@ export default function SubscriptionNode() {
                       disabled={rfpMutation.isPending}
                       className="w-full py-6 rounded-3xl nm-button text-[11px] font-black uppercase tracking-[0.4em] text-purple-500 hover:text-purple-300 transition-all active:scale-95 disabled:opacity-50"
                     >
-                      {rfpMutation.isPending ? 'AUTHORIZING TRANSMISSION...' : 'TRANSMIT RFP SIGNAL'}
+                      {rfpMutation.isPending ? 'SENDING...' : 'SEND REQUEST'}
                     </button>
                     
                     <p className="text-center text-[8px] font-black uppercase tracking-[0.2em] opacity-10">
-                      SHA-256 SECURED PROVINCIAL ENTRY CHANNEL
+                      SECURELY SENT
                     </p>
                   </div>
                 </>
@@ -554,16 +569,16 @@ export default function SubscriptionNode() {
          <div className="flex items-center justify-between ml-2">
             <div className="flex items-center gap-3 opacity-60">
                <History className="w-4 h-4" />
-               <h3 className="text-xs font-black uppercase tracking-widest leading-none">Transmission Ledger</h3>
+               <h3 className="text-xs font-black uppercase tracking-widest leading-none">Payment History</h3>
             </div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-20">Showing last 3 cycles</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-20">Showing last 3 months</p>
          </div>
          
          <div className="space-y-3">
             {[
-              { id: 'TX-9921', date: 'SEP 01, 2024', amount: '$127.00', status: 'PAID', type: 'Legacy Node' },
-              { id: 'TX-9842', date: 'AUG 01, 2024', amount: '$127.00', status: 'PAID', type: 'Legacy Node' },
-              { id: 'TX-9755', date: 'JUL 01, 2024', amount: '$127.00', status: 'PAID', type: 'Legacy Node' },
+              { id: 'TX-9921', date: 'SEP 01, 2024', amount: '$127.00', status: 'PAID', type: 'Starter Plan' },
+              { id: 'TX-9842', date: 'AUG 01, 2024', amount: '$127.00', status: 'PAID', type: 'Starter Plan' },
+              { id: 'TX-9755', date: 'JUL 01, 2024', amount: '$127.00', status: 'PAID', type: 'Starter Plan' },
             ].map((tx, i) => (
               <div key={i} className="p-6 rounded-3xl nm-inset-sm flex flex-col md:flex-row md:items-center justify-between text-[11px] font-black uppercase tracking-tight group hover:nm-flat transition-all border border-white/5 bg-white/2">
                  <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-12 flex-1">
@@ -577,10 +592,10 @@ export default function SubscriptionNode() {
                     <span className="tabular-nums opacity-60 text-lg italic">{tx.amount}</span>
                     <div className="flex items-center gap-4 w-28 justify-end text-green-500">
                        <CheckCircle2 className="w-4 h-4" />
-                       <span className="text-[10px]">VERIFIED</span>
+                       <span className="text-[10px]">PAID</span>
                     </div>
                     <button 
-                       onClick={() => alert(`TRANSMISSION AUDIT: ${tx.id}\nStatus: ${tx.status}\nGateway: Secured Stripe Relay`)}
+                       onClick={() => alert(`PAYMENT DETAILS: ${tx.id}\nStatus: ${tx.status}\nGateway: Secured Stripe`)}
                        className="p-2 opacity-20 hover:opacity-100 transition-opacity active:scale-90"
                      >
                        <MoreHorizontal className="w-4 h-4" />

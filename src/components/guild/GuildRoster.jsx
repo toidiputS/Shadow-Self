@@ -1,23 +1,56 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/api/supabase";
 import { 
   Users,
-  Activity,
   ShieldCheck,
   ShieldAlert,
   Heart,
   Search,
   MessageSquare,
   Settings,
-  MoreHorizontal
+  Clock
 } from "lucide-react";
-import MemberIntelligenceModal from "./MemberIntelligenceModal";
+import MemberProfileModal from "./MemberProfileModal";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function GuildRoster({ guildId }) {
   const [selectedMember, setSelectedMember] = React.useState(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [initialAction, setInitialAction] = React.useState(null);
+  const { user } = useAuth();
+  const [sendingSupportId, setSendingSupportId] = React.useState(null);
+
+  const supportMutation = useMutation({
+    mutationFn: async ({ targetUserId, targetName }) => {
+      if (!user) return;
+      
+      const { error } = await supabase.from('notifications').insert([{
+        user_id: targetUserId,
+        type: 'support',
+        message: `${user.user_metadata?.display_name || 'A fellow resident'} just sent you some encouragement! Keep going.`,
+        metadata: { 
+          priority: 'low', 
+          sender_id: user.id,
+          sender_name: user.user_metadata?.display_name || 'House Peer'
+        }
+      }]);
+      if (error) throw error;
+      return targetName;
+    },
+    onSuccess: () => {
+       setSendingSupportId(null);
+    },
+    onError: (err) => {
+       setSendingSupportId(null);
+       console.error("Support Signal Failed:", err.message);
+    }
+  });
+
+  const handleSendSupport = (memberId, targetUserId, targetName) => {
+    setSendingSupportId(memberId);
+    supportMutation.mutate({ targetUserId, targetName });
+  };
 
   const handleAction = (member, action) => {
     setSelectedMember(member);
@@ -41,7 +74,7 @@ export default function GuildRoster({ guildId }) {
     enabled: !!guildId,
   });
 
-  if (isLoading) return <div className="text-center py-20 opacity-20 font-black uppercase tracking-widest animate-pulse">Syncing Guild Nodes...</div>;
+  if (isLoading) return <div className="text-center py-20 opacity-20 font-black uppercase tracking-widest animate-pulse">Syncing Members...</div>;
 
   return (
     <div className="p-10 rounded-[3rem] nm-flat border border-white/5 relative overflow-hidden">
@@ -54,12 +87,12 @@ export default function GuildRoster({ guildId }) {
              </div>
              <div>
                 <h3 className="text-2xl font-black uppercase tracking-[0.3em] leading-none mb-2">Member Roster</h3>
-                <p className="text-[10px] font-black uppercase opacity-30 tracking-widest italic">Collective Node Transparency</p>
+                <p className="text-[10px] font-black uppercase opacity-30 tracking-widest italic">Full transparency for better support</p>
              </div>
           </div>
           <div className="flex items-center gap-4">
              <div className="px-6 py-3 rounded-xl nm-inset-sm text-[10px] font-black uppercase tracking-widest opacity-60">
-                {roster.length} Active Nodes
+                {roster.length} Total Members
              </div>
           </div>
        </div>
@@ -68,16 +101,16 @@ export default function GuildRoster({ guildId }) {
           <table className="w-full text-left border-collapse">
              <thead>
                 <tr className="border-b border-white/5">
-                   <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Identity</th>
+                   <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Member</th>
                    <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Status</th>
-                   <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Contribution</th>
+                   <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Wellness</th>
                    <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-40 text-center">Streak</th>
                    <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-40 text-right">Actions</th>
                 </tr>
              </thead>
              <tbody>
                 {roster.map((member) => (
-                   <tr key={member.id} className="group hover:bg-blue-500/5 transition-colors border-b border-white/5 last:border-none">
+                   <tr key={`${member.id}-${member.user_id}`} className="group hover:bg-blue-500/5 transition-colors border-b border-white/5 last:border-none">
                       <td className="p-6">
                          <div className="flex items-center gap-4 cursor-pointer" onClick={() => handleAction(member, 'view')}>
                             <div className="w-12 h-12 rounded-2xl nm-inset-sm flex items-center justify-center text-blue-300 font-bold">
@@ -85,7 +118,7 @@ export default function GuildRoster({ guildId }) {
                             </div>
                             <div>
                                <h4 className="text-sm font-black uppercase tracking-wider">{member.profiles?.display_name || 'Anonymous User'}</h4>
-                               <p className="text-[10px] font-bold opacity-30 italic">{member.role === 'leader' ? 'Guild Leader' : 'Protocol Member'}</p>
+                               <p className="text-[10px] font-bold opacity-30 italic">{member.role === 'leader' ? 'House Manager' : 'Active Member'}</p>
                             </div>
                          </div>
                       </td>
@@ -94,14 +127,29 @@ export default function GuildRoster({ guildId }) {
                             member.profiles?.current_streak > 0 ? 'text-green-500' : 'text-red-500'
                          }`}>
                             {member.profiles?.current_streak > 0 ? <ShieldCheck className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
-                            <span>{member.profiles?.current_streak > 0 ? 'Verified' : 'Breach'}</span>
+                            <span>{member.profiles?.current_streak > 0 ? 'Verified' : 'Watch'}</span>
                          </div>
                       </td>
                       <td className="p-6 text-center">
-                         <div className="flex flex-col items-center gap-1.5">
-                            <div className="flex items-center gap-1">
-                               <Heart className="w-3 h-3 text-red-500/60" />
-                               <span className="text-xs font-black">+{member.contribution_score || 0}%</span>
+                         <div className="flex flex-col items-center gap-1.5 grayscale-0">
+                            <div className="flex items-center gap-4">
+                               <div className="flex items-center gap-1">
+                                  <Heart className="w-3 h-3 text-red-500/60" />
+                                  <span className="text-xs font-black">+{member.contribution_score || 0}%</span>
+                               </div>
+                               <button 
+                                 onClick={() => handleSendSupport(member.id, member.user_id, member.profiles?.display_name)}
+                                 disabled={sendingSupportId === member.id || member.user_id === user?.id}
+                                 className={`p-2 rounded-xl nm-button transition-all relative ${sendingSupportId === member.id ? 'animate-ping' : 'hover:scale-110 active:scale-95'} ${member.user_id === user?.id ? 'opacity-0 pointer-events-none' : 'opacity-40 group-hover:opacity-100'}`}
+                                 title="Send Encouragement"
+                               >
+                                  <Heart className={`w-3.5 h-3.5 text-red-500 ${sendingSupportId === member.id ? 'fill-red-500' : ''}`} />
+                                  {sendingSupportId === member.id && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                       <div className="w-full h-full bg-red-500/20 rounded-xl animate-ping" />
+                                    </div>
+                                  )}
+                               </button>
                             </div>
                             <div className="w-24 h-1.5 rounded-full nm-inset-sm overflow-hidden p-0.5">
                                <div 
@@ -118,14 +166,14 @@ export default function GuildRoster({ guildId }) {
                          <div className="flex items-center justify-end gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
                             <button 
                                 onClick={() => handleAction(member, 'signal')}
-                                title="Institutional Signaling: View Signal History & Send Protocol Notices" 
+                                title="House Alerts: Send messages and check-in requests" 
                                 className="p-2.5 rounded-xl nm-button text-purple-500/60 hover:text-purple-500 transition-all hover:scale-110 active:scale-95"
                              >
-                               <MessageSquare className="w-4 h-4" />
+                                <MessageSquare className="w-4 h-4" />
                             </button>
                             <button 
                                onClick={() => handleAction(member, 'view')}
-                               title="Audit Intelligence: Review Habit Heatmap & Tactical Progress Logs"
+                               title="Member Activity: Review daily habits and progress"
                                className="p-2.5 rounded-xl nm-button text-blue-500/60 hover:text-blue-500 transition-all hover:scale-110 active:scale-95"
                             >
                                <Search className="w-4 h-4" />
@@ -133,7 +181,7 @@ export default function GuildRoster({ guildId }) {
                             {member.role !== 'leader' && (
                                <button 
                                   onClick={() => handleAction(member, 'manage')}
-                                  title="Registry Management: Purge Activity & Administrative Log Control" 
+                                  title="Manage Records: Update activity logs and member status" 
                                   className="p-2.5 rounded-xl nm-button text-orange-500/60 hover:text-orange-500 transition-all hover:scale-110 active:scale-95"
                                 >
                                   <Settings className="w-4 h-4" />
@@ -147,7 +195,7 @@ export default function GuildRoster({ guildId }) {
           </table>
        </div>
 
-       <MemberIntelligenceModal 
+       <MemberProfileModal 
           isOpen={isModalOpen} 
           onClose={() => {
             setIsModalOpen(false);

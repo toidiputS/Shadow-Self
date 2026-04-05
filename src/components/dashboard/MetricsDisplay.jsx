@@ -77,7 +77,7 @@ export default function MetricsDisplay({ todayCount, wallet, profile, currentRan
 
         <div className="pt-4 border-t border-(--text-secondary)/5">
           <p className="text-xs text-orange-500/70 font-black uppercase tracking-widest italic">
-            {profile?.current_streak > 0 ? "Momentum Sustained" : "Protocol Breach Check"}
+            {profile?.current_streak > 0 ? "Momentum Sustained" : "Consistency Watch"}
           </p>
         </div>
       </div>

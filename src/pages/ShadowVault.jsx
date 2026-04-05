@@ -135,13 +135,13 @@ export default function ShadowVault() {
               <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center nm-flat">
                 <Store className="w-6 h-6 md:w-8 md:h-8 text-blue-500" />
               </div>
-              Guild Vault
+              House Store
             </h1>
             <div className="flex items-center justify-center md:justify-start gap-3 mt-4 md:ml-18">
-              <span className="text-(--text-secondary) font-black uppercase tracking-[0.3em] text-[10px] opacity-40">Recovery Privilege Market</span>
+              <span className="text-(--text-secondary) font-black uppercase tracking-[0.3em] text-[10px] opacity-40">Rewards & Points</span>
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full nm-inset-sm text-[10px] font-black uppercase tracking-tighter opacity-70">
                 <ShieldCheck className="w-3 h-3 text-green-500" />
-                <span>Locked Redemption Terminal</span>
+                <span>Point Redemption</span>
               </div>
             </div>
           </div>
@@ -155,10 +155,10 @@ export default function ShadowVault() {
             </button>
 
             <div className="flex-1 md:flex-none flex flex-col items-center justify-center px-8 py-4 rounded-3xl nm-inset min-w-[160px] group transition-all hover:nm-inset-sm overflow-hidden">
-               <p className="text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) opacity-40 mb-1">Authenticated Merit</p>
+               <p className="text-[10px] font-black uppercase tracking-[0.2rem] text-(--text-secondary) opacity-40 mb-1">Your Progress</p>
                <div className="flex items-center gap-3">
                  <Coins className="w-6 h-6 text-yellow-500 transition-transform group-hover:scale-110" />
-                 <span className="text-2xl font-black leading-none">{progressData?.sp || 0} <span className="text-[10px] opacity-30 tracking-tighter">Vested SP</span></span>
+                 <span className="text-2xl font-black leading-none">{progressData?.sp || 0} <span className="text-[10px] opacity-30 tracking-tighter">Points</span></span>
                </div>
             </div>
 
@@ -167,7 +167,7 @@ export default function ShadowVault() {
               className="flex-1 md:flex-none py-5 px-8 rounded-2xl nm-button font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 group transition-all"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-              Exit Vault
+              Go Back
             </Link>
           </div>
         </div>
@@ -178,9 +178,9 @@ export default function ShadowVault() {
             <Info className="w-6 h-6 text-blue-500" />
           </div>
           <div>
-            <h4 className="text-sm font-black uppercase tracking-[0.2rem] mb-2 leading-none">Guild Protocol 402: Privilege Redemption</h4>
+            <h4 className="text-sm font-black uppercase tracking-[0.2rem] mb-2 leading-none">How points work</h4>
             <p className="text-sm text-(--text-secondary) leading-relaxed font-medium opacity-80">
-              Verified recovery progression (Merit) generates Vested Shadow Points. These represent earned resource allocations for institutional privileges, personal exemptions, and cosmetic environmental overrides. All transactions are logged for clinical review.
+              By completing your check-ins and habits, you earn points. You can use these points for house rewards or to customize your dashboard. Everything you've earned is a reflection of your hard work!
             </p>
           </div>
         </div>
@@ -191,15 +191,15 @@ export default function ShadowVault() {
             <div className="w-10 h-10 rounded-xl nm-inset-sm flex items-center justify-center">
               <ShoppingCart className="w-5 h-5 opacity-40" />
             </div>
-            <h2 className="text-2xl font-black tracking-widest uppercase">Active Clearance Tiers</h2>
+            <h2 className="text-2xl font-black tracking-widest uppercase">Available Rewards</h2>
           </div>
 
           {isLoading ? (
-            <div className="text-center py-12 text-(--text-secondary) font-bold uppercase tracking-widest opacity-40 animate-pulse">Requesting inventory from Shadow Core...</div>
+            <div className="text-center py-12 text-(--text-secondary) font-bold uppercase tracking-widest opacity-40 animate-pulse">Loading rewards...</div>
           ) : items.length === 0 ? (
             <div className="text-center py-16 rounded-3xl nm-inset">
-              <p className="text-(--text-secondary) text-lg font-black uppercase tracking-widest opacity-80">Terminal Empty</p>
-              <p className="text-(--text-secondary) opacity-40 text-sm mt-3 italic">Await next system delivery for privilege updates</p>
+              <p className="text-(--text-secondary) text-lg font-black uppercase tracking-widest opacity-80">Nothing here yet</p>
+              <p className="text-(--text-secondary) opacity-40 text-sm mt-3 italic">Check back soon for more!</p>
             </div>
           ) : (
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">

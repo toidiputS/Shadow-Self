@@ -35,7 +35,7 @@ export default function TemplateManager({ onClone, onCreate }) {
 
   const handleClone = () => {
     onClone(selectedTemplates);
-    setSuccessMessage(`Cloned ${selectedTemplates.length} protocols to House Command.`);
+    setSuccessMessage(`Added ${selectedTemplates.length} habits to your House.`);
     setSelectedTemplates([]);
     setTimeout(() => setSuccessMessage(null), 3000);
   };
@@ -44,8 +44,8 @@ export default function TemplateManager({ onClone, onCreate }) {
     <div className="space-y-12">
       <div className="flex items-center justify-between ml-4">
         <div>
-          <h2 className="text-3xl font-black uppercase tracking-widest italic text-blue-500">Recovery Templates</h2>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mt-2">Clone institutional standard protocols</p>
+          <h2 className="text-3xl font-black uppercase tracking-widest italic text-blue-500">House Habit Templates</h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mt-2">Add common recovery habits to your house</p>
         </div>
         <button 
           onClick={handleClone}
@@ -54,7 +54,7 @@ export default function TemplateManager({ onClone, onCreate }) {
             selectedTemplates.length === 0 ? 'opacity-20 pointer-events-none grayscale' : 'hover:scale-105 active:scale-95'
           }`}
         >
-          <Copy className="w-5 h-5" /> Execute Clone ({selectedTemplates.length})
+          <Copy className="w-5 h-5" /> Add to House ({selectedTemplates.length})
         </button>
       </div>
 
@@ -105,11 +105,11 @@ export default function TemplateManager({ onClone, onCreate }) {
              <div className="flex items-center gap-6 pt-4 border-t border-white/5 relative z-10">
                 <div className="flex items-center gap-2">
                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                   <span className="text-[9px] font-black uppercase tracking-widest">{template.xp} XP</span>
+                   <span className="text-[9px] font-black uppercase tracking-widest">Progress</span>
                 </div>
                 <div className="flex items-center gap-2">
                    <div className="w-2 h-2 rounded-full bg-orange-500/40"></div>
-                   <span className="text-[9px] font-black uppercase tracking-widest">{template.sp} SP</span>
+                   <span className="text-[9px] font-black uppercase tracking-widest">Points</span>
                 </div>
                 <div className="ml-auto">
                    <span className="text-[8px] font-black uppercase italic opacity-20 group-hover:opacity-100 transition-opacity">{template.freq}</span>
@@ -125,8 +125,8 @@ export default function TemplateManager({ onClone, onCreate }) {
            <div className="w-16 h-16 rounded-3xl nm-inset-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
               <Plus className="w-8 h-8" />
            </div>
-           <h4 className="text-sm font-black uppercase tracking-widest">New Protocol</h4>
-           <p className="text-[9px] font-bold opacity-30 uppercase tracking-widest mt-2">Architect custom guild alignment</p>
+           <h4 className="text-sm font-black uppercase tracking-widest">New Habit</h4>
+           <p className="text-[9px] font-bold opacity-30 uppercase tracking-widest mt-2">Create a custom habit for your house</p>
         </button>
 
       </div>
