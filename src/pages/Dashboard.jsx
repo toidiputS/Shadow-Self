@@ -571,6 +571,8 @@ export default function Dashboard() {
         )}
         {showWeeklyReview && <WeeklyReview onClose={() => setShowWeeklyReview(false)} />}
       </AnimatePresence>
+
+      <ThemeSidebar isOpen={isThemeOpen} onClose={() => setIsThemeOpen(false)} />
     </div>
   );
 }
